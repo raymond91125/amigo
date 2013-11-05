@@ -179,6 +179,11 @@ fields:
       - "RO:0002211"
       - "RO:0002212"
       - "RO:0002213"
+      - "DESCENDENTOF"
+      - "DESCINHERM"
+      - "DESCINMALE"
+      - "develops_from"
+      - "xunion_of"
     indexed: false
   - id: regulates_transitivity_graph_json
     description: JSON blob form of the local relation transitivity graph.

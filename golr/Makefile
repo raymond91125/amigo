@@ -15,7 +15,7 @@ OWLTOOLS_MAX_MEMORY ?= 32G
 OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS = --merge-support-ontologies --reasoner elk
 
 ## Bins.
-MAVEN_EXE ?= ~/local/src/java/apache-maven-3.0.4/bin/mvn
+MAVEN_EXE ?= ~/local/src/java/apache-maven-3.0.5/bin/mvn
 
 ## URLs.
 SOLR_URL ?= http://localhost:8080/solr/ 
@@ -24,7 +24,6 @@ SOLR_URL ?= http://localhost:8080/solr/
 OWLTOOLS_ROOT ?= ~/local/src/svn/owltools/
 BBOP_JS_ROOT ?= ~/local/src/git/bbop-js/
 PANTHER_FILES_DIR ?= ~/local/src/svn/geneontology.org/trunk/experimental/trees/panther_data/
-SOLR_DATA_ROOT ?= /srv/solr
 
 ## Files.
 SOLR_LOAD_LOG ?= /tmp/golr_timestamp.log
@@ -34,7 +33,6 @@ SCHEMA_METADATA ?= \
  ../metadata/ont-config.yaml \
  ../metadata/bio-config.yaml \
  ../metadata/ann-config.yaml \
- ../metadata/complex-ann-config.yaml \
  ../metadata/protein-family-config.yaml \
  ../metadata/general-config.yaml \
  ../metadata/ann_ev_agg-config.yaml
@@ -47,11 +45,26 @@ ONTOLOGIES ?= \
  http://geneontology.org/ontology/extensions/gorel.owl \
  http://purl.obolibrary.org/obo/ma.owl \
  http://purl.obolibrary.org/obo/emap.owl
+WBONTOLOGIES ?= \
+ http://caltech.wormbase.org/ONTOLOGY/disease_ontology.WS240.obo \
+ http://caltech.wormbase.org/ONTOLOGY/phenotype_ontology.WS240.obo \
+ http://caltech.wormbase.org/ONTOLOGY/worm_development.WS240.obo \
+ http://caltech.wormbase.org/ONTOLOGY/gene_ontology.WS240.obo \
+ http://purl.obolibrary.org/obo/wbbt.owl
+
+// http://caltech.wormbase.org/ONTOLOGY/anatomy_ontology.WS240.obo
+
+TESTONTOLOGIES ?= \
+ /home/raymond/ontology/wbbt.owl \
+ http://purl.obolibrary.org/obo/doid.owl \
+ http://purl.obolibrary.org/obo/wbphenotype.owl \
+ http://purl.obolibrary.org/obo/wbls.owl \
+ http://purl.obolibrary.org/obo/go.owl
+ 
 ## Next:
-# http://purl.obolibrary.org/obo/go/extensions/go-plus.owl \
 # http://purl.obolibrary.org/obo/uberon/basic.owl
 
-GENE_ASSOCIATION_FILES ?= \
+ALL_GAFS ?= \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Lmajor.gz \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Pfalciparum.gz \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Spombe.gz  \
@@ -90,25 +103,10 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
 	http://www.geneontology.org/gene-associations/gene_association.zfin.gz \
 	http://www.geneontology.org/gene-associations/submission/paint/pre-submission/gene_association.paint_other.gaf # And higher-level PAINT annotations.
-
-TEST_GAF = http://www.geneontology.org/gene-associations/gene_association.mgi.gz
-TEST_GAF_SMALL ?= ./_test/mgi-limited.gaf
-TEST_GAF_MICRO = ./_test/mgi-limited-100.gaf
-
-## Not over the wire yet.
-## Experimental Lego paths.
-LEGO_CATALOGS ?= \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/catalog-v001.xml
-LEGO_FILES ?= \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/Muscle_contraction.owl \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/NEDD4-merged.owl \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/Wnt-intestine-pmid22617424dph.owl \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/canonical-wnt.owl \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/cytokinin-signaling.owl \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/lr-asymmetry-pmid21771813.owl \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/textbook_glycolysis-mouse.owl \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/worm-vulval-development.owl \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/owl/reactome/Arachidonic_acid_metabolism.owl
+MGI_GAF = http://www.geneontology.org/gene-associations/gene_association.mgi.gz
+MGI_TEST_GAF = ./_test/mgi-limited.gaf
+MGI_NANO_GAF = ./_test/mgi-limited-100.gaf
+WB_GAFS ?= http://caltech.wormbase.org/ONTOLOGY/anatomy_association.WS240.wb \
 
 ##
 DATE = `date +'%Y-%m-%d'`
@@ -181,25 +179,25 @@ load-ontology: owltools-build
 	make message-load-clear
 
 ## Test GAF.
-.PHONY: load-test-gaf
-load-test-gaf: owltools-build
+.PHONY: load-mgi-gaf
+load-mgi-gaf: owltools-build
 	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(TEST_GAF) --solr-load-panther --solr-load-panther-general
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(MGI_GAF) --solr-load-panther --solr-load-panther-general
 	make message-load-clear
 
 ## Test GAF: A test load with the MGI GAF--column 16, etc.
-.PHONY: load-test-gaf-small
-load-test-gaf-small: owltools-build
+.PHONY: load-mgi-test-gaf
+load-mgi-test-gaf: owltools-build
 	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(TEST_GAF_SMALL) --solr-load-panther --solr-load-panther-general
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(MGI_TEST_GAF) --solr-load-panther --solr-load-panther-general
 	make message-load-clear
 
 ## Test GAF: A super minimal tiny test load with the MGI GAF--column 16, etc.
 ## No PANTHER.
-.PHONY: load-test-gaf-micro
-load-test-gaf-micro: owltools-build
+.PHONY: load-mgi-nano-gaf
+load-mgi-nano-gaf: owltools-build
 	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(TEST_GAF_MICRO)
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(MGI_NANO_GAF)
 	make message-load-clear
 
 ## Test PANTHER: A test load with just PANTHER (no GAF info).
@@ -209,24 +207,33 @@ load-just-panther: owltools-build
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-panther --solr-load-panther-general
 	make message-load-clear
 
-## TODO/BUG: Testing phase.
-## Test complex annotations (LEGO): A test load with just the new doc type.
-.PHONY: load-just-complex-annotations
-load-just-complex-annotations: owltools-build
+## The full and final load.
+
+.PHONY: load-full-wb
+load-full-wb: owltools-build clear-load-log
 	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools --solr-url $(SOLR_URL) --read-lego-catalogs $(LEGO_CATALOGS) --read-lego-files $(LEGO_FILES) --solr-load-complex-annotations
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(WBONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(WB_GAFS)
+	make message-load-clear
+.PHONY: load-test
+load-test: owltools-build clear-load-log
+	make message-load-start
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(TESTONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(TEST_GAFS)
+	make message-load-clear	
+.PHONY: load-full-nopanther
+load-full-nopanther: owltools-build clear-load-log
+	make message-load-start
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(ALL_GAFS)
 	make message-load-clear
 
-## The full and final load.
 .PHONY: load-full
 load-full: owltools-build clear-load-log
 	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --read-panther $(PANTHER_FILES_DIR) --solr-load-gafs $(GENE_ASSOCIATION_FILES) --solr-load-panther --solr-load-panther-general
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --read-panther $(PANTHER_FILES_DIR) --solr-load-gafs $(ALL_GAFS) --solr-load-panther --solr-load-panther-general
 	make message-load-clear
 ## "Silent" variation--useful w/o amigo.
 .PHONY: load-full-silent
 load-full-silent: owltools-build clear-load-log
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --read-panther $(PANTHER_FILES_DIR) --solr-load-gafs $(GENE_ASSOCIATION_FILES) --solr-load-panther --solr-load-panther-general
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --read-panther $(PANTHER_FILES_DIR) --solr-load-gafs $(ALL_GAFS) --solr-load-panther --solr-load-panther-general
 
 ## An option optimizing step.
 .PHONY: load-optimize
@@ -250,8 +257,3 @@ service-restart-nginx:
 .PHONY: service-restart-jetty
 service-restart-jetty:
 	sudo /etc/init.d/jetty restart
-
-## Solr rollbackup helper.
-.PHONY: service-backup-solr
-service-backup-solr:
-	sudo rsync -avzog --progress $(SOLR_DATA_ROOT) $(SOLR_DATA_ROOT).$(DATE)-$(TIME)
