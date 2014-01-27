@@ -60,7 +60,7 @@ WBONTOLOGIES ?= \
  http://caltech.wormbase.org/ontology/phenotype_ontology.obo
  
 
-ANATOMYONTOLOGY ?= http://purl.obolibrary.org/obo/wbbt.owl
+ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.obo
 DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.obo
 GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.obo
 LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/worm_development.obo
