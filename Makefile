@@ -6,19 +6,26 @@
 ####
 
 METADATA ?= $(wildcard metadata/*.yaml)
-JS ?= rhino # or smjs
-JSFLAGS ?= -opt -1
+TEST_JS ?= rhino # or smjs
+## Use our local bbop-js.
+TEST_JS_FLAGS ?= -modules _data/bbop.js -modules javascript/staging/amigo2.js -opt -1
 #JSENGINES = node smjs rhino
 BBOP_JS ?= ../bbop-js/
-TESTS = \
+JS_TESTS = \
  $(wildcard javascript/lib/amigo/*.js.tests) \
  $(wildcard javascript/lib/amigo/data/*.js.tests) \
  $(wildcard javascript/lib/amigo/ui/*.js.tests) \
  $(wildcard javascript/lib/amigo/handlers/*.js.tests)
 #BENCHMARKS = $(wildcard _benchmark/*.js)
 
+## JSs for (currently) non-core purposes.
+RINGO_JS ?= /usr/bin/ringo
+NODE_JS ?= /usr/bin/node
+##
+AMIGO_VERSION ?= 2.0.0-rc1
+
 all:
-	@echo "Default JS engine: $(JS)"
+	@echo "Default JS engine: $(TEST_JS)"
 	@echo "See: http://wiki.geneontology.org/index.php/AmiGO_Manual:_Installation_2.0"
 	@echo "for more details."
 #	@echo "All JS engines: $(JSENGINES)"
@@ -28,11 +35,12 @@ all:
 ### Tests.
 ###
 
-.PHONY: test $(TESTS)
-test: $(TESTS)
-$(TESTS): bundle
+.PHONY: test $(JS_TESTS)
+test: $(JS_TESTS)
+$(JS_TESTS): bundle
 	echo "trying: $@"
-	cd $(@D) && $(JS) $(JSFLAGS) -f $(@F)
+	$(TEST_JS) $(TEST_JS_FLAGS) -f $(@D)/$(@F)
+#	cd $(@D) && $(TEST_JS) $(TEST_JS_FLAGS) -f $(@F)
 
 ###
 ### Check the metadata using kwalify.
@@ -67,11 +75,21 @@ docs:
 
 .PHONY: bundle
 bundle:
-	./install -b
+	./install -b -V $(AMIGO_VERSION)
 
 .PHONY: bundle-uncompressed
 bundle-uncompressed:
-	./install -b -u
+	./install -b -u -V $(AMIGO_VERSION)
+
+###
+### Create exportable JS NPM directory.
+###
+
+.PHONY: npm
+npm: bundle
+	./scripts/release-npm.pl -v -i javascript/staging/amigo2.js -o javascript/npm/amigo2 -r $(AMIGO_VERSION)
+	npm unpublish amigo2@$(AMIGO_VERSION)
+	npm publish javascript/npm/amigo2
 
 # ###
 # ### Produce static statistics data files for landing page.
@@ -88,12 +106,13 @@ bundle-uncompressed:
 
 .PHONY: install
 install: test docs
-	./install -v -e -g
+	./install -v -e -g -V $(AMIGO_VERSION)
+#	 AMIGO_VERSION = $(AMIGO_VERSION) ./install -v -e -g
 
 ## This target skips testing.
 .PHONY: install-uncompressed
 install-uncompressed: docs
-	./install -v -e -g -u
+	./install -v -e -g -u -V $(AMIGO_VERSION)
 
 ###
 ### Copy in the standard inital values for installation.
@@ -112,7 +131,7 @@ dummy:
 	cp conf/.dummy_values.yaml conf/amigo.yaml
 
 ###
-### Release: docs and bundle; then to an upload.
+### Release: docs and bundle; then do an upload.
 ###
 
 .PHONY: release
@@ -143,7 +162,7 @@ refresh: tags bundle
 	cp $(BBOP_JS)/staging/bbop.js ./_data
 	cp ./javascript/lib/amigo/data/*.js $(BBOP_JS)/_data/
 	cp ./javascript/lib/amigo/data/golr.js $(BBOP_JS)/demo/
-	./install -v -e -g
+	./install -v -e -g -V $(AMIGO_VERSION)
 	./scripts/blank-kvetch.pl
 
 ###
@@ -163,7 +182,7 @@ clean-filesystem:
 
 .PHONY: rollout
 rollout:
-	./install -v -e -g
+	./install -v -e -g -V $(AMIGO_VERSION)
 	./scripts/blank-kvetch.pl
 
 ###
@@ -175,3 +194,13 @@ rollout:
 .PHONY: w3c-validate
 w3c-validate:
 	./scripts/w3c-validate.pl -v --html
+
+###
+### Example on how to start the (RingoJS) OpenSearch server.
+###
+
+start-ringo-example:
+	RINGO_MODULE_PATH="../stick/lib:_data:javascript/staging" $(RINGO_JS) javascript/bin/ringo-example.js --port 8910
+
+start-ringo-opensearch:
+	RINGO_MODULE_PATH="../stick/lib:_data:javascript/staging" $(RINGO_JS) javascript/bin/ringo-opensearch.js

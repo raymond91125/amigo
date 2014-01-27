@@ -1142,7 +1142,6 @@ sub _fuse_arguments {
 
 =item get_interlink
 
-TODO: how would this play properly with a templating system?
 Gets an environmental variable, including (and specically for)
 variables designated in config.pl.
 
@@ -1546,7 +1545,7 @@ sub get_interlink {
     if( $ilink ){
       if( $optional_public_p ){
 	#$self->kvetch('PUBLIC LINK');
-	$ilink = $self->amigo_env('AMIGO_PUBLIC_CGI_URL') . '/' . $ilink;
+	$ilink = $self->amigo_env('AMIGO_PUBLIC_CGI_BASE_URL') . '/' . $ilink;
       }elsif( $optional_full_p ){
 	#$self->kvetch('FULL LINK');
 	$ilink = $self->amigo_env('AMIGO_CGI_URL') . '/' . $ilink;

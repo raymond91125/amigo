@@ -11,89 +11,7 @@
 // Module and namespace checking.
 if ( typeof bbop == "undefined" ){ var bbop = {}; }
 if ( typeof bbop.core == "undefined" ){ bbop.core = {}; }
-if ( typeof amigo == "undefined" ){ var amigo = {}; }
-
-/*
- * Variable: global
- * 
- * Capture the global object for later reference.
- * 
- * Used by namespace and require.
- * 
- * TODO: There is a temporary workaround for NodeJS here
- * TODO: Creates loop; problem?
- * 
- * Also see:
- *  <namespace>
- *  <requires>
- */
-bbop.core.global = this;
-if( typeof GLOBAL !== 'undefined' ){ // TODO: Better probe of NodeJS-ness.
-    (function(){
-	 var global_context = {};
-	 global_context['bbop'] = GLOBAL['bbop'];
-	 global_context['amigo'] = GLOBAL['amigo'];
-	 bbop.core.global = global_context;
-	 //bbop.core.global = GLOBAL;
-     })();
-}
-
-///
-/// Utility functions can hang as prototypes.
-///
-
-/*
- * Function: namespace
- * 
- * Create a namespace (chained object) in the global environment.
- * 
- * Parameters: An arbitrary number of strings.
- * 
- * Returns: Nothing. Side-effects: this function extends the global
- * object for easy namespace creation.
- * 
- * Also See: <require>
- */
-bbop.core.namespace = function(){
-
-    // Go through the arguments and add them to the namespace,
-    // starting at global.
-    var current_object = bbop.core.global;
-    for ( var i = 0; i < arguments.length; i++ ) {
-	var ns = arguments[i];
-	if( ! current_object[ns] ){
-	    current_object[ns] = {};
-	}
-	current_object = current_object[ns];
-    }
-    return current_object;
-};
-
-/*
- * Function: require
- * 
- * Throw an error unless a specified namespace is defined.
- * 
- * Parameters: An arbitrary number of strings.
- * 
- * Returns: Nothing. Side-effects: throws an error if the namespace
- * defined by the strings is not currently found.
- * 
- * Also See: <namespace>
- */
-bbop.core.require = function(){
-
-    // Walk through from global namespace, checking.
-    var current_object = bbop.core.global;
-    for ( var i = 0; i < arguments.length; i++ ) {
-	var ns = arguments[i];
-	if( ! current_object[ns] ){
-	    throw new Error("Could not find required NS: " + ns);
-	}
-	current_object = current_object[ns];
-    }
-    return current_object;
-};
+//if ( typeof amigo == "undefined" ){ var amigo = {}; }
 
 /*
  * Function: crop
@@ -619,8 +537,8 @@ bbop.core.clone = function(thing){
  *
  * Essentially add standard 'to string' interface to the string class
  * and as a stringifier interface to other classes. More meant for
- * output. Only atoms, arrays, and objects with a to_string function
- * are handled.
+ * output--think REPL. Only atoms, arrays, and objects with a
+ * to_string function are handled.
  *
  * Parameters: 
  *  in_thing - something
@@ -631,17 +549,27 @@ bbop.core.clone = function(thing){
  */
 bbop.core.to_string = function(in_thing){
 
-    var what = bbop.core.what_is(in_thing);
-    if( what == 'number' ){
-	return in_thing.toString();
-    }else if( what == 'string' ){
-	return in_thing;
-    }else if( what == 'array' ){
-	return bbop.core.dump(in_thing);
-    }else if( in_thing.to_string && typeof(in_thing.to_string) == 'function' ){
+    // First try interface, then the rest.
+    if( in_thing &&
+	typeof(in_thing.to_string) !== 'undefined' &&
+	typeof(in_thing.to_string) == 'function' ){
 	return in_thing.to_string();
     }else{
-	throw new Error('to_string interface not defined for this object');
+		
+	var what = bbop.core.what_is(in_thing);
+	if( what == 'number' ){
+	    return in_thing.toString();
+	}else if( what == 'string' ){
+	    return in_thing;
+	}else if( what == 'array' ){
+	    return bbop.core.dump(in_thing);
+	// }else if( what == 'object' ){
+	//     return bbop.core.dump(in_thing);
+	// }else{
+	//     return '[unsupported]';
+	}else{
+	    return in_thing;
+	}
     }
 };
 
@@ -649,7 +577,8 @@ bbop.core.to_string = function(in_thing){
  * Function: dump
  *
  * Dump an object to a string form as best as possible. More meant for
- * debugging. For a slightly different take, see to_string.
+ * debugging. This is meant to be an Object walker. For a slightly
+ * different take (Object identification), see <to_string>.
  *
  * Parameters: 
  *  in_thing - something
@@ -1291,1075 +1220,6 @@ bbop.core.extend = function(subclass, baseclass){
     // subclass.parent_class = baseclass.prototype;
 };
 /* 
- * Package: version.js
- * 
- * Namespace: bbop.version
- * 
- * This package was automatically created during the release process
- * and contains its version information--this is the release of the 
- * API that you have.
- */
-
-bbop.core.namespace('bbop', 'version');
-bbop.version = {};
-
-/*
- * Variable: revision
- *
- * Partial version for this library; revision (major/minor version numbers)
- * information.
- */
-bbop.version.revision = "2.0b1";
-
-/*
- * Variable: release
- *
- * Partial version for this library: release (date-like) information.
- */
-bbop.version.release = "20131029";
-/* 
- * Package: json.js
- * 
- * Namespace: bbop.json
- * 
- * JSON stringifying and parsing capabilities.  This package is a
- * small modification of json2.js (in the Public Domain from
- * https://raw.github.com/douglascrockford/JSON-js/master/json2.js and
- * http://json.org) to fit in a little more with the style of BBOP
- * JS. As well, the Date prototypes were removed. See json2.js in the
- * source directory for this package for the original.
- * 
- * As much of the original documentation and structure was kept as
- * possible while converting to Naturaldocs and the bbop namespace.
- * 
- * Purpose: Ensure that JSON parsing capabilites exist on all
- * platforms that BBOP JS runs on.
- */
-
-/*
- * Function: stringify
- * 
- * This method produces a JSON text from a JavaScript value.
- * 
- * When an object value is found, if the object contains a toJSON
- * method, its toJSON method will be called and the result will be
- * stringified. A toJSON method does not serialize: it returns the
- * value represented by the name/value pair that should be serialized,
- * or undefined if nothing should be serialized. The toJSON method
- * will be passed the key associated with the value, and this will be
- * bound to the value.
-
- * For example, this would serialize Dates as ISO strings.
- * 
- * : Date.prototype.toJSON = function (key) {
- * :         function f(n) {
- * :               // Format integers to have at least two digits.
- * :                    return n < 10 ? '0' + n : n;
- * :                }
- * :
- * :                return this.getUTCFullYear()   + '-' +
- * :                  f(this.getUTCMonth() + 1) + '-' +
- * :                     f(this.getUTCDate())      + 'T' +
- * :                     f(this.getUTCHours())     + ':' +
- * :                     f(this.getUTCMinutes())   + ':' +
- * :                     f(this.getUTCSeconds())   + 'Z';
- * :            };
- * 
- * You can provide an optional replacer method. It will be passed the
- * key and value of each member, with this bound to the containing
- * object. The value that is returned from your method will be
- * serialized. If your method returns undefined, then the member will
- * be excluded from the serialization.
- * 
- * If the replacer parameter is an array of strings, then it will be
- * used to select the members to be serialized. It filters the results
- * such that only members with keys listed in the replacer array are
- * stringified.
- * 
- * Values that do not have JSON representations, such as undefined or
- * functions, will not be serialized. Such values in objects will be
- * dropped; in arrays they will be replaced with null. You can use
- * a replacer function to replace those with JSON values.
- * JSON.stringify(undefined) returns undefined.
- * 
- * The optional space parameter produces a stringification of the
- * value that is filled with line breaks and indentation to make it
- * easier to read.
- * 
- * If the space parameter is a non-empty string, then that string will
- * be used for indentation. If the space parameter is a number, then
- * the indentation will be that many spaces. For example:
- * 
- * : text = JSON.stringify(['e', {pluribus: 'unum'}]);
- * : // text is '["e",{"pluribus":"unum"}]'
- * : 
- * : text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
- * : // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
- * :
- * : text = JSON.stringify([new Date()], function (key, value) {
- * :          return this[key] instanceof Date ?
- * :                 'Date(' + this[key] + ')' : value;
- * :  });
- * :  // text is '["Date(---current time---)"]'
- *
- * Parameters:
- *  value - any JavaScript value, usually an object or array.
- *  replacer - an optional parameter that determines how object values are stringified for objects. It can be a function or an array of strings.
- *  space - an optional parameter that specifies the indentation of nested structures. If it is omitted, the text will be packed without extra whitespace. If it is a number, it will specify the number of spaces to indent at each level. If it is a string (such as '\t' or '&nbsp;'), it contains the characters used to indent at each level.
- * 
- * Returns: string
- */
-
-/*
- * Function: parse
- * (text, reviver)
- * 
- * This method parses a JSON text to produce an object or array.
- * It can throw a SyntaxError exception.
- * 
- * The optional reviver parameter is a function that can filter and
- * transform the results. It receives each of the keys and values,
- * and its return value is used instead of the original value.
- * If it returns what it received, then the structure is not modified.
- * If it returns undefined then the member is deleted. For example:
- * 
- * : // Parse the text. Values that look like ISO date strings will
- * : // be converted to Date objects.
- * :
- * : myData = JSON.parse(text, function (key, value) {
- * :     var a;
- * :     if (typeof value === 'string') {
- * :         a =
-/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
- * :         if (a) {
- * :             return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
- * :                 +a[5], +a[6]));
- * :         }
- * :     }
- * :     return value;
- * : });
- * :
- * : myData = JSON.parse('["Date(09/09/2001)"]', function (key, value) {
- * :     var d;
- * :     if (typeof value === 'string' &&
- * :             value.slice(0, 5) === 'Date(' &&
- * :             value.slice(-1) === ')') {
- * :         d = new Date(value.slice(5, -1));
- * :                   if (d) {
- * :             return d;
- * :         }
- * :     }
- * :     return value;
- * : });
- * 
- * Parameters:
- *  text - the string to parse to a JavaScript entity.
- *  reviver - *[optional]* optional transforming function for modifying results; see the documentation above for more details.
- * 
- * Returns: well, pretty much anything you put in...
- */
-
-/*jslint evil: true, regexp: true */
-
-/*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
-    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
-    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
-    lastIndex, length, parse, prototype, push, replace, slice, stringify,
-    test, toJSON, toString, valueOf
-*/
-
-
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'json', 'stringify');
-bbop.core.namespace('bbop', 'json', 'parse');
-
-(function () {
-    //'use strict';
-
-    // function f(n) {
-    //     // Format integers to have at least two digits.
-    //     return n < 10 ? '0' + n : n;
-    // }
-
-    // if (typeof Date.prototype.toJSON !== 'function') {
-
-    //     Date.prototype.toJSON = function (key) {
-
-    //         return isFinite(this.valueOf())
-    //             ? this.getUTCFullYear()     + '-' +
-    //                 f(this.getUTCMonth() + 1) + '-' +
-    //                 f(this.getUTCDate())      + 'T' +
-    //                 f(this.getUTCHours())     + ':' +
-    //                 f(this.getUTCMinutes())   + ':' +
-    //                 f(this.getUTCSeconds())   + 'Z'
-    //             : null;
-    //     };
-
-    //     String.prototype.toJSON      =
-    //         Number.prototype.toJSON  =
-    //         Boolean.prototype.toJSON = function (key) {
-    //             return this.valueOf();
-    //         };
-    // }
-
-    var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-        gap,
-        indent,
-        meta = {    // table of character substitutions
-            '\b': '\\b',
-            '\t': '\\t',
-            '\n': '\\n',
-            '\f': '\\f',
-            '\r': '\\r',
-            '"' : '\\"',
-            '\\': '\\\\'
-        },
-        rep;
-
-
-    function quote(string) {
-
-// If the string contains no control characters, no quote characters, and no
-// backslash characters, then we can safely slap some quotes around it.
-// Otherwise we must also replace the offending characters with safe escape
-// sequences.
-
-        escapable.lastIndex = 0;
-        return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
-            var c = meta[a];
-            return typeof c === 'string'
-                ? c
-                : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-        }) + '"' : '"' + string + '"';
-    }
-
-
-    function str(key, holder) {
-
-// Produce a string from holder[key].
-
-        var i,          // The loop counter.
-            k,          // The member key.
-            v,          // The member value.
-            length,
-            mind = gap,
-            partial,
-            value = holder[key];
-
-// If the value has a toJSON method, call it to obtain a replacement value.
-
-        if (value && typeof value === 'object' &&
-                typeof value.toJSON === 'function') {
-            value = value.toJSON(key);
-        }
-
-// If we were called with a replacer function, then call the replacer to
-// obtain a replacement value.
-
-        if (typeof rep === 'function') {
-            value = rep.call(holder, key, value);
-        }
-
-// What happens next depends on the value's type.
-
-        switch (typeof value) {
-        case 'string':
-            return quote(value);
-
-        case 'number':
-
-// JSON numbers must be finite. Encode non-finite numbers as null.
-
-            return isFinite(value) ? String(value) : 'null';
-
-        case 'boolean':
-        case 'null':
-
-// If the value is a boolean or null, convert it to a string. Note:
-// typeof null does not produce 'null'. The case is included here in
-// the remote chance that this gets fixed someday.
-
-            return String(value);
-
-// If the type is 'object', we might be dealing with an object or an array or
-// null.
-
-        case 'object':
-
-// Due to a specification blunder in ECMAScript, typeof null is 'object',
-// so watch out for that case.
-
-            if (!value) {
-                return 'null';
-            }
-
-// Make an array to hold the partial results of stringifying this object value.
-
-            gap += indent;
-            partial = [];
-
-// Is the value an array?
-
-            if (Object.prototype.toString.apply(value) === '[object Array]') {
-
-// The value is an array. Stringify every element. Use null as a placeholder
-// for non-JSON values.
-
-                length = value.length;
-                for (i = 0; i < length; i += 1) {
-                    partial[i] = str(i, value) || 'null';
-                }
-
-// Join all of the elements together, separated with commas, and wrap them in
-// brackets.
-
-                v = partial.length === 0
-                    ? '[]'
-                    : gap
-                    ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
-                    : '[' + partial.join(',') + ']';
-                gap = mind;
-                return v;
-            }
-
-// If the replacer is an array, use it to select the members to be stringified.
-
-            if (rep && typeof rep === 'object') {
-                length = rep.length;
-                for (i = 0; i < length; i += 1) {
-                    if (typeof rep[i] === 'string') {
-                        k = rep[i];
-                        v = str(k, value);
-                        if (v) {
-                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                        }
-                    }
-                }
-            } else {
-
-// Otherwise, iterate through all of the keys in the object.
-
-                for (k in value) {
-                    if (Object.prototype.hasOwnProperty.call(value, k)) {
-                        v = str(k, value);
-                        if (v) {
-                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                        }
-                    }
-                }
-            }
-
-// Join all of the member texts together, separated with commas,
-// and wrap them in braces.
-
-            v = partial.length === 0
-                ? '{}'
-                : gap
-                ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
-                : '{' + partial.join(',') + '}';
-            gap = mind;
-            return v;
-        }
-    }
-
-// If the JSON object does not yet have a stringify method, give it one.
-
-//    if (typeof bbop.json.stringify !== 'function') {
-        bbop.json.stringify = function (value, replacer, space) {
-
-// The stringify method takes a value and an optional replacer, and an optional
-// space parameter, and returns a JSON text. The replacer can be a function
-// that can replace values, or an array of strings that will select the keys.
-// A default replacer method can be provided. Use of the space parameter can
-// produce text that is more easily readable.
-
-            var i;
-            gap = '';
-            indent = '';
-
-// If the space parameter is a number, make an indent string containing that
-// many spaces.
-
-            if (typeof space === 'number') {
-                for (i = 0; i < space; i += 1) {
-                    indent += ' ';
-                }
-
-// If the space parameter is a string, it will be used as the indent string.
-
-            } else if (typeof space === 'string') {
-                indent = space;
-            }
-
-// If there is a replacer, it must be a function or an array.
-// Otherwise, throw an error.
-
-            rep = replacer;
-            if (replacer && typeof replacer !== 'function' &&
-                    (typeof replacer !== 'object' ||
-                    typeof replacer.length !== 'number')) {
-                throw new Error('bbop.json.stringify');
-            }
-
-// Make a fake root object containing our value under the key of ''.
-// Return the result of stringifying the value.
-
-            return str('', {'': value});
-        };
-//    }
-
-
-// If the JSON object does not yet have a parse method, give it one.
-
-//    if (typeof bbop.json.parse !== 'function') {
-        bbop.json.parse = function (text, reviver) {
-
-// The parse method takes a text and an optional reviver function, and returns
-// a JavaScript value if the text is a valid JSON text.
-
-            var j;
-
-            function walk(holder, key) {
-
-// The walk method is used to recursively walk the resulting structure so
-// that modifications can be made.
-
-                var k, v, value = holder[key];
-                if (value && typeof value === 'object') {
-                    for (k in value) {
-                        if (Object.prototype.hasOwnProperty.call(value, k)) {
-                            v = walk(value, k);
-                            if (v !== undefined) {
-                                value[k] = v;
-                            } else {
-                                delete value[k];
-                            }
-                        }
-                    }
-                }
-                return reviver.call(holder, key, value);
-            }
-
-
-// Parsing happens in four stages. In the first stage, we replace certain
-// Unicode characters with escape sequences. JavaScript handles many characters
-// incorrectly, either silently deleting them, or treating them as line endings.
-
-            text = String(text);
-            cx.lastIndex = 0;
-            if (cx.test(text)) {
-                text = text.replace(cx, function (a) {
-                    return '\\u' +
-                        ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-                });
-            }
-
-// In the second stage, we run the text against regular expressions that look
-// for non-JSON patterns. We are especially concerned with '()' and 'new'
-// because they can cause invocation, and '=' because it can cause mutation.
-// But just to be safe, we want to reject all unexpected forms.
-
-// We split the second stage into 4 regexp operations in order to work around
-// crippling inefficiencies in IE's and Safari's regexp engines. First we
-// replace the JSON backslash pairs with '@' (a non-JSON character). Second, we
-// replace all simple value tokens with ']' characters. Third, we delete all
-// open brackets that follow a colon or comma or that begin the text. Finally,
-// we look to see that the remaining characters are only whitespace or ']' or
-// ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
-
-            if (/^[\],:{}\s]*$/
-                    .test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
-                        .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
-                        .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
-
-// In the third stage we use the eval function to compile the text into a
-// JavaScript structure. The '{' operator is subject to a syntactic ambiguity
-// in JavaScript: it can begin a block or an object literal. We wrap the text
-// in parens to eliminate the ambiguity.
-
-                j = eval('(' + text + ')');
-
-// In the optional fourth stage, we recursively walk the new structure, passing
-// each name/value pair to a reviver function for possible transformation.
-
-                return typeof reviver === 'function'
-                    ? walk({'': j}, '')
-                    : j;
-            }
-
-// If the text is not JSON parseable, then a SyntaxError is thrown.
-
-            throw new SyntaxError('bbop.json.parse: ' + text);
-        };
-//    }
-}());
-/*
- * Package: logger.js
- * 
- * Namespace: bbop.logger
- * 
- * BBOP JS logger object. Using .kvetch(), you can automatically log a
- * message in almost any environment you find yourself in--browser,
- * server wherever. Also, if you have jQuery available and an element
- * with the id "bbop-logger-console-textarea",
- * "bbop-logger-console-text", or "bbop-logger-console-html", the
- * logger will append to that element (with a "\n" (autoscroll), "\n",
- * or "<br />" terminator respectively) instead.
- */
-
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'logger');
-
-/*
- * Constructor: logger
- * 
- * Arguments: (optional) initial context.
- */
-bbop.logger = function(initial_context){
-
-    /*
-     * Variable: DEBUG 
-     * 
-     * Different debugging available per object. Externally toggle
-     * between true and false to switch on and off the logging.
-     */
-    this.DEBUG = false;
-
-    var anchor = this;
-
-    // Define an optional context to tag onto the front of messages.
-    this._context = [];
-    if( initial_context ){
-	this._context = [initial_context];
-    }
-
-    /*
-     * Function: reset_context
-     * 
-     * Define the ability to reset the contex.
-     * 
-     * Arguments:
-     *  new_initial_context - (optional) New context to start with.
-     */
-    this.reset_context = function(new_initial_context){
-	if( new_initial_context ){
-	    this._context = [new_initial_context];
-	}else{
-	    this._context = [];	    
-	}
-    };
-
-    /*
-     * Function: push_context
-     * 
-     * Add an additional logging context to the stack.
-     * 
-     * Arguments:
-     *  new_context - New context to add to the context stack.
-     */
-    this.push_context = function(new_context){
-	this._context.push(new_context);
-    };
-
-    /*
-     * Function: pop_context
-     * 
-     * Remove the last context if it's there.
-     */
-    this.pop_context = function(){
-	var popped_context = null;
-	if( this._context.length > 0 ){
-	    popped_context = this._context.pop();
-	}
-	return popped_context;
-    };
-
-    // Generalizer console (or whatever) printing.
-    this._console_sayer = function(){};
-
-    // // Check for: Opera, FF, Safari, Chrome, console, etc.
-    // if( typeof(jQuery) != 'undefined' &&
-    // 	jQuery('#' + 'bbop-logger-console-textarea') != 'undefined' ){
-    // 	    // Our own logging console takes precedence. 
-    // 	    this._console_sayer = function(msg){
-    // 		var area = jQuery('#'+ 'bbop-logger-console-textarea');
-    // 		area.append(msg + "\n");
-    // 		try{
-    // 		    area.scrollTop(area[0].scrollHeight);
-    // 		} catch (x) {
-    // 		    // could scroll
-    // 		}
-    // 	    };
-    // }else if( typeof(jQuery) != 'undefined' &&
-    // 	jQuery('#' + 'bbop-logger-console-text') != 'undefined' &&
-    // 	jQuery('#' + 'bbop-logger-console-text').length != 0 ){
-    // 	    // Our own logging console takes precedence. 
-    // 	    this._console_sayer = function(msg){
-    // 		jQuery('#' + 'bbop-logger-console-text').append(msg + "\n");
-    // 	    };
-    // }else
-    if( typeof(jQuery) != 'undefined' &&
-	jQuery('#' + 'bbop-logger-console-html') != 'undefined' &&
-	jQuery('#' + 'bbop-logger-console-html').length ){
-	    // Our own logging console takes precedence. 
-	    this._console_sayer = function(msg){
-		var area = jQuery('#'+ 'bbop-logger-console-html');
-		area.append(msg + "<br />");
-		try{
-    		    area.scrollTop(area[0].scrollHeight);
-		} catch (x) {
-		    // could scroll
-		}
-		//jQuery('#' + 'bbop-logger-console-html').append(msg + "<br />");
-	    };
-    }else if( typeof(console) != 'undefined' &&
-	      typeof(console.log) == 'function' ){
-	// This may be okay for Chrome and a subset of various console
-	// loggers. This should now include FF's Web Console.
-	this._console_sayer = function(msg){ console.log(msg + "\n"); };
-    }else if( typeof(opera) != 'undefined' &&
-	typeof(opera.postError) == 'function' ){
-	// If Opera is in there, probably Opera.
-	this._console_sayer = function(msg){ opera.postError(msg + "\n"); };
-    }else if( typeof(window) != 'undefined' &&
-	      typeof(window.dump) == 'function' ){
-	// From developer.mozilla.org: To see the dump output you have
-	// to enable it by setting the preference
-	// browser.dom.window.dump.enabled to true. You can set the
-	// preference in about:config or in a user.js file. Note: this
-	// preference is not listed in about:config by default, you
-	// may need to create it (right-click the content area -> New
-	// -> Boolean).
-	this._console_sayer = function(msg){ dump( msg + "\n"); };
-    }else if( typeof(window) != 'undefined' &&
-	      typeof(window.console) != 'undefined' &&
-	      typeof(window.console.log) == 'function' ){
-	// From developer.apple.com: Safari's "Debug" menu allows you
-	// to turn on the logging of JavaScript errors. To display the
-	// debug menu in Mac OS X, open a Terminal window and type:
-	// "defaults write com.apple.Safari IncludeDebugMenu 1" Need
-	// the wrapper function because safari has personality
-	// problems.
-	this._console_sayer = function(msg){ window.console.log(msg + "\n"); };
-    }else if( typeof(build) == 'function' &&
-	      typeof(getpda) == 'function' &&
-	      typeof(pc2line) == 'function' &&
-	      typeof(print) == 'function' ){
-	// This may detect SpiderMonkey on the comand line.
-	this._console_sayer = function(msg){ print(msg); };
-    }else if( typeof(org) != 'undefined' &&
-	      typeof(org.rhino) != 'undefined' &&
-	      typeof(print) == 'function' ){
-	// This may detect Rhino on the comand line.
-	this._console_sayer = function(msg){ print(msg); };
-    }
-    
-    /*
-     * Function: kvetch
-     * 
-     * Log a string to somewhere. Also return a string to (mostly for
-     * the unit tests).
-     * 
-     * Arguments:
-     *  string - The string to print out to wherever we found.
-     */
-    this.kvetch = function(string){
-	var ret_str = null;
-	if( anchor.DEBUG == true ){
-
-	    // Make sure there is something there no matter what.
-	    if( typeof(string) == 'undefined' ){ string = ''; }
-
-	    // Redefined the string a little if we have contexts.
-	    if( anchor._context.length > 0 ){
-		var cstr = anchor._context.join(':');
-		string = cstr + ': '+ string;
-	    }
-
-	    // Actually log to the console.
-	    anchor._console_sayer(string);
-
-	    // Bind for output.
-	    ret_str = string;
-	}
-	return ret_str;
-    };
-};
-/*
- * Package: template.js
- * 
- * Namespace: bbop.template
- * 
- * BBOP JS template object/enginette.
- * 
- * Some (nonsensical) usage is like:
- * 
- * : var tt = new bbop.template("{{foo}} {{bar}} {{foo}}");
- * : 'A B A' == tt.fill({'foo': 'A', 'bar': 'B'});
- */
-
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'template');
-
-/*
- * Constructor: template
- * 
- * Arguments:
- *  template_string - the string template to use for future fill calls
- * 
- * Returns:
- *  self
- */
-bbop.template = function(template_string){
-    this.is_a = 'bbop.template';
-
-    var anchor = this;
-
-    anchor._template_string = template_string;
-
-    // First break the template string into ordered sections which we
-    // will interleve later.
-    var split_re = /\{\{[A-Za-z0-9_-]+\}\}/;
-    anchor._template_split_strings =
-	template_string.split(split_re);
-
-    // Now map out which variables are at which locations.
-    var var_id_re = /\{\{[A-Za-z0-9_-]+\}\}/g;
-    anchor._var_id_matches =
-	template_string.match(var_id_re);
-    // Trim off the '{{' and '}}' from the matches.
-    bbop.core.each(anchor._var_id_matches,
-		  function(item, index){
-		      var new_item = item.substring(2, item.length -2);
-		      anchor._var_id_matches[index] = new_item;
-		  });
-
-    /*
-     * Function: fill
-     * 
-     * Fill the template with the corresponding hash items. Undefined
-     * variables are replaced with ''.
-     * 
-     * Arguments:
-     *  fill_hash - the template with the hashed values
-     * 
-     * Returns:
-     *  string
-     */
-    this.fill = function(fill_hash){
-	var ret_str = '';
-
-	bbop.core.each(anchor._template_split_strings,
-		       function(str, index){
-
-			   // Add the next bit.
-			   ret_str += str;
-
-			   // Add the replacement value if we can make
-			   // sense of it.
-			   if( index < anchor._var_id_matches.length ){
-			       var use_str = '';
-			       var varname = anchor._var_id_matches[index];
-			       if( varname &&
-				   bbop.core.is_defined(fill_hash[varname]) ){
-				   use_str = fill_hash[varname];
-			       }
-			       ret_str += use_str;
-			   }
-		       });
-
-	return ret_str;
-    };
-
-    /*
-     * Function: variables
-     * 
-     * Return a hash of the variables used in the template.
-     * 
-     * Arguments:
-     *  n/a
-     * 
-     * Returns:
-     *  a hash like: {'foo': true, 'bar': true, ...}
-     */
-    this.variables = function(){
-	return bbop.core.hashify(anchor._var_id_matches);
-    };
-
-};
-/*
- * Package: logic.js
- * 
- * Namespace: bbop.logic
- * 
- * BBOP object to try and take some of the pain out of managing the
- * boolean logic that seems to show up periodically. Right now mostly
- * aimed at dealing with Solr/GOlr.
- * 
- * Anatomy of a core data bundle.
- * 
- * : data_bundle => {op: arg}
- * : op => '__AND__', '__OR__', '__NOT__'
- * : arg => <string>, array, data_bundle
- * : array => [array_item*]
- * : array_item => <string>, data
- * 
- * Example:
- * 
- * : {and: [{or: ...}, {or: ...}, {and: ...} ]}
- * : var filters = {'and': []};
- *
- * TODO: parens between levels
- */
-
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.namespace('bbop', 'logic');
-
-/*
- * Constructor: logic
- * 
- * Contructor for the bbop.logic object. NOTE: during processing,
- * binary operators with a single argument cease to exist as they will
- * never make it to output.
- * 
- * Arguments:
- *  default_conjuntion - *[optional]* "and" or "or"; defaults to "and"
- * 
- * Returns:
- *  bbop logic object
- */
-bbop.logic = function(default_conjunction){
-    this._is_a = 'bbop.logic';
-
-    // Add logging.
-    var logger = new bbop.logger();
-    //logger.DEBUG = true;
-    logger.DEBUG = false;
-    function ll(str){ logger.kvetch(str); }
-
-    var logic_anchor = this;
-
-    // // Handling conjunctions.
-    // this._and = '__AND__';
-    // this._or = '__OR__';
-    // this._not = '__NOT__';
-    // function _is_token(possible_token){
-    // 	var retval = false;
-    // 	if( possible_token == this._and ||
-    // 	    possible_token == this._or ||
-    // 	    possible_token == this._not ){
-    // 	   retval = true; 
-    // 	}
-    // 	return retval;
-    // }
-    // // Convert the internal
-    // function _usable
-
-    // // Set the internal default conjunction. Default to "and".
-    // if( ! default_conjunction ){
-    // 	default_conjunction = this._and;
-    // }else if( default_conjunction == this._or ){
-    // 	default_conjunction = this._or;
-    // }else{
-    // 	default_conjunction = this._and;
-    // }
-    if( ! default_conjunction ){
-    	default_conjunction = 'and';
-    }
-    this.default_conjunction = default_conjunction;
-
-    // Set initial state.
-    // ie: this._bundle = {'__AND__': []};
-    //this._bundle = {};
-    //this._bundle[this.default_conjunction] = [];
-    // See documentation for empty().
-    var _empty = function(){
-	logic_anchor._bundle = {};
-	logic_anchor._bundle[logic_anchor.default_conjunction] = [];
-    };
-    _empty();
-
-    /*
-     * Function: add
-     * 
-     * Add to the current stored logic bundle.
-     * 
-     * Parameters:
-     *  item - string or bbop.logic object
-     * 
-     * Returns:
-     *  n/a
-     */
-    //this.and = function(){
-    //this.or = function(){
-    //this.not = function(){
-    this.add = function(item){
-
-	// Add things a little differently if it looks like a bit of
-	// logic.
-	if(  bbop.core.what_is(item) == 'bbop.logic' ){
-	    this._bundle[this.default_conjunction].push(item._bundle);
-	}else{
-	    this._bundle[this.default_conjunction].push(item);
-	}
-    };
-
-    /*
-     * Function: negate
-     * 
-     * Negate the current stored logic.
-     * 
-     * TODO/BUG: I think this might cause an unreleasable circular
-     * reference.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  n/a
-     */
-    this.negate = function(){
-	var nega = {};
-	nega['not'] = this._bundle;
-	this._bundle = nega;
-    };
-    
-    // Walk the data structure...
-    this._read_walk = function(data_bundle, in_encoder, lvl){
-	
-	// The encoder defaults to whatever--no transformations
-	var encoder = in_encoder || function(in_out){ return in_out; };
-
-	ll("LRW: with: " + bbop.core.dump(data_bundle));
-
-	// If level is not defined, we just started and we're on level
-	// one, the first level.
-	var l_enc = '(';
-	var r_enc = ')';
-	if( typeof(lvl) == 'undefined' ){
-	    lvl = 1;
-	    l_enc = '';
-	    r_enc = '';
-	}	
-
-	var read = '';
-	
-	// The task of walking is broken into the terminal case (a
-	// string) or things that we need to operate on (arrays or
-	// sub-data_bundles).
-	if( bbop.core.what_is(data_bundle) == 'string' ){
-	    ll("LRW: trigger string");
-	    read = data_bundle;
-	}else{
-	    ll("LRW: trigger non-string");
-
-	    // Always single op.
-	    var op = bbop.core.get_keys(data_bundle)[0];
-	    var arg = data_bundle[op];
-
-	    // We can treat the single data_bundle/string case like a
-	    // degenerate array case.
-	    if( ! bbop.core.is_array(arg) ){
-		arg = [arg];
-	    }
-
-	    // Recure through the array and join the results with the
-	    // current op.
-	    //ll('L: arg: ' + bbop.core.what_is(arg));
-	    var stack = [];
-	    bbop.core.each(arg, function(item, i){
-			       stack.push(logic_anchor._read_walk(item,
-								  encoder,
-								  lvl + 1));
-			   });
-
-	    // Slightly different things depending on if it's a unary
-	    // or binary op.
-	    if( op == 'not' ){
-		// TODO: I believe that it should no be possible
-		// (i.e. policy by code) to have a 'not' with more
-		// that a single argument.
-		read = op + ' ' + stack.join('');
-	    }else{
-		read = l_enc + stack.join(' ' + op + ' ') + r_enc;
-	    }
-	}
-
-	
-	ll("LRW: returns: " + read);
-	return read;
-    };
-
-    /*
-     * Function: to_string
-     * 
-     * Dump the current data out to a string.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  n/a
-     */
-    this.to_string = function(){
-	return logic_anchor._read_walk(logic_anchor._bundle);
-    };
-
-    /*
-     * Function: url
-     * 
-     * TODO
-     * 
-     * Dump the current data out to a URL.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  n/a
-     */
-    this.url = function(){
-	return logic_anchor._read_walk(logic_anchor._bundle);
-    };
-
-    /*
-     * Function: empty
-     * 
-     * Empty/reset self.
-     * 
-     * Parameters:
-     *  n/a
-     * 
-     * Returns:
-     *  n/a
-     */
-    // Staggered declaration so I can use it above during initialization.
-    this.empty = _empty;
-
-    /*
-     * Function: parse
-     * 
-     * TODO: I think I can grab the shunting yard algorithm for a
-     * similar problem in the old AmiGO 1.x codebase.
-     * 
-     * Parse an incoming string into the internal data structure.
-     * 
-     * Parameters:
-     *  in_str - the incoming string to parse
-     * 
-     * Returns:
-     *  n/a
-     */
-    this.parse = function(in_str){
-	return null;
-    };
-
-};
-/* 
  * Package: test.js
  * 
  * Namespace: bbop.test
@@ -2995,6 +1855,1072 @@ bbop.test = function(){
     };
 };
 /* 
+ * Package: version.js
+ * 
+ * Namespace: bbop.version
+ * 
+ * This package was automatically generated during the build process
+ * and contains its version information--this is the release of the
+ * API that you have.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
+
+/*
+ * Variable: revision
+ *
+ * Partial version for this library; revision (major/minor version numbers)
+ * information.
+ */
+bbop.version.revision = "2.0.0-rc1";
+
+/*
+ * Variable: release
+ *
+ * Partial version for this library: release (date-like) information.
+ */
+bbop.version.release = "20140124";
+/*
+ * Package: logger.js
+ * 
+ * Namespace: bbop.logger
+ * 
+ * BBOP JS logger object. Using .kvetch(), you can automatically log a
+ * message in almost any environment you find yourself in--browser,
+ * server wherever. Also, if you have jQuery available and an element
+ * with the id "bbop-logger-console-textarea",
+ * "bbop-logger-console-text", or "bbop-logger-console-html", the
+ * logger will append to that element (with a "\n" (autoscroll), "\n",
+ * or "<br />" terminator respectively) instead.
+ */
+
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+
+/*
+ * Constructor: logger
+ * 
+ * Arguments: (optional) initial context.
+ */
+bbop.logger = function(initial_context){
+
+    /*
+     * Variable: DEBUG 
+     * 
+     * Different debugging available per object. Externally toggle
+     * between true and false to switch on and off the logging.
+     */
+    this.DEBUG = false;
+
+    var anchor = this;
+
+    // Define an optional context to tag onto the front of messages.
+    this._context = [];
+    if( initial_context ){
+	this._context = [initial_context];
+    }
+
+    /*
+     * Function: reset_context
+     * 
+     * Define the ability to reset the contex.
+     * 
+     * Arguments:
+     *  new_initial_context - (optional) New context to start with.
+     */
+    this.reset_context = function(new_initial_context){
+	if( new_initial_context ){
+	    this._context = [new_initial_context];
+	}else{
+	    this._context = [];	    
+	}
+    };
+
+    /*
+     * Function: push_context
+     * 
+     * Add an additional logging context to the stack.
+     * 
+     * Arguments:
+     *  new_context - New context to add to the context stack.
+     */
+    this.push_context = function(new_context){
+	this._context.push(new_context);
+    };
+
+    /*
+     * Function: pop_context
+     * 
+     * Remove the last context if it's there.
+     */
+    this.pop_context = function(){
+	var popped_context = null;
+	if( this._context.length > 0 ){
+	    popped_context = this._context.pop();
+	}
+	return popped_context;
+    };
+
+    // Generalizer console (or whatever) printing.
+    this._console_sayer = function(){};
+
+    // // Check for: Opera, FF, Safari, Chrome, console, etc.
+    // if( typeof(jQuery) != 'undefined' &&
+    // 	jQuery('#' + 'bbop-logger-console-textarea') != 'undefined' ){
+    // 	    // Our own logging console takes precedence. 
+    // 	    this._console_sayer = function(msg){
+    // 		var area = jQuery('#'+ 'bbop-logger-console-textarea');
+    // 		area.append(msg + "\n");
+    // 		try{
+    // 		    area.scrollTop(area[0].scrollHeight);
+    // 		} catch (x) {
+    // 		    // could scroll
+    // 		}
+    // 	    };
+    // }else if( typeof(jQuery) != 'undefined' &&
+    // 	jQuery('#' + 'bbop-logger-console-text') != 'undefined' &&
+    // 	jQuery('#' + 'bbop-logger-console-text').length != 0 ){
+    // 	    // Our own logging console takes precedence. 
+    // 	    this._console_sayer = function(msg){
+    // 		jQuery('#' + 'bbop-logger-console-text').append(msg + "\n");
+    // 	    };
+    // }else
+    if( typeof(jQuery) != 'undefined' &&
+	jQuery('#' + 'bbop-logger-console-html') != 'undefined' &&
+	jQuery('#' + 'bbop-logger-console-html').length ){
+	    // Our own logging console takes precedence. 
+	    this._console_sayer = function(msg){
+		var area = jQuery('#'+ 'bbop-logger-console-html');
+		area.append(msg + "<br />");
+		try{
+    		    area.scrollTop(area[0].scrollHeight);
+		} catch (x) {
+		    // could scroll
+		}
+		//jQuery('#' + 'bbop-logger-console-html').append(msg + "<br />");
+	    };
+    }else if( typeof(console) != 'undefined' &&
+	      typeof(console.log) == 'function' ){
+	// This may be okay for Chrome and a subset of various console
+	// loggers. This should now include FF's Web Console and NodeJS.
+	//this._console_sayer = function(msg){ console.log(msg + "\n"); };
+	// These usually seem to have "\n" incorporated now.
+	this._console_sayer = function(msg){ console.log(msg); };
+    }else if( typeof(opera) != 'undefined' &&
+	typeof(opera.postError) == 'function' ){
+	// If Opera is in there, probably Opera.
+	this._console_sayer = function(msg){ opera.postError(msg + "\n"); };
+    }else if( typeof(window) != 'undefined' &&
+	      typeof(window.dump) == 'function' ){
+	// From developer.mozilla.org: To see the dump output you have
+	// to enable it by setting the preference
+	// browser.dom.window.dump.enabled to true. You can set the
+	// preference in about:config or in a user.js file. Note: this
+	// preference is not listed in about:config by default, you
+	// may need to create it (right-click the content area -> New
+	// -> Boolean).
+	this._console_sayer = function(msg){ dump( msg + "\n"); };
+    }else if( typeof(window) != 'undefined' &&
+	      typeof(window.console) != 'undefined' &&
+	      typeof(window.console.log) == 'function' ){
+	// From developer.apple.com: Safari's "Debug" menu allows you
+	// to turn on the logging of JavaScript errors. To display the
+	// debug menu in Mac OS X, open a Terminal window and type:
+	// "defaults write com.apple.Safari IncludeDebugMenu 1" Need
+	// the wrapper function because safari has personality
+	// problems.
+	this._console_sayer = function(msg){ window.console.log(msg + "\n"); };
+    }else if( typeof(build) == 'function' &&
+	      typeof(getpda) == 'function' &&
+	      typeof(pc2line) == 'function' &&
+	      typeof(print) == 'function' ){
+	// This may detect SpiderMonkey on the comand line.
+	this._console_sayer = function(msg){ print(msg); };
+    }else if( typeof(org) != 'undefined' &&
+	      typeof(org.rhino) != 'undefined' &&
+	      typeof(print) == 'function' ){
+	// This may detect Rhino on the comand line.
+	this._console_sayer = function(msg){ print(msg); };
+    }
+    
+    /*
+     * Function: kvetch
+     * 
+     * Log a string to somewhere. Also return a string to (mostly for
+     * the unit tests).
+     * 
+     * Arguments:
+     *  string - The string to print out to wherever we found.
+     */
+    this.kvetch = function(string){
+	var ret_str = null;
+	if( anchor.DEBUG == true ){
+
+	    // Make sure there is something there no matter what.
+	    if( typeof(string) == 'undefined' ){ string = ''; }
+
+	    // Redefined the string a little if we have contexts.
+	    if( anchor._context.length > 0 ){
+		var cstr = anchor._context.join(':');
+		string = cstr + ': '+ string;
+	    }
+
+	    // Actually log to the console.
+	    anchor._console_sayer(string);
+
+	    // Bind for output.
+	    ret_str = string;
+	}
+	return ret_str;
+    };
+};
+/* 
+ * Package: json.js
+ * 
+ * Namespace: bbop.json
+ * 
+ * JSON stringifying and parsing capabilities.  This package is a
+ * small modification of json2.js (in the Public Domain from
+ * https://raw.github.com/douglascrockford/JSON-js/master/json2.js and
+ * http://json.org) to fit in a little more with the style of BBOP
+ * JS. As well, the Date prototypes were removed. See json2.js in the
+ * source directory for this package for the original.
+ * 
+ * As much of the original documentation and structure was kept as
+ * possible while converting to Naturaldocs and the bbop namespace.
+ * 
+ * Purpose: Ensure that JSON parsing capabilites exist on all
+ * platforms that BBOP JS runs on.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.json == "undefined" ){ bbop.json = {}; }
+
+/*
+ * Function: stringify
+ * 
+ * This method produces a JSON text from a JavaScript value.
+ * 
+ * When an object value is found, if the object contains a toJSON
+ * method, its toJSON method will be called and the result will be
+ * stringified. A toJSON method does not serialize: it returns the
+ * value represented by the name/value pair that should be serialized,
+ * or undefined if nothing should be serialized. The toJSON method
+ * will be passed the key associated with the value, and this will be
+ * bound to the value.
+
+ * For example, this would serialize Dates as ISO strings.
+ * 
+ * : Date.prototype.toJSON = function (key) {
+ * :         function f(n) {
+ * :               // Format integers to have at least two digits.
+ * :                    return n < 10 ? '0' + n : n;
+ * :                }
+ * :
+ * :                return this.getUTCFullYear()   + '-' +
+ * :                  f(this.getUTCMonth() + 1) + '-' +
+ * :                     f(this.getUTCDate())      + 'T' +
+ * :                     f(this.getUTCHours())     + ':' +
+ * :                     f(this.getUTCMinutes())   + ':' +
+ * :                     f(this.getUTCSeconds())   + 'Z';
+ * :            };
+ * 
+ * You can provide an optional replacer method. It will be passed the
+ * key and value of each member, with this bound to the containing
+ * object. The value that is returned from your method will be
+ * serialized. If your method returns undefined, then the member will
+ * be excluded from the serialization.
+ * 
+ * If the replacer parameter is an array of strings, then it will be
+ * used to select the members to be serialized. It filters the results
+ * such that only members with keys listed in the replacer array are
+ * stringified.
+ * 
+ * Values that do not have JSON representations, such as undefined or
+ * functions, will not be serialized. Such values in objects will be
+ * dropped; in arrays they will be replaced with null. You can use
+ * a replacer function to replace those with JSON values.
+ * JSON.stringify(undefined) returns undefined.
+ * 
+ * The optional space parameter produces a stringification of the
+ * value that is filled with line breaks and indentation to make it
+ * easier to read.
+ * 
+ * If the space parameter is a non-empty string, then that string will
+ * be used for indentation. If the space parameter is a number, then
+ * the indentation will be that many spaces. For example:
+ * 
+ * : text = JSON.stringify(['e', {pluribus: 'unum'}]);
+ * : // text is '["e",{"pluribus":"unum"}]'
+ * : 
+ * : text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
+ * : // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
+ * :
+ * : text = JSON.stringify([new Date()], function (key, value) {
+ * :          return this[key] instanceof Date ?
+ * :                 'Date(' + this[key] + ')' : value;
+ * :  });
+ * :  // text is '["Date(---current time---)"]'
+ *
+ * Parameters:
+ *  value - any JavaScript value, usually an object or array.
+ *  replacer - an optional parameter that determines how object values are stringified for objects. It can be a function or an array of strings.
+ *  space - an optional parameter that specifies the indentation of nested structures. If it is omitted, the text will be packed without extra whitespace. If it is a number, it will specify the number of spaces to indent at each level. If it is a string (such as '\t' or '&nbsp;'), it contains the characters used to indent at each level.
+ * 
+ * Returns: string
+ */
+
+/*
+ * Function: parse
+ * (text, reviver)
+ * 
+ * This method parses a JSON text to produce an object or array.
+ * It can throw a SyntaxError exception.
+ * 
+ * The optional reviver parameter is a function that can filter and
+ * transform the results. It receives each of the keys and values,
+ * and its return value is used instead of the original value.
+ * If it returns what it received, then the structure is not modified.
+ * If it returns undefined then the member is deleted. For example:
+ * 
+ * : // Parse the text. Values that look like ISO date strings will
+ * : // be converted to Date objects.
+ * :
+ * : myData = JSON.parse(text, function (key, value) {
+ * :     var a;
+ * :     if (typeof value === 'string') {
+ * :         a =
+/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+ * :         if (a) {
+ * :             return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+ * :                 +a[5], +a[6]));
+ * :         }
+ * :     }
+ * :     return value;
+ * : });
+ * :
+ * : myData = JSON.parse('["Date(09/09/2001)"]', function (key, value) {
+ * :     var d;
+ * :     if (typeof value === 'string' &&
+ * :             value.slice(0, 5) === 'Date(' &&
+ * :             value.slice(-1) === ')') {
+ * :         d = new Date(value.slice(5, -1));
+ * :                   if (d) {
+ * :             return d;
+ * :         }
+ * :     }
+ * :     return value;
+ * : });
+ * 
+ * Parameters:
+ *  text - the string to parse to a JavaScript entity.
+ *  reviver - *[optional]* optional transforming function for modifying results; see the documentation above for more details.
+ * 
+ * Returns: well, pretty much anything you put in...
+ */
+
+/*jslint evil: true, regexp: true */
+
+/*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
+    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
+    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
+    lastIndex, length, parse, prototype, push, replace, slice, stringify,
+    test, toJSON, toString, valueOf
+*/
+
+(function () {
+    //'use strict';
+
+    // function f(n) {
+    //     // Format integers to have at least two digits.
+    //     return n < 10 ? '0' + n : n;
+    // }
+
+    // if (typeof Date.prototype.toJSON !== 'function') {
+
+    //     Date.prototype.toJSON = function (key) {
+
+    //         return isFinite(this.valueOf())
+    //             ? this.getUTCFullYear()     + '-' +
+    //                 f(this.getUTCMonth() + 1) + '-' +
+    //                 f(this.getUTCDate())      + 'T' +
+    //                 f(this.getUTCHours())     + ':' +
+    //                 f(this.getUTCMinutes())   + ':' +
+    //                 f(this.getUTCSeconds())   + 'Z'
+    //             : null;
+    //     };
+
+    //     String.prototype.toJSON      =
+    //         Number.prototype.toJSON  =
+    //         Boolean.prototype.toJSON = function (key) {
+    //             return this.valueOf();
+    //         };
+    // }
+
+    var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+        gap,
+        indent,
+        meta = {    // table of character substitutions
+            '\b': '\\b',
+            '\t': '\\t',
+            '\n': '\\n',
+            '\f': '\\f',
+            '\r': '\\r',
+            '"' : '\\"',
+            '\\': '\\\\'
+        },
+        rep;
+
+
+    function quote(string) {
+
+// If the string contains no control characters, no quote characters, and no
+// backslash characters, then we can safely slap some quotes around it.
+// Otherwise we must also replace the offending characters with safe escape
+// sequences.
+
+        escapable.lastIndex = 0;
+        return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
+            var c = meta[a];
+            return typeof c === 'string'
+                ? c
+                : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+        }) + '"' : '"' + string + '"';
+    }
+
+
+    function str(key, holder) {
+
+// Produce a string from holder[key].
+
+        var i,          // The loop counter.
+            k,          // The member key.
+            v,          // The member value.
+            length,
+            mind = gap,
+            partial,
+            value = holder[key];
+
+// If the value has a toJSON method, call it to obtain a replacement value.
+
+        if (value && typeof value === 'object' &&
+                typeof value.toJSON === 'function') {
+            value = value.toJSON(key);
+        }
+
+// If we were called with a replacer function, then call the replacer to
+// obtain a replacement value.
+
+        if (typeof rep === 'function') {
+            value = rep.call(holder, key, value);
+        }
+
+// What happens next depends on the value's type.
+
+        switch (typeof value) {
+        case 'string':
+            return quote(value);
+
+        case 'number':
+
+// JSON numbers must be finite. Encode non-finite numbers as null.
+
+            return isFinite(value) ? String(value) : 'null';
+
+        case 'boolean':
+        case 'null':
+
+// If the value is a boolean or null, convert it to a string. Note:
+// typeof null does not produce 'null'. The case is included here in
+// the remote chance that this gets fixed someday.
+
+            return String(value);
+
+// If the type is 'object', we might be dealing with an object or an array or
+// null.
+
+        case 'object':
+
+// Due to a specification blunder in ECMAScript, typeof null is 'object',
+// so watch out for that case.
+
+            if (!value) {
+                return 'null';
+            }
+
+// Make an array to hold the partial results of stringifying this object value.
+
+            gap += indent;
+            partial = [];
+
+// Is the value an array?
+
+            if (Object.prototype.toString.apply(value) === '[object Array]') {
+
+// The value is an array. Stringify every element. Use null as a placeholder
+// for non-JSON values.
+
+                length = value.length;
+                for (i = 0; i < length; i += 1) {
+                    partial[i] = str(i, value) || 'null';
+                }
+
+// Join all of the elements together, separated with commas, and wrap them in
+// brackets.
+
+                v = partial.length === 0
+                    ? '[]'
+                    : gap
+                    ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
+                    : '[' + partial.join(',') + ']';
+                gap = mind;
+                return v;
+            }
+
+// If the replacer is an array, use it to select the members to be stringified.
+
+            if (rep && typeof rep === 'object') {
+                length = rep.length;
+                for (i = 0; i < length; i += 1) {
+                    if (typeof rep[i] === 'string') {
+                        k = rep[i];
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                        }
+                    }
+                }
+            } else {
+
+// Otherwise, iterate through all of the keys in the object.
+
+                for (k in value) {
+                    if (Object.prototype.hasOwnProperty.call(value, k)) {
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                        }
+                    }
+                }
+            }
+
+// Join all of the member texts together, separated with commas,
+// and wrap them in braces.
+
+            v = partial.length === 0
+                ? '{}'
+                : gap
+                ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
+                : '{' + partial.join(',') + '}';
+            gap = mind;
+            return v;
+        }
+    }
+
+// If the JSON object does not yet have a stringify method, give it one.
+
+//    if (typeof bbop.json.stringify !== 'function') {
+        bbop.json.stringify = function (value, replacer, space) {
+
+// The stringify method takes a value and an optional replacer, and an optional
+// space parameter, and returns a JSON text. The replacer can be a function
+// that can replace values, or an array of strings that will select the keys.
+// A default replacer method can be provided. Use of the space parameter can
+// produce text that is more easily readable.
+
+            var i;
+            gap = '';
+            indent = '';
+
+// If the space parameter is a number, make an indent string containing that
+// many spaces.
+
+            if (typeof space === 'number') {
+                for (i = 0; i < space; i += 1) {
+                    indent += ' ';
+                }
+
+// If the space parameter is a string, it will be used as the indent string.
+
+            } else if (typeof space === 'string') {
+                indent = space;
+            }
+
+// If there is a replacer, it must be a function or an array.
+// Otherwise, throw an error.
+
+            rep = replacer;
+            if (replacer && typeof replacer !== 'function' &&
+                    (typeof replacer !== 'object' ||
+                    typeof replacer.length !== 'number')) {
+                throw new Error('bbop.json.stringify');
+            }
+
+// Make a fake root object containing our value under the key of ''.
+// Return the result of stringifying the value.
+
+            return str('', {'': value});
+        };
+//    }
+
+
+// If the JSON object does not yet have a parse method, give it one.
+
+//    if (typeof bbop.json.parse !== 'function') {
+        bbop.json.parse = function (text, reviver) {
+
+// The parse method takes a text and an optional reviver function, and returns
+// a JavaScript value if the text is a valid JSON text.
+
+            var j;
+
+            function walk(holder, key) {
+
+// The walk method is used to recursively walk the resulting structure so
+// that modifications can be made.
+
+                var k, v, value = holder[key];
+                if (value && typeof value === 'object') {
+                    for (k in value) {
+                        if (Object.prototype.hasOwnProperty.call(value, k)) {
+                            v = walk(value, k);
+                            if (v !== undefined) {
+                                value[k] = v;
+                            } else {
+                                delete value[k];
+                            }
+                        }
+                    }
+                }
+                return reviver.call(holder, key, value);
+            }
+
+
+// Parsing happens in four stages. In the first stage, we replace certain
+// Unicode characters with escape sequences. JavaScript handles many characters
+// incorrectly, either silently deleting them, or treating them as line endings.
+
+            text = String(text);
+            cx.lastIndex = 0;
+            if (cx.test(text)) {
+                text = text.replace(cx, function (a) {
+                    return '\\u' +
+                        ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+                });
+            }
+
+// In the second stage, we run the text against regular expressions that look
+// for non-JSON patterns. We are especially concerned with '()' and 'new'
+// because they can cause invocation, and '=' because it can cause mutation.
+// But just to be safe, we want to reject all unexpected forms.
+
+// We split the second stage into 4 regexp operations in order to work around
+// crippling inefficiencies in IE's and Safari's regexp engines. First we
+// replace the JSON backslash pairs with '@' (a non-JSON character). Second, we
+// replace all simple value tokens with ']' characters. Third, we delete all
+// open brackets that follow a colon or comma or that begin the text. Finally,
+// we look to see that the remaining characters are only whitespace or ']' or
+// ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
+
+            if (/^[\],:{}\s]*$/
+                    .test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
+                        .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
+                        .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+
+// In the third stage we use the eval function to compile the text into a
+// JavaScript structure. The '{' operator is subject to a syntactic ambiguity
+// in JavaScript: it can begin a block or an object literal. We wrap the text
+// in parens to eliminate the ambiguity.
+
+                j = eval('(' + text + ')');
+
+// In the optional fourth stage, we recursively walk the new structure, passing
+// each name/value pair to a reviver function for possible transformation.
+
+                return typeof reviver === 'function'
+                    ? walk({'': j}, '')
+                    : j;
+            }
+
+// If the text is not JSON parseable, then a SyntaxError is thrown.
+
+            throw new SyntaxError('bbop.json.parse: ' + text);
+        };
+//    }
+}());
+/*
+ * Package: template.js
+ * 
+ * Namespace: bbop.template
+ * 
+ * BBOP JS template object/enginette.
+ * 
+ * Some (nonsensical) usage is like:
+ * 
+ * : var tt = new bbop.template("{{foo}} {{bar}} {{foo}}");
+ * : 'A B A' == tt.fill({'foo': 'A', 'bar': 'B'});
+ */
+
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+
+/*
+ * Constructor: template
+ * 
+ * Arguments:
+ *  template_string - the string template to use for future fill calls
+ * 
+ * Returns:
+ *  self
+ */
+bbop.template = function(template_string){
+    this.is_a = 'bbop.template';
+
+    var anchor = this;
+
+    anchor._template_string = template_string;
+
+    // First break the template string into ordered sections which we
+    // will interleve later.
+    var split_re = /\{\{[A-Za-z0-9_-]+\}\}/;
+    anchor._template_split_strings =
+	template_string.split(split_re);
+
+    // Now map out which variables are at which locations.
+    var var_id_re = /\{\{[A-Za-z0-9_-]+\}\}/g;
+    anchor._var_id_matches =
+	template_string.match(var_id_re);
+    // Trim off the '{{' and '}}' from the matches.
+    bbop.core.each(anchor._var_id_matches,
+		  function(item, index){
+		      var new_item = item.substring(2, item.length -2);
+		      anchor._var_id_matches[index] = new_item;
+		  });
+
+    /*
+     * Function: fill
+     * 
+     * Fill the template with the corresponding hash items. Undefined
+     * variables are replaced with ''.
+     * 
+     * Arguments:
+     *  fill_hash - the template with the hashed values
+     * 
+     * Returns:
+     *  string
+     */
+    this.fill = function(fill_hash){
+	var ret_str = '';
+
+	bbop.core.each(anchor._template_split_strings,
+		       function(str, index){
+
+			   // Add the next bit.
+			   ret_str += str;
+
+			   // Add the replacement value if we can make
+			   // sense of it.
+			   if( index < anchor._var_id_matches.length ){
+			       var use_str = '';
+			       var varname = anchor._var_id_matches[index];
+			       if( varname &&
+				   bbop.core.is_defined(fill_hash[varname]) ){
+				   use_str = fill_hash[varname];
+			       }
+			       ret_str += use_str;
+			   }
+		       });
+
+	return ret_str;
+    };
+
+    /*
+     * Function: variables
+     * 
+     * Return a hash of the variables used in the template.
+     * 
+     * Arguments:
+     *  n/a
+     * 
+     * Returns:
+     *  a hash like: {'foo': true, 'bar': true, ...}
+     */
+    this.variables = function(){
+	return bbop.core.hashify(anchor._var_id_matches);
+    };
+
+};
+/*
+ * Package: logic.js
+ * 
+ * Namespace: bbop.logic
+ * 
+ * BBOP object to try and take some of the pain out of managing the
+ * boolean logic that seems to show up periodically. Right now mostly
+ * aimed at dealing with Solr/GOlr.
+ * 
+ * Anatomy of a core data bundle.
+ * 
+ * : data_bundle => {op: arg}
+ * : op => '__AND__', '__OR__', '__NOT__'
+ * : arg => <string>, array, data_bundle
+ * : array => [array_item*]
+ * : array_item => <string>, data
+ * 
+ * Example:
+ * 
+ * : {and: [{or: ...}, {or: ...}, {and: ...} ]}
+ * : var filters = {'and': []};
+ *
+ * TODO: parens between levels
+ */
+
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+
+/*
+ * Constructor: logic
+ * 
+ * Contructor for the bbop.logic object. NOTE: during processing,
+ * binary operators with a single argument cease to exist as they will
+ * never make it to output.
+ * 
+ * Arguments:
+ *  default_conjuntion - *[optional]* "and" or "or"; defaults to "and"
+ * 
+ * Returns:
+ *  bbop logic object
+ */
+bbop.logic = function(default_conjunction){
+    this._is_a = 'bbop.logic';
+
+    // Add logging.
+    var logger = new bbop.logger();
+    //logger.DEBUG = true;
+    logger.DEBUG = false;
+    function ll(str){ logger.kvetch(str); }
+
+    var logic_anchor = this;
+
+    // // Handling conjunctions.
+    // this._and = '__AND__';
+    // this._or = '__OR__';
+    // this._not = '__NOT__';
+    // function _is_token(possible_token){
+    // 	var retval = false;
+    // 	if( possible_token == this._and ||
+    // 	    possible_token == this._or ||
+    // 	    possible_token == this._not ){
+    // 	   retval = true; 
+    // 	}
+    // 	return retval;
+    // }
+    // // Convert the internal
+    // function _usable
+
+    // // Set the internal default conjunction. Default to "and".
+    // if( ! default_conjunction ){
+    // 	default_conjunction = this._and;
+    // }else if( default_conjunction == this._or ){
+    // 	default_conjunction = this._or;
+    // }else{
+    // 	default_conjunction = this._and;
+    // }
+    if( ! default_conjunction ){
+    	default_conjunction = 'and';
+    }
+    this.default_conjunction = default_conjunction;
+
+    // Set initial state.
+    // ie: this._bundle = {'__AND__': []};
+    //this._bundle = {};
+    //this._bundle[this.default_conjunction] = [];
+    // See documentation for empty().
+    var _empty = function(){
+	logic_anchor._bundle = {};
+	logic_anchor._bundle[logic_anchor.default_conjunction] = [];
+    };
+    _empty();
+
+    /*
+     * Function: add
+     * 
+     * Add to the current stored logic bundle.
+     * 
+     * Parameters:
+     *  item - string or bbop.logic object
+     * 
+     * Returns:
+     *  n/a
+     */
+    //this.and = function(){
+    //this.or = function(){
+    //this.not = function(){
+    this.add = function(item){
+
+	// Add things a little differently if it looks like a bit of
+	// logic.
+	if(  bbop.core.what_is(item) == 'bbop.logic' ){
+	    this._bundle[this.default_conjunction].push(item._bundle);
+	}else{
+	    this._bundle[this.default_conjunction].push(item);
+	}
+    };
+
+    /*
+     * Function: negate
+     * 
+     * Negate the current stored logic.
+     * 
+     * TODO/BUG: I think this might cause an unreleasable circular
+     * reference.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  n/a
+     */
+    this.negate = function(){
+	var nega = {};
+	nega['not'] = this._bundle;
+	this._bundle = nega;
+    };
+    
+    // Walk the data structure...
+    this._read_walk = function(data_bundle, in_encoder, lvl){
+	
+	// The encoder defaults to whatever--no transformations
+	var encoder = in_encoder || function(in_out){ return in_out; };
+
+	ll("LRW: with: " + bbop.core.dump(data_bundle));
+
+	// If level is not defined, we just started and we're on level
+	// one, the first level.
+	var l_enc = '(';
+	var r_enc = ')';
+	if( typeof(lvl) == 'undefined' ){
+	    lvl = 1;
+	    l_enc = '';
+	    r_enc = '';
+	}	
+
+	var read = '';
+	
+	// The task of walking is broken into the terminal case (a
+	// string) or things that we need to operate on (arrays or
+	// sub-data_bundles).
+	if( bbop.core.what_is(data_bundle) == 'string' ){
+	    ll("LRW: trigger string");
+	    read = data_bundle;
+	}else{
+	    ll("LRW: trigger non-string");
+
+	    // Always single op.
+	    var op = bbop.core.get_keys(data_bundle)[0];
+	    var arg = data_bundle[op];
+
+	    // We can treat the single data_bundle/string case like a
+	    // degenerate array case.
+	    if( ! bbop.core.is_array(arg) ){
+		arg = [arg];
+	    }
+
+	    // Recure through the array and join the results with the
+	    // current op.
+	    //ll('L: arg: ' + bbop.core.what_is(arg));
+	    var stack = [];
+	    bbop.core.each(arg, function(item, i){
+			       stack.push(logic_anchor._read_walk(item,
+								  encoder,
+								  lvl + 1));
+			   });
+
+	    // Slightly different things depending on if it's a unary
+	    // or binary op.
+	    if( op == 'not' ){
+		// TODO: I believe that it should no be possible
+		// (i.e. policy by code) to have a 'not' with more
+		// that a single argument.
+		read = op + ' ' + stack.join('');
+	    }else{
+		read = l_enc + stack.join(' ' + op + ' ') + r_enc;
+	    }
+	}
+
+	
+	ll("LRW: returns: " + read);
+	return read;
+    };
+
+    /*
+     * Function: to_string
+     * 
+     * Dump the current data out to a string.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  n/a
+     */
+    this.to_string = function(){
+	return logic_anchor._read_walk(logic_anchor._bundle);
+    };
+
+    /*
+     * Function: url
+     * 
+     * TODO
+     * 
+     * Dump the current data out to a URL.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  n/a
+     */
+    this.url = function(){
+	return logic_anchor._read_walk(logic_anchor._bundle);
+    };
+
+    /*
+     * Function: empty
+     * 
+     * Empty/reset self.
+     * 
+     * Parameters:
+     *  n/a
+     * 
+     * Returns:
+     *  n/a
+     */
+    // Staggered declaration so I can use it above during initialization.
+    this.empty = _empty;
+
+    /*
+     * Function: parse
+     * 
+     * TODO: I think I can grab the shunting yard algorithm for a
+     * similar problem in the old AmiGO 1.x codebase.
+     * 
+     * Parse an incoming string into the internal data structure.
+     * 
+     * Parameters:
+     *  in_str - the incoming string to parse
+     * 
+     * Returns:
+     *  n/a
+     */
+    this.parse = function(in_str){
+	return null;
+    };
+
+};
+/* 
  * Package: registry.js
  * 
  * Namespace: bbop.registry
@@ -3002,8 +2928,8 @@ bbop.test = function(){
  * BBOP generic lightweight listener/callback registry system.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'registry');
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
 
 /*
  * Constructor: registry
@@ -3211,15 +3137,14 @@ bbop.registry = function(evt_list){
  * This package takes all of the bbop.html.* namespace.
  */
 
-bbop.core.require('bbop', 'core');
-//bbop.core.require('bbop', 'logger');
-//bbop.core.require('bbop', 'amigo');
-bbop.core.namespace('bbop', 'html');
-bbop.core.namespace('bbop', 'html', 'tag');
-bbop.core.namespace('bbop', 'html', 'accordion');
-bbop.core.namespace('bbop', 'html', 'list');
-bbop.core.namespace('bbop', 'html', 'input');
-bbop.core.namespace('bbop', 'html', 'img');
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.html == "undefined" ){ bbop.html = {}; }
+if ( typeof bbop.html.tag == "undefined" ){ bbop.html.tag = {}; }
+if ( typeof bbop.html.accordion == "undefined" ){ bbop.html.accordion = {}; }
+if ( typeof bbop.html.list == "undefined" ){ bbop.html.list = {}; }
+if ( typeof bbop.html.input == "undefined" ){ bbop.html.input = {}; }
+if ( typeof bbop.html.img == "undefined" ){ bbop.html.img = {}; }
 
 /*
  * Namespace: bbop.html.tag
@@ -4182,6 +4107,51 @@ bbop.html.span.prototype.get_id = function(){
     return this._span_stack.get_id();
 };
 /* 
+ * Package: handler.js
+ * 
+ * Namespace: bbop.handler
+ * 
+ * This package contains a "useable", but utterly worthless reference
+ * implementation of a handler.
+ */
+
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+
+/*
+ * Constructor: handler
+ *
+ * Partial version for this library; revision (major/minor version numbers)
+ * information.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  n/a
+ */
+bbop.handler = function(){
+    this._is_a = 'bbop.handler';
+};
+
+/*
+ * Function: url
+ * 
+ * Return a url string.
+ * 
+ * Arguments:
+ *  data - the incoming thing to be handled
+ *  name - the field name to be processed
+ *  context - *[optional]* a string to add extra context to the call
+ *  fallback - *[optional]* a fallback function to call in case nothing is found
+ * 
+ * Returns:
+ *  null
+ */
+bbop.handler.prototype.dispatch = function(data, name, context, fallback){
+    return null;
+};
+/* 
  * Package: linker.js
  * 
  * Namespace: bbop.linker
@@ -4190,7 +4160,8 @@ bbop.html.span.prototype.get_id = function(){
  * implementation of a linker.
  */
 
-bbop.core.namespace('bbop', 'linker');
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
 
 /*
  * Constructor: linker
@@ -4240,50 +4211,6 @@ bbop.linker.prototype.anchor = function(id, xid){
     return null;
 };
 /* 
- * Package: handler.js
- * 
- * Namespace: bbop.handler
- * 
- * This package contains a "useable", but utterly worthless reference
- * implementation of a handler.
- */
-
-bbop.core.namespace('bbop', 'handler');
-
-/*
- * Constructor: handler
- *
- * Partial version for this library; revision (major/minor version numbers)
- * information.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  n/a
- */
-bbop.handler = function(){
-    this._is_a = 'bbop.handler';
-};
-
-/*
- * Function: url
- * 
- * Return a url string.
- * 
- * Arguments:
- *  data - the incoming thing to be handled
- *  name - the field name to be processed
- *  context - *[optional]* a string to add extra context to the call
- *  fallback - *[optional]* a fallback function to call in case nothing is found
- * 
- * Returns:
- *  null
- */
-bbop.handler.prototype.dispatch = function(data, name, context, fallback){
-    return null;
-};
-/* 
  * Package: model.js
  * 
  * Namespace: bbop.model
@@ -4304,10 +4231,8 @@ bbop.handler.prototype.dispatch = function(data, name, context, fallback){
  */
 
 // Module and namespace checking.
-bbop.core.require('bbop', 'core'); // not needed, but want the habit
-bbop.core.require('bbop', 'logger');
-bbop.core.namespace('bbop', 'model');
-
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.model == "undefined" ){ bbop.model = {}; }
 
 /*
  * Variable: default_predicate
@@ -5337,7 +5262,8 @@ bbop.model.graph.prototype.get_ancestor_subgraph = function(nb_id_or_list, pid){
  * 
  * Load the graph from the specified JSON object (not string).
  * 
- * TODO: a work in progress
+ * TODO: a work in progress 'type' not currently imported (just as
+ * not exported)
  * 
  * Parameters:
  *  JSON object
@@ -5377,6 +5303,71 @@ bbop.model.graph.prototype.load_json = function(json_object){
 
     return true;
 };
+
+/*
+ * Function: to_json
+ * 
+ * Dump out the graph into a JSON-able object.
+ * 
+ * TODO: a work in progress; 'type' not currently exported (just as
+ * not imported)
+ * 
+ * Parameters:
+ *  n/a
+ * 
+ * Returns:
+ *  An object that can be converted to a JSON string by dumping.
+ */
+bbop.model.graph.prototype.to_json = function(){
+
+    var anchor = this;
+
+    // Copy
+    var nset = [];
+    bbop.core.each(anchor.all_nodes(),
+		   function(raw_node){
+
+		       var node = bbop.core.clone(raw_node);
+		       var ncopy = {};
+
+		       var nid = node.id();
+		       if(nid){ ncopy['id'] = nid; }
+
+		       // var nt = node.type();
+		       // if(nt){ ncopy['type'] = nt; }
+
+		       var nlabel = node.label();
+		       if(nlabel){ ncopy['lbl'] = nlabel; }
+
+		       var nmeta = node.metadata();
+		       if(nmeta){ ncopy['meta'] = nmeta; }
+
+		       nset.push(ncopy);
+		   });
+
+    var eset = [];
+    var ecopy = bbop.core.clone(anchor._edges['array']);
+    bbop.core.each(anchor.all_edges(),
+		   function(node){
+		       var ecopy = {};
+
+		       var s = node.subject_id();
+		       if(s){ ecopy['sub'] = s; }
+
+		       var o = node.object_id();
+		       if(o){ ecopy['obj'] = o; }
+
+		       var p = node.predicate_id();
+		       if(p){ ecopy['pred'] = p; }
+
+		       eset.push(ecopy);
+		   });
+
+    // New exportable.
+    var ret_obj = {'nodes': nset, 'edges': eset};
+
+    return ret_obj;
+};
 /* 
  * Package: tree.js
  * 
@@ -5387,22 +5378,13 @@ bbop.model.graph.prototype.load_json = function(json_object){
  * TODO: /Much/ better documentation. I have no idea what's going on
  * in there anymore...
  * 
- * TODO: See: http://raphaeljs.com/graffle.html
- * 
  * TODO: Subtree calculation during bracket_down.
  */
 
 // Module and namespace checking.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'model');
-bbop.core.namespace('bbop', 'model', 'tree');
-
-
-// // BUG/TODO: remove later...or something...
-// bbop.model.tree.logger = new bbop.logger();
-// bbop.model.tree.logger.DEBUG = true;
-// var _kvetch = bbop.model.tree.logger.kvetch;
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.model == "undefined" ){ bbop.model = {}; }
+if ( typeof bbop.model.tree == "undefined" ){ bbop.model.tree = {}; }
 
 /*
  * Namespace: bbop.model.tree.node
@@ -5915,9 +5897,10 @@ bbop.core.extend(bbop.model.tree.graph, bbop.model.graph);
  */
 
 // Module and namespace checking.
-bbop.core.require('bbop', 'core'); // not needed, but want the habit
-bbop.core.require('bbop', 'model');
-bbop.core.namespace('bbop', 'model', 'bracket', 'graph');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.model == "undefined" ){ bbop.model = {}; }
+if ( typeof bbop.model.bracket == "undefined" ){ bbop.model.bracket = {}; }
+//if ( typeof bbop.model.bracket.graph == "undefined" ){ bbop.model.bracket.graph = {}; }
 
 /*
  * Namespace: bbop.model.bracket.graph
@@ -6262,6 +6245,2031 @@ bbop.model.bracket.graph = function(){
 };
 bbop.core.extend(bbop.model.bracket.graph, bbop.model.graph);
 /* 
+ * Package: sugiyama.js
+ * 
+ * Namespace: bbop.layout.sugiyama
+ * 
+ * Purpose: Sugiyama system.
+ * 
+ * TODO: /Much/ better documentation. I have no idea what's going on
+ * in there anymore...will try to recover what I can.
+ * 
+ * TODO: Matrix implementation and partition->matrix step need to be
+ * tightened.
+ *
+ * TODO: Switch strange for-loops to bbop.core.each.
+ *
+ * BUG: need to check if there are no edges.
+ * 
+ * Actually, maybe there should be a separate render section, as this
+ * is just a normal graph really?
+ */
+
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.layout == "undefined" ){ bbop.layout = {}; }
+if ( typeof bbop.layout.sugiyama == "undefined" ){ bbop.layout.sugiyama = {}; }
+
+// Speciality variables in the namespace.
+bbop.layout.sugiyama.DEBUG = true;
+//bbop.layout.sugiyama.DEBUG = false;
+bbop.layout.sugiyama.iterations = 10;
+
+///
+/// Defined some special in-house objects for helping figure out
+/// the layout.
+///
+
+// Id, level, and whether it is real or not.
+bbop.layout.sugiyama.simple_vertex = function(in_id, is_virtual){
+
+    var vid = in_id;
+    this.is_virtual = false;
+    this.level = null;
+    
+    if( is_virtual ){
+	this.is_virtual = true;
+    }
+    
+    this.id = function(){
+	return vid;
+    };  
+};
+
+// An edge. A pair of ids and virtual_p.
+bbop.layout.sugiyama.simple_edge = function( sub, obj, is_virtual ){
+
+    var subject = sub;
+    var object = obj;
+    this.is_virtual = false;
+    //var predicate = pred;
+    
+    //var is_virtual = false;
+    //if( in_type ){
+    //  is_virtual = true; }
+    
+    if( is_virtual ){
+	this.is_virtual = true;
+    }
+    
+    this.subject = function(){
+	return subject;
+    };
+    
+    this.object = function(){
+	return object;
+    };
+    
+    this.id = function(){
+	return subject + '^' + object;
+    };
+    
+    //this.predicate = function(){
+    //  return predicate; };
+};
+
+/*
+ * Wrapper for the recursive partitioner and partition object.
+ * 
+ * Partitions the graph into a layer cake of nodes, adds in the
+ * necessary virtual nodes to make path routing work.
+ */
+bbop.layout.sugiyama.partitioner = function(graph){
+    //bbop.layout.sugiyama.partitioner = function(graph, rel){
+    
+    // Internal logger.
+    var logger = new bbop.logger("Partitioner");
+    logger.DEBUG = bbop.layout.sugiyama.DEBUG;
+    function ll(str){ logger.kvetch(str); }
+
+    // Aliases.
+    var each = bbop.core.each;
+
+    // Make use lexical scoping.
+    var first_seen_reference = {};
+    var last_seen_reference = {};
+    var vertex_set = {};
+    var edge_set = {};
+    var vertex_partition_set = {};
+    var edge_partition_set = {};
+    var logical_paths = [];
+    var maximum_partition_width = 0;
+    var number_of_partitions = 0;
+
+    // Dump partition.
+    this.dump = function(){
+
+	// Dump vertex partitions.
+	var num_parts = 0;
+	for( var key in vertex_partition_set ){
+	    num_parts++;
+	}
+	for( var i = 0; i < num_parts; i++ ){
+	    ll('Vertex Partition ' + i + ':');
+
+	    var curr_part = vertex_partition_set[ i ];
+	    var out = [];
+	    for( var j = 0; j < curr_part.length; j++ ){
+		out.push('[' + curr_part[j].id() + ']');
+	    }
+	    ll(out.join(''));
+	}
+
+	// Dump edge partitions.
+	num_parts = 0;
+	for( var key in edge_partition_set ){
+	    num_parts++;
+	}
+	for( var i = 0; i < num_parts; i++ ){
+	    ll('Edge Partition ' + i + ':');
+	    var curr_part = edge_partition_set[ i ];
+	    var out = [];
+	    for( var j = 0; j < curr_part.length; j++ ){
+		out.push('[' + curr_part[j].id() + ']');
+	    }
+	    ll(out.join(''));
+	}
+
+	// Dump paths list.
+	for( var i = 0; i < logical_paths.length; i++ ){
+	    ll('Path ' + i + ':');
+	    var out = [];
+	    for( var l = 0; l < logical_paths[i].length; l++ ){
+		out.push( logical_paths[i][l] );
+	    }
+	    ll(out.join(', '));
+	}
+    };
+
+    //
+    this.max_partition_width = function(){
+	return maximum_partition_width;
+    };
+
+    // Return the number of partitions.
+    this.number_of_vertex_partitions = function(){
+	return number_of_partitions;
+    };
+
+    // Return a partition.
+    this.get_vertex_partition = function(integer){
+	return vertex_partition_set[ integer ];
+    };
+
+    // Return the number of partitions.
+    this.number_of_edge_partitions = function(){
+	var i = 0;
+	for( var key in edge_partition_set ){ i++; }
+	return i;
+    };
+
+    // Return a partition.
+    this.get_edge_partition = function(integer){
+	return edge_partition_set[ integer ];
+    };
+
+    // Return the number of paths.
+    this.number_of_logical_paths = function(){
+	return logical_paths.length;
+    };
+
+    // Return the paths list.
+    //this.get_logical_paths = function(integer){
+    this.get_logical_paths = function(integer){
+	return logical_paths;
+    };
+
+    // // Define the partitioner. Recursively walk the graph. BFS.
+    // //function recursivePartitioner(graph, node, relation, level){
+    // function recursivePartitioner(graph, node, level){
+	
+    // 	var curr_level = level;
+    // 	var next_level = level +1;
+
+    // 	ll("Saw " + node.id() + " at level " + level + "!");
+
+    // 	// Have we seen it before or is it new?
+    // 	var was_seen = false;
+    // 	if( ! vertex_set[ node.id() ] ){
+
+    // 	    // Create new vertex and add to set.
+    // 	    var new_vertex = new bbop.layout.sugiyama.simple_vertex(node.id());
+    // 	    new_vertex.level = level;
+    // 	    vertex_set[ new_vertex.id() ] = new_vertex;
+
+    // 	    // Check the node in to the 'seen' references.
+    // 	    first_seen_reference[ new_vertex.id() ] = level;
+    // 	    last_seen_reference[ new_vertex.id() ] = level;
+
+    // 	}else{
+
+    // 	    if( first_seen_reference[ node.id() ] > level ){
+    // 		first_seen_reference[ node.id() ] = level;
+    // 	    }
+    // 	    if( last_seen_reference[ node.id() ] < level ){
+    // 		last_seen_reference[ node.id() ] = level;
+    // 	    }
+
+    // 	    was_seen = true;
+    // 	}
+	
+    // 	// Get all the child nodes and down we go!
+    // 	//var child_nodes = graph.getExtantChildren(node.id(), relation);
+    // 	var child_nodes = graph.get_child_nodes(node.id());
+    // 	// TODO: Better way?
+    // 	//var child_nodes = graph.getChildren(node.id(), relation);
+    // 	for( var i = 0; i < child_nodes.length; i++ ){
+    // 	    // Add edge and descend.
+    // 	    var new_edge =
+    // 		new bbop.layout.sugiyama.simple_edge(child_nodes[i].id(),
+    // 						    node.id());
+    // 	    edge_set[ new_edge.id() ] = new_edge;
+
+    // 	    // Do not recur on seen nodes.
+    // 	    if( ! was_seen ){
+    // 		//recursivePartitioner(graph, child_nodes[i], relation, level +1);
+    // 		recursivePartitioner(graph, child_nodes[i], level +1);
+    // 	    }
+    // 	}
+    // }
+    
+    // Detect a cycle by seeing if the ID in question appears in the
+    // search history stack.
+    // TODO/BUG: make this less hyper-dumb and/or slow.
+    function _cycle_p(node, stack){
+	var ret = false;
+
+	var id = node.id();
+	each(stack,
+	     function(item){
+		 if( item == id ){
+		     ret = true;
+		 }
+	     });
+
+	return ret;
+    }
+
+    // Add a new node to the global variables.
+    function _new_node_at(bnode, level){
+
+	ll("adding " + bnode.id() + " at level " + level + "!");
+
+	// Create new vertex and add to set.
+	var new_vertex = new bbop.layout.sugiyama.simple_vertex(bnode.id());
+	new_vertex.level = level;
+	vertex_set[ new_vertex.id() ] = new_vertex;
+	
+	// Check the node in to the 'seen' references.
+	first_seen_reference[ new_vertex.id() ] = level;
+	last_seen_reference[ new_vertex.id() ] = level;		 
+    }
+
+    // Define the partitioner. Recursively walk the graph. BFS.
+    //function recursivePartitioner(graph, node, relation, level){
+    function recursivePartitioner(graph, node, call_stack){
+	
+	var curr_level = call_stack.length -1;
+	var next_level = curr_level +1;
+
+	ll("recur on " + node.id() + " at level " + curr_level);
+
+	// Get children and see where there are.
+	//var child_nodes = graph.get_child_nodes(node.id(), relation);
+	var child_nodes = graph.get_child_nodes(node.id());
+	ll(node.id() + " has " + (child_nodes.length || 'no' ) + ' child(ren)');
+	for( var i = 0; i < child_nodes.length; i++ ){
+	    var cnode = child_nodes[i];
+
+	    ll("looking at " + cnode.id());
+
+	    if( _cycle_p(cnode, call_stack) ){
+		ll('no update to ' + cnode.id() + ': cycle');
+	    }else{
+
+		// Add edges--safe since they're definition-based and will
+		// clobber if they're already in.
+		var new_edge =
+		    new bbop.layout.sugiyama.simple_edge(cnode.id(), node.id());
+		edge_set[ new_edge.id() ] = new_edge;
+
+		// Nodes we have to be a little more careful with since
+		// they're what we're using for traversal.
+		if( ! vertex_set[ cnode.id() ] ){
+		
+		    _new_node_at(cnode, next_level);
+		    
+		    // // Create new vertex and add to set.
+		    // var new_vertex =
+		    //     new bbop.layout.sugiyama.simple_vertex(cnode.id());
+		    // new_vertex.level = next_level;
+		    // vertex_set[ new_vertex.id() ] = new_vertex;
+		    
+		    // // Check the node in to the 'seen' references.
+		    // first_seen_reference[ new_vertex.id() ] = next_level;
+		    // last_seen_reference[ new_vertex.id() ] = next_level;
+		    
+		    // Since it is a new node, we traverse it.
+		    ll('cs (a): ' + call_stack);
+		    var new_cs = bbop.core.clone(call_stack);
+		    ll('cs (b): ' + new_cs);
+		    new_cs.push(cnode.id());
+		    ll('cs (c): ' + new_cs);
+		    recursivePartitioner(graph, cnode, new_cs);
+		    
+		}else{
+		    
+		    ll('update ' + cnode.id() + ' level to ' + next_level);
+		    
+		    // Otherwise, just update the levels that we've seen
+		    // the child at--do not descend.
+		    if( first_seen_reference[ cnode.id() ] > next_level ){
+			first_seen_reference[ cnode.id() ] = next_level;
+		    }
+		    if( last_seen_reference[ cnode.id() ] < next_level ){
+			last_seen_reference[ cnode.id() ] = next_level;
+		    }
+		}
+	    }
+	}
+    }
+    
+
+    // Run the partitioner after getting the root values (or whatever)
+    // bootstrapped in.
+    //var roots = graph.get_root_nodes(rel);
+    var roots = graph.get_root_nodes();
+    if( roots.length > 0 ){
+	//partitionerBootstrap(roots);
+	for( var i = 0; i < roots.length; i++ ){
+	    _new_node_at(roots[i], 0);
+	    recursivePartitioner(graph, roots[i], [roots[i].id()]);
+	}
+    }else{
+    	// If there is no root (think of a "top-level" cycle),
+    	// a node should be picked randomly.
+    	// TODO: Test this.
+    	var a_node = graph.all_nodes()[0] || null;
+    	if( ! a_node ){
+    	    throw new Error('apparently the graph is empty--stop it!');
+    	}else{
+	    _new_node_at(a_node, 0);
+    	    recursivePartitioner(graph, a_node, [a_node.id()]);
+    	}
+    }
+
+    // Now we have a listing of the first and last level that a node
+    // appears at. We'll go through and make a proper ordering. We know
+    // that the last seen reference is where the actual node will
+    // appear. If there is a difference with the listing in the first
+    // node reference, the difference will be made in virtual nodes.
+    var v_id = 0;
+    for( var key in edge_set ){
+	var edge = edge_set[ key ];
+
+	var difference = vertex_set[ edge.subject() ].level -
+	    vertex_set[ edge.object() ].level;
+
+	// If there is a difference, create virtual nodes and
+	// paths. Deleted used edges.
+	var new_path = [];
+	if( difference > 1 ){
+	    
+	    // Create a new chain of virtual nodes.
+	    var current_subject = edge.object();
+	    var current_object = null;
+	    var current_level = vertex_set[ edge.object() ].level; 
+	    new_path.push(edge.object());
+	    for( var i = 1; i <= difference; i++ ){
+
+		current_object = current_subject;
+		current_level++;
+
+		if( i != difference ){
+		    // Make a virtual node.
+		    var v_node_id = '_VN_' + v_id + '_';
+		    v_id++;	
+		    var new_v_node =
+			new bbop.layout.sugiyama.simple_vertex(v_node_id, true);
+		    new_v_node.level = current_level;
+		    vertex_set[ new_v_node.id() ] = new_v_node;
+		    current_subject = new_v_node.id();
+		    new_path.push(new_v_node.id());
+		}else{
+		    // Last link and path step.
+		    current_subject = edge.subject();
+		    new_path.push(edge.subject());
+		}
+
+		// Make edge to virtual node.
+		var new_edge =
+		    new bbop.layout.sugiyama.simple_edge(current_subject,
+							current_object, true);
+		edge_set[ new_edge.id() ] = new_edge;	
+	    }
+
+	    // Since the node generator goes in reverse order.
+	    new_path.reverse();
+
+	    // Finally, delete the edge connecting these two--no longer needed.
+	    delete( edge_set[ key ] );
+
+	}else{
+	    // Add the trival path.
+	    new_path.push(edge.subject());
+	    new_path.push(edge.object());
+	}
+	// Add our new path to the group.
+	logical_paths.push(new_path);
+    }
+
+    // Sort the vertices into different partitions and count them.
+    for( var key in vertex_set ){
+	var vert = vertex_set[ key ];
+	var lvl = vert.level;
+	if( ! vertex_partition_set[ lvl ] ){
+	    vertex_partition_set[ lvl ] = [];
+	    number_of_partitions++; // Count the number of partitions.
+	}
+	vertex_partition_set[ lvl ].push(vert);
+	// Count max width.
+	if( vertex_partition_set[ lvl ].length > maximum_partition_width ){
+	    maximum_partition_width = vertex_partition_set[ lvl ].length;
+	}
+    }
+
+    // Sort the edges into different partitions. Made easier since the
+    // vertices have already been sorted.
+    for( var key in edge_set ){
+
+	var edge = edge_set[ key ];
+	var lvl = vertex_set[ edge.object() ].level;
+	ll('l:' +lvl);
+	if( ! edge_partition_set[ lvl ] ){
+	    edge_partition_set[ lvl ] = [];
+	}
+	edge_partition_set[ lvl ].push(edge);
+    }
+};
+
+// Takes arrays of vertices and edges as an argument. Edges must have
+// the methods '.object()' and '.subject()' and Vertices must have
+// method '.id()'.
+bbop.layout.sugiyama.bmatrix = function(object_vertex_partition,
+				       subject_vertex_partition,
+				       edge_partition){
+    
+    // Internal logger.
+    var logger = new bbop.logger("BMatrix");
+    logger.DEBUG = bbop.layout.sugiyama.DEBUG;
+    function ll(str){ logger.kvetch(str); }
+
+    var relation_matrix = {};
+    var object_vector = object_vertex_partition;
+    var subject_vector = subject_vertex_partition;
+
+    for( var i = 0; i < edge_partition.length; i++ ){
+
+	var obj_id = edge_partition[i].object();
+	var sub_id = edge_partition[i].subject();
+
+	//
+	if( ! relation_matrix[ obj_id ] ){
+	    relation_matrix[ obj_id ] = {}; }
+	//if( ! relation_matrix[ sub_id ] ){
+	//  relation_matrix[ sub_id ] = {}; }
+
+	relation_matrix[ obj_id ][ sub_id ] = true;
+	//relation_matrix[ sub_id ][ obj_id ] = false;
+    }
+
+    // DEBUG relation matrix:
+    // BUG: subject _vector occasionally undefined
+    for( var m = 0; m <= object_vector.length -1; m++ ){
+	ll("obj: <<o: " + object_vector[m].id() + ">>"); }
+    for( var n = 0; n <= subject_vector.length -1; n++ ){
+	ll("sub: <<o: " + subject_vector[n].id() + ">>"); }
+    for( ob in relation_matrix ){
+	for( su in relation_matrix[ ob ] ){
+	    ll("edge: <<o: " + ob + ", s: " + su + ">>");
+	}
+    }
+
+    //
+    function getObjectBarycenter(object){
+	var weighted_number_of_edges = 0;
+	var number_of_edges = 0;
+	for( var s = 1; s <= subject_vector.length; s++ ){
+	    if( relation_matrix[object.id()] &&
+		relation_matrix[object.id()][subject_vector[s -1].id()]){
+		weighted_number_of_edges += s;
+		number_of_edges++;
+	    }
+	}
+	// The '-1' is to offset the indexing.
+	return ( weighted_number_of_edges / number_of_edges ) -1;
+    };
+
+    // Gets barycenter for column s.
+    function getSubjectBarycenter(subject){
+
+	var weighted_number_of_edges = 0;
+	var number_of_edges = 0;
+	for( var o = 1; o <= object_vector.length; o++ ){
+	    if( relation_matrix[object_vector[o -1].id()] &&
+		relation_matrix[object_vector[o -1].id()][subject.id()]){
+		weighted_number_of_edges += o;
+		number_of_edges++;
+	    }
+	}
+	// The '-1' is to offset the indexing.
+	return ( weighted_number_of_edges / number_of_edges ) -1;
+    };
+
+    // BUG: These damn things seem to reoder on equal--want no reorder
+    // on equal. Reorder objects given B1 <= B2, where Bi is the
+    // barycenter weight.
+    this.barycentricObjectReorder = function(){  
+	object_vector.sort(
+	    function(a,b){
+		return getObjectBarycenter(a)
+		    - getObjectBarycenter(b);
+	    });
+    };
+
+    // BUG: These damn things seem to reoder on equal--want no reorder
+    // on equal. Reorder subjects given B1 <= B2, where Bi is the
+    // barycenter weight.
+    this.barycentricSubjectReorder = function(){
+	subject_vector.sort(
+	    function(a,b){
+		return getSubjectBarycenter(a)
+		    - getSubjectBarycenter(b);
+	    });
+    };
+    
+    // Display the stored matrix.
+    this.dump = function(){
+	
+	var queue = [];
+	var string = null;
+
+	//ll('o:' + object_vector);
+	//ll('s:' + subject_vector);
+
+	// Print top row.
+	for( var i = 0; i < subject_vector.length; i++ ){
+	    queue.push(subject_vector[i].id());
+	}
+	string = queue.join('\t');
+	ll('o\\s\t' + string );
+
+	// Print remainder.
+	for( var j = 0; j < object_vector.length; j++ ){
+	    queue = [];
+	    queue.push(object_vector[j].id());
+	    //ll("_(o: " + object_vector[j].id() + ")");
+	    for( var k = 0; k < subject_vector.length; k++ ){
+		//ll("_(o: "+object_vector[j].id() +", s: "+subject_vector[k].id()+")");
+		//ll("(j: " + j + " k: " + k + ")");
+		if( relation_matrix[object_vector[j].id()] &&
+		    relation_matrix[object_vector[j].id()][subject_vector[k].id()] ){
+			queue.push('(1)');
+		    }else{
+			queue.push('(0)');
+		    }
+	    }
+	    ll(queue.join('\t'));
+	}
+    };
+};
+
+// Takes a graph.
+// Can be queried for the position of every node and edge.
+// GraphLayout = {};
+// GraphLayout.Sugiyama = function
+bbop.layout.sugiyama.render = function(){
+    //bbop.layout.graph.call(this);
+    this._is_a = 'bbop.layout.sugiyama.render';
+
+    // Get a good self-reference point.
+    var anchor = this;
+
+    // Internal logger.
+    var logger = new bbop.logger("SuGR");
+    logger.DEBUG = bbop.layout.sugiyama.DEBUG;
+    function ll(str){ logger.kvetch(str); }
+
+    //
+    //this.layout = function(graph_in, rel){
+    this.layout = function(graph_in){
+    //this.layout = function(){
+	
+	///
+	/// Step I: Make a proper hierarchy; partition the graph over
+	/// 'is_a'.
+	///
+	
+	//var partitions = new bbop.layout.sugiyama.partitioner(g, 'is_a');
+	//var partitions = new bbop.layout.sugiyama.partitioner(graph_in, rel);
+	var partitions = new bbop.layout.sugiyama.partitioner(graph_in);
+	//var partitions = new bbop.layout.sugiyama.partitioner(anchor);
+
+	// DEBUG:
+	ll('Dump paritions:');
+	partitions.dump();
+	ll('');
+
+	///
+	/// Step II: Reduce number of crossings by vertex permutation.
+	///
+
+	var edge_partitions = [];
+	var vertex_partitions = [];
+
+	// BUG: Need to catch num_partitions < 2 Create an instatiation of
+	// all of the matrix representations of the partitions.
+	for( var i = 0; i < partitions.number_of_edge_partitions(); i++ ){
+	    var epart = partitions.get_edge_partition(i);
+	    if( ! epart ){
+	    	throw new Error('null edge partition at level: ' + i);
+	    }else{
+		edge_partitions.push(epart);
+	    }
+	}
+
+	//
+	for( var i = 0; i < partitions.number_of_vertex_partitions(); i++ ){
+	    var vpart = partitions.get_vertex_partition(i);
+	    if( ! vpart ){
+	    	throw new Error('null vertex partition at level: ' + i);
+	    }else{
+		vertex_partitions.push(vpart);
+	    }
+	}  
+	
+	//
+	for( var i = 0; i < edge_partitions.length; i++ ){
+	    var m = new bbop.layout.sugiyama.bmatrix(vertex_partitions[i],
+						     vertex_partitions[i +1],
+						     edge_partitions[i]);
+	    
+	    ll('Matrix: ' + i);
+	    m.dump();
+	    ll('');
+	    
+	    // TODO: Can increase the number of iterations--the paper doesn't
+	    // really explain this.
+	    for( var k = 0; k < bbop.layout.sugiyama.iterations; k++ ){
+		m.barycentricObjectReorder();
+		m.barycentricSubjectReorder();
+	    }
+
+	    ll('Matrix: ' + i);
+	    m.dump();
+	    ll('');
+	}
+
+	///
+	/// Step III: give proper integer X and Y positions: suspend
+	/// them in a matrix.
+	///
+
+	// Create matrix for calculating layout.
+	var layout_matrix = [];
+	for( var i = 0; i < vertex_partitions.length; i++ ){
+	    layout_matrix.push(new Array(partitions.max_partition_width()));
+	}
+	
+	// Populate matrix and register final locations of nodes for later.
+	// TODO: Sugiyama method. Temporarily did naive method.
+	var real_vertex_locations = [];
+	var vertex_registry = {};
+	var virtual_vertex_locations = []; // 
+	var m = partitions.max_partition_width();
+	for( var i = 0; i < vertex_partitions.length; i++ ){
+	    var l = vertex_partitions[i].length;
+	    for( var v = 0; v < l; v++ ){
+		var locale = Math.floor( (v+1) * (m/l/2) );
+		while( layout_matrix[i][locale] ){
+		    locale++;
+		}
+		var vid = vertex_partitions[i][v].id();
+		layout_matrix[i][locale] = vid;
+		vertex_registry[ vid ] = {x: locale, y: i};
+		if( ! vertex_partitions[i][v].is_virtual ){
+		    real_vertex_locations.push({x: locale, y: i, id: vid});
+		}else{
+		    virtual_vertex_locations.push({x: locale, y: i, id: vid});
+		}
+		ll( vid + ', x:' + locale + ' y:' + i);
+	    }
+	}
+	
+	// Convert logical paths to actual paths.
+	var logical_paths = partitions.get_logical_paths();
+	var described_paths = [];
+	for( var i = 0; i < logical_paths.length; i++ ){
+	    var node_trans = [];
+	    var waypoints = [];
+	    for( var j = 0; j < logical_paths[i].length; j++ ){
+		var cursor = logical_paths[i][j];
+		node_trans.push(cursor);
+		waypoints.push({x: vertex_registry[cursor].x,
+				y: vertex_registry[cursor].y });
+	    }
+	    described_paths.push({'nodes': node_trans,
+				  'waypoints': waypoints});
+	}
+	
+	// Create a return array 
+	// DEBUG:
+	//   ll('Layout:');
+	//   for( var i = 0; i < layout_matrix.length; i++ ){
+	//     var out = [];
+	//     for( var j = 0; j < layout_matrix[i].length; j++ ){
+	//       out.push(layout_matrix[i][j]);
+	//     }
+	//     ll(out.join('\t'));
+	//   }
+	//   ll('');
+	
+	// Return this baddy to the world.
+	return { nodes: real_vertex_locations,
+		 virtual_nodes: virtual_vertex_locations,
+		 paths: described_paths,
+		 height: partitions.max_partition_width(),
+		 width: partitions.number_of_vertex_partitions()};
+    };
+};
+//bbop.core.extend(bbop.model.sugiyama.graph, bbop.model.graph);
+/* 
+ * Package: response.js
+ * 
+ * Namespace: bbop.rest.response
+ * 
+ * Generic BBOP handler for dealing with the gross parsing of
+ * responses from a REST server. This is just an example pass-thru
+ * handler that needs to be overridden (see subclasses).
+ * 
+ * You may note that things like status and status codes are not part
+ * of the base response. The reason is is that not all methods of REST
+ * in the environments that we use support them. For example: readURL
+ * in rhino. For this reason, the "health" of the response is left to
+ * the simple okay() function--just enought to be able to choose
+ * between "success" and "failure" in the managers. To give a bit more
+ * information in case of early error, there is message and
+ * message_type.
+ * 
+ * Similarly, there are no toeholds in the returned data except
+ * raw(). All data views and operations are implemented in the
+ * subclasses.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+
+/*
+ * Constructor: response
+ * 
+ * Contructor for a REST query response object.
+ * 
+ * The constructor argument is an object, not a string.
+ * 
+ * Arguments:
+ *  in_data - the string returned from a request
+ * 
+ * Returns:
+ *  rest response object
+ */
+bbop.rest.response = function(in_data){
+    this._is_a = 'bbop.rest.response';
+
+    // The raw incoming document.
+    this._raw = in_data;
+
+    // Cache for repeated calls to okay().
+    this._okay = null;
+    this._message = null;
+    this._message_type = null;
+};
+
+/*
+ * Function: raw
+ * 
+ * Returns the initial response object, whatever it was.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  object
+ */
+bbop.rest.response.prototype.raw = function(){
+    return this._raw;
+};
+
+/*
+ * Function: okay
+ * 
+ * Simple return verification of sane response from server.
+ * 
+ * This okay() caches its return value, so harder probes don't need to
+ * be performed more than once.
+ * 
+ * Arguments:
+ *  okay_p - *[optional]* setter for okay
+ * 
+ * Returns:
+ *  boolean
+ */
+bbop.rest.response.prototype.okay = function(okay_p){
+
+    // Optionally set from the outside.
+    if( bbop.core.is_defined(okay_p) ){
+	this._okay = okay_p;
+    }
+
+    //print('a: ' + this._okay);
+    if( this._okay == null ){ // only go if answer not cached
+	//print('b: ' + this._raw);
+	if( ! this._raw || this._raw == '' ){
+	    //print('c: if');
+	    this._okay = false;
+	}else{
+	    //print('c: else');
+	    this._okay = true;
+	}
+    }
+    
+    return this._okay;
+};
+
+/*
+ * Function: message
+ * 
+ * A message that the response wants to let you know about its
+ * creation.
+ * 
+ * Arguments:
+ *  message - *[optional]* setter for message
+ * 
+ * Returns:
+ *  message string
+ */
+bbop.rest.response.prototype.message = function(message){
+    if( bbop.core.is_defined(message) ){
+	this._message = message;
+    }
+    return this._message;
+};
+
+/*
+ * Function: message_type
+ * 
+ * A message about the message (a string classifier) that the response
+ * wants to let you know about its message.
+ * 
+ * Arguments:
+ *  message_type - *[optional]* setter for message_type
+ * 
+ * Returns:
+ *  message type string
+ */
+bbop.rest.response.prototype.message_type = function(message_type){
+    if( bbop.core.is_defined(message_type) ){
+	this._message_type = message_type;
+    }
+    return this._message_type;
+};
+/* 
+ * Package: json.js
+ * 
+ * Namespace: bbop.rest.response.json
+ * 
+ * Generic BBOP handler for dealing with the gross parsing of
+ * responses from a REST JSON server.
+ * 
+ * It will detect if the incoming response is a string, and if so, try
+ * to parse it to JSON. Otherwise, if the raw return is already an
+ * Object, we assume that somebody got to it before us (e.g. jQuery's
+ * handling).
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+if ( typeof bbop.rest.response == "undefined" ){ bbop.rest.response = {}; }
+
+/*
+ * Constructor: json
+ * 
+ * Contructor for a REST JSON response object.
+ * 
+ * The constructor argument is an object, not a string.
+ * 
+ * Arguments:
+ *  json_data - the JSON object as a string (as returned from a request)
+ * 
+ * Returns:
+ *  rest response object
+ */
+bbop.rest.response.json = function(json_data){
+    bbop.rest.response.call(this);
+    this._is_a = 'bbop.rest.response.json';
+
+    // The raw incoming document.
+    //this._raw_string = json_data_str;
+    this._raw_string = null;
+    this._okay = null;
+
+    if( json_data ){
+
+	if( bbop.core.what_is(json_data) == 'string' ){
+
+	    // Try and parse out strings.
+	    try {
+		this._raw = bbop.json.parse(json_data);
+		this._okay = true;
+	    }catch(e){
+		// Didn't make it, but still a string.
+		this._raw = json_data;
+		this._okay = false;
+	    }
+
+	}else if( bbop.core.what_is(json_data) == 'object' ){
+
+	    // Looks like somebody else got here first.
+	    this._raw = json_data;
+	    this._okay = true;
+	    
+	}else{
+
+	    // No idea what this thing is...
+	    this._raw = null;
+	    this._okay = null;
+	}
+    }
+};
+bbop.core.extend(bbop.rest.response.json, bbop.rest.response);
+
+// /*
+//  * Function: string
+//  * 
+//  * returns a string of the incoming response
+//  * 
+//  * Arguments:
+//  *  n/a
+//  * 
+//  * Returns:
+//  *  raw response string
+//  */
+// bbop.rest.response.json.prototype.string = function(){
+//     return this._raw_string;
+// };
+/* 
+ * Package: mmm.js
+ * 
+ * Namespace: bbop.rest.response.mmm
+ * 
+ * Generic BBOP handler for dealing with the gross parsing of
+ * responses from the GO Molecular Model Manager REST server JSON
+ * responses.
+ * 
+ * It will detect if the incoming response is structured correctly and
+ * give safe access to fields and properties.
+ * 
+ * It is not meant to be a model for the parts in the data section.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+if ( typeof bbop.rest.response == "undefined" ){ bbop.rest.response = {}; }
+
+/*
+ * Constructor: mmm
+ * 
+ * Contructor for a GO MMM REST JSON response object.
+ * 
+ * The constructor argument is an object or a string.
+ * 
+ * Arguments:
+ *  raw_data - the JSON object as a string or object
+ * 
+ * Returns:
+ *  response object
+ */
+bbop.rest.response.mmm = function(raw_data){
+    bbop.rest.response.call(this);
+    this._is_a = 'bbop.rest.response.mmm';
+
+    // Add the required commentary and data
+    this._commentary = null;
+    this._data = null;
+
+    // Start with the assumption that the response is bad, try and
+    // prove otherwise.
+    this.okay(false);
+
+    // Raw will only be provided in that cases that it makes sense.
+    this._raw = null;
+    
+    // If we have data coming in...
+    if( ! raw_data ){
+	
+	this.message('empty response in handler');
+	this.message_type('error');
+
+    }else{
+
+	// And it looks like something we might be able to deal with...
+	var itsa = bbop.core.what_is(raw_data);
+	if( itsa != 'string' && itsa != 'object' ){
+	    
+	    // No idea what this thing is...
+	    this.message('bad argument type in handler');
+	    this.message_type('error');
+
+	}else{
+	    
+	    // Try to make the string an object.
+	    if( itsa == 'string' ){
+		try {
+		    this._raw = bbop.json.parse(raw_data);
+		}catch(e){
+		    // Didn't make it--chuck it to create a signal.
+		    this._raw = null;
+		    this.message('handler could not parse string response');
+		    this.message_type('error');
+		}
+	    }else{
+		// Looks like somebody else got here first.
+		this._raw = raw_data;
+	    }
+
+	    // If we managed to define some kind of raw incoming data
+	    // that is, or has been parsed to, a model, probe it to
+	    // see if it is structured correctly.
+	    if( this._raw ){
+
+		// Check required fields.
+		var data = this._raw;
+		// These must always be defined.
+		if( data && data['message_type'] && data['message'] ){
+
+		    var odata = data['data'] || null;
+		    var cdata = data['commentary'] || null;
+		    // If data, object or array.
+		    if( odata && bbop.core.what_is(odata) != 'object' &&
+			bbop.core.what_is(odata) != 'array' ){
+			this.message('data not object');
+			this.message_type('error');
+		    }else{
+			// If commentary, object.
+			if( cdata && bbop.core.what_is(cdata) != 'object' ){
+			    this.message('commentary not object');
+			    this.message_type('error');
+			}else{
+			    // Looks fine then I guess.
+			    this.okay(true);
+			    this.message_type(data['message_type']);
+			    this.message(data['message']);
+
+			    // Add any additional fields.
+			    if( cdata ){ this._commentary = cdata; }
+			    if( odata ){ this._data = odata; }
+			}
+		    }
+		}
+	    }
+	}
+    }
+};
+bbop.core.extend(bbop.rest.response.mmm, bbop.rest.response);
+
+/*
+ * Function: commentary
+ * 
+ * Returns the commentary object (whatever that might be in any given
+ * case).
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  copy of commentary object or null
+ */
+bbop.rest.response.mmm.prototype.commentary = function(){
+    var ret = null;
+    if( this._commentary ){
+	ret = bbop.core.clone(this._commentary);
+    }
+    return ret;
+};
+
+/*
+ * Function: data
+ * 
+ * Returns the data object (whatever that might be in any given
+ * case).
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  copy of data object or null
+ */
+bbop.rest.response.mmm.prototype.data = function(){
+    var ret = null;
+    if( this._data ){
+	ret = bbop.core.clone(this._data);
+    }
+    return ret;
+};
+/* 
+ * Package: manager.js
+ * 
+ * Namespace: bbop.rest.manager
+ * 
+ * Generic BBOP manager for dealing with basic generic REST calls.
+ * This specific one is designed to be overridden by its subclasses.
+ * This one pretty much just uses its incoming resource string as the data.
+ * Mostly for testing purposes.
+ * 
+ * Both a <bbop.rest.response> (or clean error data) and the manager
+ * itself (this as anchor) should be passed to the callbacks.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+
+/*
+ * Constructor: manager
+ * 
+ * Contructor for the REST manager
+ * 
+ * Arguments:
+ *  response_parser - the response handler class to use for each call
+ * 
+ * Returns:
+ *  rest manager object
+ * 
+ * See also:
+ *  <bbop.registry>
+ */
+bbop.rest.manager = function(response_handler){
+    bbop.registry.call(this, ['success', 'error']);
+    this._is_a = 'bbop.rest.manager';
+
+    // Get a good self-reference point.
+    var anchor = this;
+
+    // Per-manager logger.
+    this._logger = new bbop.logger(this._is_a);
+    //this._logger.DEBUG = true;
+    this._logger.DEBUG = false;
+    function ll(str){ anchor._logger.kvetch(str); }
+
+    // Handler instance.
+    this._response_handler = response_handler;
+
+    // The URL to query.
+    this._qurl = null;
+
+    // The argument payload to deliver to the URL.
+    this._qpayload = {};
+
+    // The way to do the above.
+    this._qmethod = null;
+
+    // Whether or not to prevent ajax events from going.
+    // This may not be usable, or applicable, to all backends.
+    this._safety = false;
+
+    /*
+     * Function: debug
+     * 
+     * Turn on or off the verbose messages. Uses <bbop.logger>, so
+     * they should come out everywhere.
+     * 
+     * Parameters: 
+     *  p - *[optional]* true or false for debugging
+     *
+     * Returns: 
+     *  boolean; the current state of debugging
+     */
+    this.debug = function(p){
+	if( p == true || p == false ){
+	    this._logger.DEBUG = p;
+	    // TODO: add debug parameter a la include_highlighting
+	}
+	return this._logger.DEBUG;
+    };
+
+    // The main callback function called after a successful AJAX call in
+    // the update function.
+    this._run_success_callbacks = function(in_data){
+	ll('run success callbacks...');
+	//var response = anchor.(in_data);
+	var response = new anchor._response_handler(in_data);
+	anchor.apply_callbacks('success', [response, anchor]);
+    };
+
+    // This set is called when we run into a problem.
+    this._run_error_callbacks = function(in_data){
+	ll('run error callbacks...');
+	var response = new anchor._response_handler(in_data);
+	anchor.apply_callbacks('error', [response, anchor]);
+    };
+
+    /*
+     * Function: resource
+     *
+     * The base target URL for our operations.
+     * 
+     * Parameters:
+     *  url - *[optional]* update resource target with string
+     *
+     * Returns:
+     *  the url as string (or null)
+     */
+    this.resource = function(url){
+	if( bbop.core.is_defined(url) && 
+	    bbop.core.what_is(url) == 'string' ){
+	    anchor._qurl = url;
+	}
+	return anchor._qurl;
+    };
+
+    /*
+     * Function: payload
+     *
+     * The information to deliver to the resource.
+     * 
+     * Parameters:
+     *  payload - *[optional]* update payload information
+     *
+     * Returns:
+     *  a copy of the current payload
+     */
+    this.payload = function(payload){
+	if( bbop.core.is_defined(payload) && 
+	    bbop.core.what_is(payload) == 'object' ){
+	    anchor._qpayload = payload;
+	}
+	return bbop.core.clone(anchor._qpayload);
+    };
+
+    /*
+     * Function: method
+     *
+     * The method to use to get the resource, as a string.
+     * 
+     * Parameters:
+     *  method - *[optional]* update aquisition method with string
+     *
+     * Returns:
+     *  the string or null
+     */
+    this.method = function(method){
+	if( bbop.core.is_defined(method) && 
+	    bbop.core.what_is(method) == 'string' ){
+	    anchor._qmethod = method;
+	}
+	return anchor._qmethod;
+    };
+
+    /*
+     * Function: action
+     *
+     * This method is the most fundamental operation. It should
+     * combine the URL, payload, and method in the ways appropriate to
+     * the subclass engine. This one merely combines the string.
+     * 
+     * The method argument is naturally ignored in this dummy class.
+     * 
+     * Parameters:
+     *  url - *[optional]* update resource target with string
+     *  payload - *[serially optional]* object to represent arguments
+     *  method - *[serially optional]* (GET, POST, etc.)
+     *
+     * Returns:
+     *  the combined URL argument as string
+     * 
+     * See also:
+     *  <update>
+     */
+    this.action = function(url, payload, method){
+	if( bbop.core.is_defined(url) ){ anchor.resource(url); }
+	if( bbop.core.is_defined(payload) ){ anchor.payload(payload); }
+	if( bbop.core.is_defined(method) ){ anchor.method(method); }
+
+	// Since there is no AJAX/REST in our case, we just loop back
+	// with the argument string.
+	if( bbop.core.is_defined(anchor.resource()) ){
+	    return anchor.update('success');
+	}else{
+	    return anchor.update('error');
+	}
+    };
+};
+bbop.core.extend(bbop.rest.manager, bbop.registry);
+
+/*
+ * Function: to_string
+ *
+ * Output writer for this object/class.
+ * See the documentation in <core.js> on <dump> and <to_string>.
+ * 
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string
+ */
+bbop.rest.manager.prototype.to_string = function (){
+    return '[' + this._is_a + ']';
+};
+
+/*
+ * Function: assemble
+ *
+ * Assemble the resource and arguments into a URL string.
+ * 
+ * May not be appropriate for all subclasses. Often used as a helper,
+ * etc.
+ * 
+ * Parameters:
+ *  n/a
+ *
+ * Returns:
+ *  url string
+ * 
+ * Also see:
+ *  <get_query_url>
+ */
+bbop.rest.manager.prototype.assemble = function(){
+
+    // Conditional merging of the remaining variant parts.
+    var qurl = this.resource();
+    if( ! bbop.core.is_empty(this.payload()) ){
+	var asm = bbop.core.get_assemble(this.payload());
+	qurl = qurl + '?' + asm;
+    }
+    return qurl;
+};
+
+/*
+ * Function: update
+ *
+ * The user code to select the type of update (and thus the type
+ * of callbacks to be called on data return).
+ * 
+ * Parameters: 
+ *  callback_type - callback type string; 'success' and 'error' (see subclasses)
+ *
+ * Returns:
+ *  the query url
+ * 
+ * Also see:
+ *  <get_query_url>
+ */
+bbop.rest.manager.prototype.update = function(callback_type){
+
+    // Conditional merging of the remaining variant parts.
+    var qurl = this.resource();
+    if( ! bbop.core.is_empty(this.payload()) ){
+	var asm = bbop.core.get_assemble(this.payload());
+	qurl = qurl + '?' + asm;
+    }
+
+    // Callbacks accordingly.
+    if( callback_type == 'success' ){
+	this._run_success_callbacks(qurl);
+    }else if( callback_type == 'error' ){
+	this._run_error_callbacks(qurl);
+    }else{
+    	throw new Error("Unknown callback_type: " + callback_type);
+    }
+    
+    //ll('qurl: ' + qurl);
+    return qurl;
+};
+/* 
+ * Package: rhino.js
+ * 
+ * Namespace: bbop.rest.manager.rhino
+ * 
+ * Rhino BBOP manager for dealing with remote calls. Remember,
+ * this is actually a "subclass" of <bbop.rest.manager>.
+ * 
+ * This is a very simple subclass that does not get into the messiness
+ * of errors and codes since we're using the trivial readURL method.
+ * 
+ * TODO/BUG: Does not handle "error" besides giving an "empty"
+ * response.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+if ( typeof bbop.rest.manager == "undefined" ){ bbop.rest.manager = {}; }
+
+/*
+ * Constructor: rhino
+ * 
+ * Contructor for the REST query manager; Rhino-style.
+ * 
+ * Be aware that this version is a synchronous call.
+ * 
+ * Arguments:
+ *  response_handler
+ * 
+ * Returns:
+ *  REST manager object
+ * 
+ * See also:
+ *  <bbop.rest.manager>
+ */
+bbop.rest.manager.rhino = function(response_handler){
+    bbop.rest.manager.call(this, response_handler);
+    this._is_a = 'bbop.rest.manager.rhino';
+};
+bbop.core.extend(bbop.rest.manager.rhino, bbop.rest.manager);
+
+/*
+ * Function: update
+ *
+ *  See the documentation in <bbop/rest/manager.js> on update to get more
+ *  of the story. This override function adds functionality to Rhino.
+ *
+ * Parameters: 
+ *  callback_type - callback type string
+ *
+ * Returns:
+ *  the query url (with any Rhino specific paramteters)
+ * 
+ * Also see:
+ *  <fetch>
+ */
+bbop.rest.manager.rhino.prototype.update = function(callback_type){
+
+    // 
+    var qurl = this.assemble();
+
+    // Grab the data from the server and pick the right callback group
+    // accordingly.
+    var raw_str = readUrl(qurl); // in Rhino
+    if( raw_str && raw_str != '' ){
+	var response = new this._response_handler(raw_str);
+	this.apply_callbacks(callback_type, [response, this]);
+    }else{
+	var response = new anchor._response_handler(null);
+	this.apply_callbacks('error', [response, this]);
+	//throw new Error('explody');
+    }
+
+    return qurl;
+};
+
+/*
+ * Function: fetch
+ *
+ * This is the synchronous data getter for Rhino--probably your best
+ * bet right now for scripting.
+ * 
+ * Parameters:
+ *  n/a 
+ *
+ * Returns:
+ *  a <bbop.rest.response> (or subclass) or null
+ * 
+ * Also see:
+ *  <update>
+ */
+bbop.rest.manager.rhino.prototype.fetch = function(url, payload){
+    
+    var retval = null;
+
+    // Update if necessary.
+    if( url ){ this.resource(url); }
+    if( payload ){ this.payload(payload); }
+
+    var qurl = this.assemble();
+    
+    // Grab the data from the server and pick the right callback group
+    // accordingly.
+    var raw_str = readUrl(qurl); // in Rhino
+    if( raw_str && raw_str != '' ){
+	retval = new this._response_handler(raw_str);
+    }else{
+	retval = new anchor._response_handler(null);
+	//this.apply_callbacks('error', ['no data', this]);
+	//throw new Error('explody');
+    }
+
+    return retval;
+};
+
+/* 
+ * Package: ringo.js
+ * 
+ * Namespace: bbop.rest.manager.ringo
+ * 
+ * RingoJS BBOP manager for dealing with remote calls. Remember,
+ * this is actually a "subclass" of <bbop.rest.manager>.
+ * 
+ * TODO/BUG: Does not handle "error" besides giving an "empty"
+ * response.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+if ( typeof bbop.rest.manager == "undefined" ){ bbop.rest.manager = {}; }
+
+/*
+ * Constructor: ringo
+ * 
+ * Contructor for the REST query manager; RingoJS-style.
+ * 
+ * Be aware that this version is a synchronous call. Also be aware
+ * that this assumes we're in a ringo environment so that the require
+ * for commonjs is around.
+ * 
+ * Arguments:
+ *  response_handler
+ * 
+ * Returns:
+ *  REST manager object
+ * 
+ * See also:
+ *  <bbop.rest.manager>
+ */
+bbop.rest.manager.ringo = function(response_handler){
+    bbop.rest.manager.call(this, response_handler);
+    this._is_a = 'bbop.rest.manager.ringo';
+
+    // Grab an http client.
+    this._http_client = require("ringo/httpclient");
+};
+bbop.core.extend(bbop.rest.manager.ringo, bbop.rest.manager);
+
+/*
+ * Function: update
+ *
+ *  See the documentation in <bbop.rest.manager.js> on update to get more
+ *  of the story. This override function adds functionality to RingoJS.
+ *
+ * Parameters: 
+ *  callback_type - callback type string
+ *
+ * Returns:
+ *  the query url (with any RingoJS specific parameters)
+ * 
+ * Also see:
+ *  <get_query_url>
+ */
+bbop.rest.manager.ringo.prototype.update = function(callback_type){
+
+    var anchor = this;
+    var qurl = anchor.resource();
+    //console.log('qurl: ' + qurl);
+
+    // Grab the data from the server and pick the right callback group
+    // accordingly.
+    //anchor._callbacker = function(exchange){
+    anchor._callbacker = function(data, status, contentType, exchange){
+	// console.log('callback_type: ' + callback_type);
+	// console.log('data: ' + data);
+	// console.log('status: ' + status);
+	// console.log('contentType: ' + contentType);
+	// console.log('exchange: ' + exchange);
+
+	var raw_str = exchange.content;
+	//var raw_str = data;
+	if( raw_str && raw_str != '' ){
+	    var response = new anchor._response_handler(raw_str);
+	    // console.log('response okay?: ' + response.okay());
+	    anchor.apply_callbacks(callback_type, [response, this]);
+	}else{
+	    var response = new anchor._response_handler(null);
+	    this.apply_callbacks('error', [response, this]);
+	    //throw new Error('explody');
+	}
+    };
+    // In RingoJS.
+    var exchange = this._http_client.get(qurl, null, anchor._callbacker);
+    // console.log('exchange.done: ' + exchange.done);
+
+    return qurl;
+};
+
+// /*
+//  * Function: fetch
+//  *
+//  * This is the synchronous data getter for RingoJS--probably your best
+//  * bet right now for scripting.
+//  * 
+//  * NOTE:
+//  * 
+//  * Parameters:
+//  *  url - url to get the data from
+//  *
+//  * Returns:
+//  *  a <bbop.rest.response> or null
+//  * 
+//  * Also see:
+//  *  <update>
+//  */
+// bbop.rest.manager.ringo.prototype.fetch = function(url){
+    
+//     var retval = null;
+
+//     var qurl = this.resource(url);
+
+//     // Grab the data from the server and pick the right callback group
+//     // accordingly.
+//     var exchange = this._http_client.get(qurl); // in RingoJS
+//     // BUG/TODO: until I figure out sync.
+//     var raw_str = exchange.content;
+//     if( raw_str && raw_str != '' ){
+// 	retval = new this._response_handler(raw_str);
+//     }else{
+// 	var response = new anchor._response_handler(null);
+// 	this.apply_callbacks('error', [response, this]);
+// 	//throw new Error('explody');
+//     }
+
+//     return retval;
+// };
+
+/* 
+ * Package: node.js
+ * 
+ * Namespace: bbop.rest.manager.node
+ * 
+ * NodeJS BBOP manager for dealing with remote calls. Remember,
+ * this is actually a "subclass" of <bbop.rest.manager>.
+ * 
+ * TODO/BUG: Does not handle "error" besides giving an "empty"
+ * response.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+if ( typeof bbop.rest.manager == "undefined" ){ bbop.rest.manager = {}; }
+
+/*
+ * Constructor: node
+ * 
+ * Contructor for the REST query manager; NodeJS-style.
+ * 
+ * This assumes we're in a node environment so that the require
+ * for commonjs is around.
+ * 
+ * Arguments:
+ *  response_handler
+ * 
+ * Returns:
+ *  REST manager object
+ * 
+ * See also:
+ *  <bbop.rest.manager>
+ */
+bbop.rest.manager.node = function(response_handler){
+    bbop.rest.manager.call(this, response_handler);
+    this._is_a = 'bbop.rest.manager.node';
+
+    // Grab an http client.
+    this._http_client = require('http');
+    this._url_parser = require('url');
+};
+bbop.core.extend(bbop.rest.manager.node, bbop.rest.manager);
+
+/*
+ * Function: update
+ *
+ *  See the documentation in <bbop.rest.manager.js> on update to get more
+ *  of the story. This override function adds functionality to NodeJS.
+ *
+ * Parameters: 
+ *  callback_type - callback type string (so far unused)
+ *
+ * Returns:
+ *  the query url (with any NodeJS specific parameters)
+ */
+bbop.rest.manager.node.prototype.update = function(callback_type){
+
+    var anchor = this;
+
+    // What to do if an error is triggered.
+    function on_error(e) {
+	console.log('problem with request: ' + e.message);
+	var response = new anchor._response_handler(null);
+	response.okay(false);
+	response.message(e.message);
+	response.message_type('error');
+	anchor.apply_callbacks('error', [response, anchor]);
+    }
+
+    // Two things to do here: 1) collect data and 2) what to do with
+    // it when we're done (create response).
+    function on_connect(res){
+	//console.log('STATUS: ' + res.statusCode);
+	//console.log('HEADERS: ' + JSON.stringify(res.headers));
+	res.setEncoding('utf8');
+	var raw_data = '';
+	res.on('data', function (chunk) {
+		   //console.log('BODY: ' + chunk);
+		   raw_data = raw_data + chunk;
+	       });
+	// Throw to .
+	res.on('end', function () {
+		   var response = new anchor._response_handler(raw_data);
+		   if( response && response.okay() ){
+		       anchor.apply_callbacks('success', [response, anchor]);
+		   }else{
+		       // Make sure that there is something there to
+		       // hold on to.
+		       if( ! response ){
+			   response = new anchor._response_handler(null);
+			   response.okay(false);
+			   response.message_type('error');
+			   response.message('null response');
+		       }else{
+			   response.message_type('error');
+			   response.message('bad response');
+		       }
+		       anchor.apply_callbacks('error', [response, anchor]);
+		   }
+	       });
+    }
+
+    // Conditional merging of the remaining variant parts.
+    var qurl = this.resource();
+    var args = '';
+    if( ! bbop.core.is_empty(this.payload()) ){
+	var asm = bbop.core.get_assemble(this.payload());
+	args = '?' + asm;
+    }
+
+    //qurl = 'http://amigo2.berkeleybop.org/cgi-bin/amigo2/amigo/term/GO:0022008/json';
+    var final_url = qurl + args;
+
+    // http://nodejs.org/api/url.html
+    var purl = anchor._url_parser.parse(final_url);
+    var req_opts = {
+    	//'hostname': 'localhost',
+    	//'path': '/cgi-bin/amigo2/amigo/term/GO:0022008/json',
+	'port': 80,
+	'method': 'GET'
+    };
+    // Tranfer the intersting bit over.
+    bbop.core.each(['protocol', 'hostname', 'port', 'path'],
+		   function(purl_prop){
+		       if( purl[purl_prop] ){
+			   req_opts[purl_prop] = purl[purl_prop];
+		       }
+		   });
+    // And the method.
+    var mth = anchor.method();
+    if( mth && mth != 'get' ){
+    	req_opts['method'] = mth;
+    }
+    var req = anchor._http_client.request(req_opts, on_connect);
+    // var req = anchor._http_client.request(final_url, on_connect);
+
+    req.on('error', on_error);
+    
+    // write data to request body
+    //req.write('data\n');
+    //req.write('data\n');
+    req.end();
+    
+    return final_url;
+};
+/* 
+ * Package: jquery.js
+ * 
+ * Namespace: bbop.rest.manager.jquery
+ * 
+ * TODO!
+ * 
+ * jQuery BBOP manager for dealing with actual ajax calls. Remember,
+ * this is actually a "subclass" of <bbop.rest.manager>.
+ * 
+ * This should still be able to limp along (no ajax and no error
+ * parsing) even outside of a jQuery environment.
+ * 
+ * Use <use_jsonp> is you are working against a JSONP service instead
+ * of a non-cross-site JSON service.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.rest == "undefined" ){ bbop.rest = {}; }
+if ( typeof bbop.rest.manager == "undefined" ){ bbop.rest.manager = {}; }
+
+/*
+ * Constructor: jquery
+ * 
+ * Contructor for the jQuery REST manager
+ * 
+ * Arguments:
+ *  response_handler
+ * 
+ * Returns:
+ *  REST manager object
+ * 
+ * See also:
+ *  <bbop.rest.manager>
+ */
+bbop.rest.manager.jquery = function(response_handler){
+    bbop.rest.manager.call(this, response_handler);
+    this._is_a = 'bbop.rest.manager.jquery';
+
+    this._use_jsonp = false;
+    this._headers = null;
+
+    // Before anything else, if we cannot find a viable jQuery library
+    // for use, we're going to create a fake one so we can still test
+    // and work in a non-browser/networked environment.
+    var anchor = this;
+    anchor.JQ = new bbop.rest.manager.jquery_faux_ajax();
+    try{ // some interpreters might not like this kind of probing
+    	if( typeof(jQuery) !== 'undefined' ){
+    	    //JQ = jQuery;
+    	    anchor.JQ = jQuery.noConflict();
+    	}
+    }catch (x){
+    }finally{
+    	var got = bbop.core.what_is(anchor.JQ);
+    	if( got && got == 'bbop.rest.manager.jquery_faux_ajax'){
+    	}else{
+    	    got = 'jQuery';
+    	}
+    	//ll('Using ' + got + ' for ajax calls.');
+    }
+};
+bbop.core.extend(bbop.rest.manager.jquery, bbop.rest.manager);
+
+/*
+ * Function: use_jsonp
+ *
+ * Set the jQuery engine to use JSONP handling instead of the default
+ * JSON. If set, the callback function to use will be given my the
+ * argument "json.wrf" (like Solr), so consider that special.
+ * 
+ * Parameters: 
+ *  use_p - *[optional]* external setter for 
+ *
+ * Returns:
+ *  boolean
+ */
+bbop.rest.manager.jquery.prototype.use_jsonp = function(use_p){
+    var anchor = this;
+    if( bbop.core.is_defined(use_p) ){
+	if( use_p == true || use_p == false ){
+	    anchor._use_jsonp = use_p;
+	}
+    }
+    return anchor._use_jsonp;
+};
+
+/*
+ * Function: headers
+ *
+ * Try and control the server with the headers.
+ * 
+ * Parameters: 
+ *  header_set - *[optional]* hash of headers; jQuery internal default
+ *
+ * Returns:
+ *  hash of headers
+ */
+bbop.rest.manager.jquery.prototype.headers = function(header_set){
+    var anchor = this;
+    if( bbop.core.is_defined(header_set) ){
+	anchor._headers = header_set;
+    }
+    return anchor._headers;
+};
+
+/*
+ * Function: update
+ *
+ *  See the documentation in <manager.js> on update to get more
+ *  of the story. This override function adds functionality for
+ *  jQuery.
+ * 
+ * Parameters: 
+ *  callback_type - callback type string (so far unused)
+ *
+ * Returns:
+ *  the query url (with the jQuery callback specific parameters)
+ */
+bbop.rest.manager.jquery.prototype.update = function(callback_type){
+
+    var anchor = this;
+    
+    // Assemble request.
+    // Conditional merging of the remaining variant parts.
+    var qurl = this.resource();
+    var args = '';
+    if( ! bbop.core.is_empty(this.payload()) ){
+	var asm = bbop.core.get_assemble(this.payload());
+	args = '?' + asm;
+    }
+    var final_url = qurl + args;
+
+    // The base jQuery Ajax args we need with the setup we have.
+    var jq_vars = {
+    	url: final_url,
+    	dataType: 'json',
+	headers: { "Content-Type": "application/javascript", "Accept": "application/javascript" },
+    	type: "GET"
+    };
+
+    // If we're going to use JSONP instead of the defaults, set that now.
+    if( anchor.use_jsonp() ){
+	jq_vars['dataType'] = 'jsonp';
+	jq_vars['jsonp'] = 'json.wrf';
+    }
+    if( anchor.headers() ){
+    	jq_vars['headers'] = anchor.headers();
+    }
+
+    // What to do if an error is triggered.
+    // Remember that with jQuery, when using JSONP, there is no error.
+    function on_error(xhr, status, error) {
+	var response = new anchor._response_handler(null);
+	response.okay(false);
+	response.message(error);
+	response.message_type(status);
+	anchor.apply_callbacks('error', [response, anchor]);
+    }
+
+    function on_success(raw_data, status, xhr){
+	var response = new anchor._response_handler(raw_data);
+	if( response && response.okay() ){
+	    anchor.apply_callbacks('success', [response, anchor]);
+	}else{
+	    // Make sure that there is something there to
+	    // hold on to.
+	    if( ! response ){
+		response = new anchor._response_handler(null);
+		response.okay(false);
+		response.message_type(status);
+		response.message('null response');
+	    }else{
+		response.message_type(status);
+		response.message('bad response');
+	    }
+	    //anchor.apply_callbacks('error', [response, anchor]);
+	    //anchor.apply_callbacks('error', [raw_data, anchor]);
+	    anchor.apply_callbacks('error', [response, anchor]);
+	}
+    }
+
+    // Setup JSONP for Solr and jQuery ajax-specific parameters.
+    jq_vars['success'] = on_success;
+    jq_vars['error'] = on_error;
+    //done: _callback_type_decider, // decide & run search or reset
+    //fail: _run_error_callbacks, // run error callbacks
+    //always: function(){} // do I need this?
+    anchor.JQ.ajax(jq_vars);
+    //anchor.JQ.ajax(final_url, jq_vars);
+    
+    return final_url;
+};
+
+/*
+ * Namespace: bbop.rest.manager.jquery_faux_ajax
+ *
+ * Constructor: faux_ajax
+ * 
+ * Contructor for a fake and inactive Ajax. Used by bbop.rest.manager.jquery
+ * in (testing) environments where jQuery is not available.
+ * 
+ * Returns:
+ *  faux_ajax object
+ */
+bbop.rest.manager.jquery_faux_ajax = function (){
+    this._is_a = 'bbop.rest.manager.jquery_faux_ajax';
+
+    /*
+     * Function: ajax
+     *
+     * Fake call to jQuery's ajax.
+     *
+     * Parameters: 
+     *  args - whatever
+     *
+     * Returns:
+     *  null
+     */
+    this.ajax = function(args){
+	return null;
+    };
+};
+/* 
  * Package: conf.js
  * 
  * Generic BBOP manager for dealing with gross GOlr configuration
@@ -6275,9 +8283,9 @@ bbop.core.extend(bbop.model.bracket.graph, bbop.model.graph);
  * drive the OWLTools-Solr parts of GOlr.
  */
 
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'golr');
+// Module and namespace checking.
+if( typeof bbop == "undefined" ){ var bbop = {}; }
+if( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
 
 /*
  * Namespace: bbop.golr.conf_field
@@ -6793,9 +8801,9 @@ bbop.golr.conf = function (golr_conf_var){
  * what parameters were passed, etc.
  */
 
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'golr', 'response');
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
 
 /*
  * Constructor: response
@@ -7626,12 +9634,9 @@ bbop.golr.response.prototype.query_filters = function(){
  * and <get_query> should only return <bbop.logic>.
  */
 
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'registry');
-bbop.core.require('bbop', 'golr', 'conf');
-bbop.core.require('bbop', 'golr', 'response');
-bbop.core.namespace('bbop', 'golr', 'manager');
+// Module and namespace checking.
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
 
 /*
  * Constructor: manager
@@ -10052,6 +12057,22 @@ bbop.golr.manager = function (golr_loc, golr_conf_obj){
 bbop.core.extend(bbop.golr.manager, bbop.registry);
 
 /*
+ * Function: to_string
+ *
+ * Output writer for this object/class.
+ * See the documentation in <core.js> on <dump> and <to_string>.
+ * 
+ * Parameters: 
+ *  n/a
+ *
+ * Returns:
+ *  string
+ */
+bbop.golr.manager.prototype.to_string = function (){
+    return '<' + this._is_a + '>';
+};
+
+/*
  * Function: update
  *
  * The user code to select the type of update (and thus the type
@@ -10156,13 +12177,9 @@ bbop.golr.manager.prototype.update = function(callback_type, rows, start){
  * This is mostly for testing purposes.
  */
 
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'registry');
-bbop.core.require('bbop', 'golr', 'conf');
-bbop.core.require('bbop', 'golr', 'response');
-bbop.core.require('bbop', 'golr', 'manager');
-bbop.core.namespace('bbop', 'golr', 'manager', 'preload');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
+if ( typeof bbop.golr.manager == "undefined" ){ bbop.golr.manager = {}; }
 
 /*
  * Constructor: preload
@@ -10246,249 +12263,6 @@ bbop.golr.manager.preload.prototype.update = function(callback_type,
     return qurl;
 };
 /* 
- * Package: nodejs.js
- * 
- * Namespace: bbop.golr.manager.nodejs
- * 
- * NodeJS BBOP manager for dealing with remote calls. Remember,
- * this is actually a "subclass" of <bbop.golr.manager>.
- * 
- * This may be madness.
- */
-
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'registry');
-bbop.core.require('bbop', 'golr', 'conf');
-bbop.core.require('bbop', 'golr', 'response');
-bbop.core.require('bbop', 'golr', 'manager');
-bbop.core.namespace('bbop', 'golr', 'manager', 'nodejs');
-
-/*
- * Constructor: nodejs
- * 
- * Contructor for the GOlr query manager; NodeJS flavor. YMMV.
- * 
- * Arguments:
- *  golr_loc - string url to GOlr server;
- *  golr_conf_obj - a <bbop.golr.conf> object
- * 
- * Returns:
- *  golr manager object
- * 
- * See also:
- *  <bbop.golr.manager>
- */
-bbop.golr.manager.nodejs = function (golr_loc, golr_conf_obj){
-//function GOlrManager(in_args){
-    // We are a registry like this:
-    bbop.golr.manager.call(this, golr_loc, golr_conf_obj);
-    this._is_a = 'bbop.golr.manager.nodejs';
-
-    // Get a good self-reference point.
-    //var anchor = this;
-
-    // Per-manager logger.
-    //this._ll = ll;
-
-    // //
-    // ll('Alive.');
-
-};
-bbop.core.extend(bbop.golr.manager.nodejs, bbop.golr.manager);
-
-/*
- * Function: update
- *
- *  See the documentation in <golr_manager.js> on update to get more
- *  of the story. This override function adds functionality to NodeJS.
- *
- * Parameters: 
- *  callback_type - callback type string
- *  rows - *[serially optional]* integer; the number of rows to return
- *  start - *[serially optional]* integer; the offset of the returned rows
- *
- * Returns:
- *  the query url (with any NodeJS specific paramteters)
- * 
- * Also see:
- *  <get_query_url>
- */
-bbop.golr.manager.nodejs.prototype.update = function(callback_type,
-						     rows, start){
-    // Get "parents" url first.
-    var parent_update = bbop.golr.manager.prototype.update;
-    var qurl = parent_update.call(this, callback_type, rows, start);
-
-    // 
-    var logger = new bbop.logger(this._is_a);
-    //this._logger = new bbop.logger(this._is_a);
-    logger.DEBUG = true;
-    function ll(str){ logger.kvetch(str); }
-
-    var anchor = this;
-    this.last = null;
-    
-    //
-    function on_error(e) {
-	console.log('problem with request: ' + e.message);
-    }
-    function on_connect(res){
-	//console.log('STATUS: ' + res.statusCode);
-	//console.log('HEADERS: ' + JSON.stringify(res.headers));
-	res.setEncoding('utf8');
-	var raw_data = '';
-	res.on('data', function (chunk) {
-		   //console.log('BODY: ' + chunk);
-		   raw_data = raw_data + chunk;
-	       });
-	// Parse JS and call callback_type callbacks.
-	res.on('end', function () {
-		   var json_data = JSON.parse(raw_data);
-		   anchor.last = json_data;
-		   var response = new bbop.golr.response(json_data);
-		   anchor.apply_callbacks(callback_type, [response, anchor]);
-	       });
-    }
-    //debugger;
-    // WARNING: This should actually be passed in by the context.
-    //var http = require('http');
-    var req = http.request(qurl, on_connect);
-    req.on('error', on_error);
-    
-    // write data to request body
-    //req.write('data\n');
-    //req.write('data\n');
-    req.end();
-    
-    return qurl;
-};
-/* 
- * Package: rhino.js
- * 
- * Namespace: bbop.golr.manager.rhino
- * 
- * Rhino BBOP manager for dealing with remote calls. Remember,
- * this is actually a "subclass" of <bbop.golr.manager>.
- * 
- * This may be madness.
- */
-
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'registry');
-bbop.core.require('bbop', 'golr', 'conf');
-bbop.core.require('bbop', 'golr', 'response');
-bbop.core.require('bbop', 'golr', 'manager');
-bbop.core.namespace('bbop', 'golr', 'manager', 'rhino');
-
-/*
- * Constructor: rhino
- * 
- * Contructor for the GOlr query manager; Rhino-style.
- * 
- * Beware that this version is a synchronous call.
- * 
- * Arguments:
- *  golr_loc - string url to GOlr server
- *  golr_conf_obj - a <bbop.golr.conf> object
- * 
- * Returns:
- *  golr manager object
- * 
- * See also:
- *  <bbop.golr.manager>
- */
-bbop.golr.manager.rhino = function (golr_loc, golr_conf_obj){
-    bbop.golr.manager.call(this, golr_loc, golr_conf_obj);
-    this._is_a = 'bbop.golr.manager.rhino';
-};
-bbop.core.extend(bbop.golr.manager.rhino, bbop.golr.manager);
-
-/*
- * Function: update
- *
- *  See the documentation in <golr_manager.js> on update to get more
- *  of the story. This override function adds functionality to Rhino.
- *
- * Parameters: 
- *  callback_type - callback type string
- *  rows - *[serially optional]* integer; the number of rows to return
- *  start - *[serially optional]* integer; the offset of the returned rows
- *
- * Returns:
- *  the query url (with any Rhino specific paramteters)
- * 
- * Also see:
- *  <get_query_url>
- */
-bbop.golr.manager.rhino.prototype.update = function(callback_type,
-						    rows, start){
-    // Get "parents" url first.
-    var parent_update = bbop.golr.manager.prototype.update;
-    var qurl = parent_update.call(this, callback_type, rows, start);
-
-    // 
-    var logger = new bbop.logger(this._is_a);
-    //this._logger = new bbop.logger(this._is_a);
-    logger.DEBUG = true;
-    function ll(str){ logger.kvetch(str); }
-
-    // Grab the data from the server and pick the right callback group
-    // accordingly.
-    var raw = readUrl(qurl); // in Rhino
-    var json_data = null;
-    if( raw && raw != '' ){
-	json_data = JSON.parse(raw);
-	if( json_data ){
-	    var response = new bbop.golr.response(json_data);
-	    this.apply_callbacks(callback_type, [response, this]);
-	}else{
-	    this.apply_callbacks('error', ['unparsable data', this]);
-	}
-    }else{
-	this.apply_callbacks('error', ['no data', this]);
-    }
-
-    return qurl;
-};
-
-/*
- * Function: fetch
- *
- * This is the synchronous data getter for Rhino--probably your best
- * bet right now for scripting.
- * 
- * Parameters:
- *  n/a 
- *
- * Returns:
- *  <bbop.golr.response> or null
- * 
- * Also see:
- *  <update>
- */
-bbop.golr.manager.rhino.prototype.fetch = function(){
-    
-    var qurl = this.get_query_url();
-
-    // Grab the data from the server and pick the right callback group
-    // accordingly.
-    var raw = readUrl(qurl); // in Rhino
-    var json_data = null;
-    var retval = null;
-    if( raw && raw != '' ){
-	json_data = JSON.parse(raw);
-	if( json_data ){
-	    var response = new bbop.golr.response(json_data);
-	    retval = response;
-	}
-    }
-
-    return retval;
-};
-
-/* 
  * Package: jquery.js
  * 
  * Namespace: bbop.golr.manager.jquery
@@ -10500,13 +12274,9 @@ bbop.golr.manager.rhino.prototype.fetch = function(){
  * parsing) even outside of a jQuery environment.
  */
 
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'registry');
-bbop.core.require('bbop', 'golr', 'conf');
-bbop.core.require('bbop', 'golr', 'response');
-bbop.core.require('bbop', 'golr', 'manager');
-bbop.core.namespace('bbop', 'golr', 'manager', 'jquery');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
+if ( typeof bbop.golr.manager == "undefined" ){ bbop.golr.manager = {}; }
 
 /*
  * Constructor: jquery
@@ -10816,409 +12586,53 @@ bbop.golr.faux_ajax = function (){
     };
 };
 /* 
- * Package: response.js
- * 
- * Namespace: bbop.rest.response
- * 
- * Generic BBOP handler for dealing with the gross parsing of
- * responses from a REST server. This is just an example pass-thru
- * handler that needs to be overridden (see subclasses).
- */
-
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'rest', 'response');
-
-/*
- * Constructor: response
- * 
- * Contructor for a REST query response object.
- * 
- * The constructor argument is an object, not a string.
- * 
- * Arguments:
- *  in_data - the JSON data (as object) returned from a request
- * 
- * Returns:
- *  rest response object
- */
-bbop.rest.response = function(in_data){
-    this._is_a = 'bbop.rest.response';
-
-    // The raw incoming document.
-    this._raw = in_data;
-
-    // Cache for repeated calls to okay().
-    this._okay = null;
-};
-
-/*
- * Function: raw
- * 
- * returns a pointer to the initial response object
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  object
- */
-bbop.rest.response.prototype.raw = function(){
-    return this._raw;
-};
-
-/*
- * Function: okay
- * 
- * Simple return verification of sane response from server.
- * 
- * Okay caches its return value.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  boolean
- */
-bbop.rest.response.prototype.okay = function(){
-
-    if( this._raw != null ){
-	this._okay = true;
-    }else{
-	this._okay = false;
-    }
-
-    return this._okay;
-};
-/* 
- * Package: json.js
- * 
- * Namespace: bbop.rest.response.json
- * 
- * Generic BBOP handler for dealing with the gross parsing of
- * responses from a REST JSON server.
- */
-
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'json');
-bbop.core.require('bbop', 'rest', 'response');
-bbop.core.namespace('bbop', 'rest', 'response', 'json');
-
-/*
- * Constructor: json
- * 
- * Contructor for a REST JSON response object.
- * 
- * The constructor argument is an object, not a string.
- * 
- * Arguments:
- *  json_data - the JSON data (as object) returned from a request
- * 
- * Returns:
- *  rest response object
- */
-bbop.rest.response.json = function(json_data){
-    bbop.rest.response.call(this);
-    this._is_a = 'bbop.rest.response.json';
-
-    // The raw incoming document.
-    this._raw_string = json_data;
-    this._okay = null;
-
-    try {
-	this._raw = bbop.json.parse(json_data);
-	this._okay = true;
-    }catch(e){
-	// Didn't make it.
-	this._raw = null;
-	this._okay = false;
-    }
-
-};
-bbop.core.extend(bbop.rest.response.json, bbop.rest.response);
-
-/*
- * Function: raw
- * 
- * returns a pointer to the parsed response object
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  raw response
- */
-bbop.rest.response.json.prototype.raw = function(){
-    return this._raw;
-};
-
-/*
- * Function: string
- * 
- * returns a string of the incoming response
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  raw response string
- */
-bbop.rest.response.json.prototype.string = function(){
-    return this._raw_string;
-};
-
-/*
- * Function: okay
- * 
- * Simple return verification of sane response from server.
- * 
- * Okay caches its return value.
- * 
- * Arguments:
- *  n/a
- * 
- * Returns:
- *  boolean
- */
-bbop.rest.response.prototype.okay = function(){
-
-    if( this._okay == null ){
-	this._okay = false;
-    }
-
-    return this._okay;
-};
-/* 
- * Package: manager.js
- * 
- * Namespace: bbop.rest.manager
- * 
- * Generic BBOP manager for dealing with basic generic REST calls.
- * This specific one is designed to be overridden by its subclasses.
- * This one pretty much just uses its incoming resource string as the data.
- * Mostly for testing purposes.
- * 
- * Both a <bbop.rest.response> (or clean error data) and the manager
- * itself (this as anchor) should be passed to the callbacks.
- */
-
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'registry');
-// Instance by instance.
-//bbop.core.require('bbop', 'rest', 'response');
-bbop.core.namespace('bbop', 'rest', 'manager');
-
-/*
- * Constructor: manager
- * 
- * Contructor for the REST manager
- * 
- * Arguments:
- *  response_parser - the response handler class to use for each call
- * 
- * Returns:
- *  rest manager object
- * 
- * See also:
- *  <bbop.registry>
- */
-bbop.rest.manager = function(response_handler){
-    bbop.registry.call(this, ['success', 'error']);
-    this._is_a = 'bbop.rest.manager';
-
-    // Get a good self-reference point.
-    var anchor = this;
-
-    // Per-manager logger.
-    this._logger = new bbop.logger(this._is_a);
-    //this._logger.DEBUG = true;
-    this._logger.DEBUG = false;
-    function ll(str){ anchor._logger.kvetch(str); }
-
-    // Handler instance.
-    this._response_handler = response_handler;
-
-    // The URL to query.
-    this._qurl = null;
-
-    // Whether or not to prevent ajax events from going.
-    // This may not be usable, or applicable, to all backends.
-    this._safety = false;
-
-    /*
-     * Function: debug
-     * 
-     * Turn on or off the verbose messages. Uses <bbop.logger>, so
-     * they should come out everywhere.
-     * 
-     * Parameters: 
-     *  p - *[optional]* true or false for debugging
-     *
-     * Returns: 
-     *  boolean; the current state of debugging
-     */
-    this.debug = function(p){
-	if( p == true || p == false ){
-	    this._logger.DEBUG = p;
-	    // TODO: add debug parameter a la include_highlighting
-	}
-	return this._logger.DEBUG;
-    };
-
-    // The main callback function called after a successful AJAX call in
-    // the update function.
-    this._run_success_callbacks = function(in_data){
-	ll('run success callbacks...');
-	//var response = anchor.(in_data);
-	var response = new anchor._response_handler(in_data);
-	anchor.apply_callbacks('success', [response, anchor]);
-    };
-
-    // This set is called when we run into a problem.
-    this._run_error_callbacks = function(in_data){
-	ll('run error callbacks...');
-	var response = new anchor._response_handler(in_data);
-	anchor.apply_callbacks('error', [response, anchor]);
-    };
-
-    /*
-     * Function: resource
-     *
-     * TODO
-     * 
-     * Parameters:
-     *  url - *[optional]* update resource target with string
-     *
-     * Returns:
-     *  the url
-     */
-    this.resource = function(url){
-	if( bbop.core.is_defined(url) ){
-	    anchor._qurl = url;
-	}
-	return anchor._qurl;
-    };
-
-    /*
-     * Function: get
-     *
-     * TODO
-     * 
-     * Parameters:
-     *  url - *[optional]* update resource target with string
-     *
-     * Returns:
-     *  the url
-     * 
-     * See also:
-     *  <update>
-     */
-    this.get = function(url){
-	if( bbop.core.is_defined(url) ){
-	    anchor.resource(url);	    
-	}
-	return anchor.update('success');
-    };
-
-    //  * Function: error
-    //  *
-    //  * TODO
-    //  * 
-    //  * Parameters:
-    //  *  n/a
-    //  *
-    //  * Returns:
-    //  *  the query url (with the jQuery callback specific parameters)
-    //  * 
-    //  * See also:
-    //  *  <update>
-    //  */
-    // this.error = function(){
-    // 	return anchor.update('error');
-    // };
-};
-bbop.core.extend(bbop.rest.manager, bbop.registry);
-
-/*
- * Function: update
- *
- * The user code to select the type of update (and thus the type
- * of callbacks to be called on data return).
- * 
- * Parameters: 
- *  callback_type - callback type string; 'success' and 'error'
- *
- * Returns:
- *  the query url
- * 
- * Also see:
- *  <get_query_url>
- */
-bbop.rest.manager.prototype.update = function(callback_type){
-
-    // Conditional merging of the remaining variant parts.
-    var qurl = this.resource();
-    if( callback_type == 'success' ){
-	this._run_success_callbacks(qurl);
-    }else if( callback_type == 'error' ){
-	this._run_error_callbacks(qurl);
-    }else{
-    	throw new Error("Unknown callback_type: " + callback_type);
-    }
-    
-    //ll('qurl: ' + qurl);
-    return qurl;
-};
-/* 
  * Package: rhino.js
  * 
- * Namespace: bbop.rest.manager.rhino
+ * Namespace: bbop.golr.manager.rhino
  * 
  * Rhino BBOP manager for dealing with remote calls. Remember,
- * this is actually a "subclass" of <bbop.rest.manager>.
+ * this is actually a "subclass" of <bbop.golr.manager>.
  * 
  * This may be madness.
  */
 
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'registry');
-bbop.core.require('bbop', 'rest', 'response');
-bbop.core.require('bbop', 'rest', 'manager');
-bbop.core.namespace('bbop', 'rest', 'manager', 'rhino');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
+if ( typeof bbop.golr.manager == "undefined" ){ bbop.golr.manager = {}; }
 
 /*
  * Constructor: rhino
  * 
- * Contructor for the REST query manager; Rhino-style.
+ * Contructor for the GOlr query manager; Rhino-style.
  * 
- * Be aware that this version is a synchronous call.
+ * Beware that this version is a synchronous call.
  * 
  * Arguments:
- *  response_handler
+ *  golr_loc - string url to GOlr server
+ *  golr_conf_obj - a <bbop.golr.conf> object
  * 
  * Returns:
- *  REST manager object
+ *  golr manager object
  * 
  * See also:
- *  <bbop.rest.manager>
+ *  <bbop.golr.manager>
  */
-bbop.rest.manager.rhino = function(response_handler){
-    bbop.rest.manager.call(this, response_handler);
-    this._is_a = 'bbop.rest.manager.rhino';
+bbop.golr.manager.rhino = function (golr_loc, golr_conf_obj){
+    bbop.golr.manager.call(this, golr_loc, golr_conf_obj);
+    this._is_a = 'bbop.golr.manager.rhino';
 };
-bbop.core.extend(bbop.rest.manager.rhino, bbop.rest.manager);
+bbop.core.extend(bbop.golr.manager.rhino, bbop.golr.manager);
 
 /*
  * Function: update
  *
- *  See the documentation in <bbop/rest/manager.js> on update to get more
+ *  See the documentation in <golr_manager.js> on update to get more
  *  of the story. This override function adds functionality to Rhino.
  *
  * Parameters: 
  *  callback_type - callback type string
+ *  rows - *[serially optional]* integer; the number of rows to return
+ *  start - *[serially optional]* integer; the offset of the returned rows
  *
  * Returns:
  *  the query url (with any Rhino specific paramteters)
@@ -11226,19 +12640,32 @@ bbop.core.extend(bbop.rest.manager.rhino, bbop.rest.manager);
  * Also see:
  *  <get_query_url>
  */
-bbop.rest.manager.rhino.prototype.update = function(callback_type){
+bbop.golr.manager.rhino.prototype.update = function(callback_type,
+						    rows, start){
+    // Get "parents" url first.
+    var parent_update = bbop.golr.manager.prototype.update;
+    var qurl = parent_update.call(this, callback_type, rows, start);
 
-    var qurl = this.resource();
+    // 
+    var logger = new bbop.logger(this._is_a);
+    //this._logger = new bbop.logger(this._is_a);
+    logger.DEBUG = true;
+    function ll(str){ logger.kvetch(str); }
 
     // Grab the data from the server and pick the right callback group
     // accordingly.
-    var raw_str = readUrl(qurl); // in Rhino
-    if( raw_str && raw_str != '' ){
-	var response = new this._response_handler(raw_str);
-	this.apply_callbacks(callback_type, [response, this]);
+    var raw = readUrl(qurl); // in Rhino
+    var json_data = null;
+    if( raw && raw != '' ){
+	json_data = JSON.parse(raw);
+	if( json_data ){
+	    var response = new bbop.golr.response(json_data);
+	    this.apply_callbacks(callback_type, [response, this]);
+	}else{
+	    this.apply_callbacks('error', ['unparsable data', this]);
+	}
     }else{
-	//this.apply_callbacks('error', ['no data', this]);
-	throw new Error('explody');
+	this.apply_callbacks('error', ['no data', this]);
     }
 
     return qurl;
@@ -11254,26 +12681,26 @@ bbop.rest.manager.rhino.prototype.update = function(callback_type){
  *  n/a 
  *
  * Returns:
- *  a <bbop.rest.response> or null
+ *  <bbop.golr.response> or null
  * 
  * Also see:
  *  <update>
  */
-bbop.rest.manager.rhino.prototype.fetch = function(url){
+bbop.golr.manager.rhino.prototype.fetch = function(){
     
-    var retval = null;
+    var qurl = this.get_query_url();
 
-    // Update the url if necessary.
-    var qurl = this.resource(url);
-    
     // Grab the data from the server and pick the right callback group
     // accordingly.
-    var raw_str = readUrl(qurl); // in Rhino
-    if( raw_str && raw_str != '' ){
-	retval = new this._response_handler(raw_str);
-    }else{
-	//this.apply_callbacks('error', ['no data', this]);
-	throw new Error('explody');
+    var raw = readUrl(qurl); // in Rhino
+    var json_data = null;
+    var retval = null;
+    if( raw && raw != '' ){
+	json_data = JSON.parse(raw);
+	if( json_data ){
+	    var response = new bbop.golr.response(json_data);
+	    retval = response;
+	}
     }
 
     return retval;
@@ -11282,133 +12709,210 @@ bbop.rest.manager.rhino.prototype.fetch = function(url){
 /* 
  * Package: ringo.js
  * 
- * Namespace: bbop.rest.manager.ringo
+ * Namespace: bbop.golr.manager.ringo
  * 
- * RingoJS BBOP manager for dealing with remote calls. Remember,
- * this is actually a "subclass" of <bbop.rest.manager>.
- * 
- * This may be madness.
+ * Ringo BBOP manager for dealing with remote GOlr calls. Remember,
+ * this is actually a "subclass" of <bbop.golr.manager>.
  */
 
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'registry');
-bbop.core.require('bbop', 'rest', 'response');
-bbop.core.require('bbop', 'rest', 'manager');
-bbop.core.namespace('bbop', 'rest', 'manager', 'ringo');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
+if ( typeof bbop.golr.manager == "undefined" ){ bbop.golr.manager = {}; }
 
 /*
  * Constructor: ringo
  * 
- * Contructor for the REST query manager; RingoJS-style.
- * 
- * Be aware that this version is a synchronous call.
+ * Contructor for the GOlr query manager; Ringo flavor. YMMV.
  * 
  * Arguments:
- *  response_handler
+ *  golr_loc - string url to GOlr server;
+ *  golr_conf_obj - a <bbop.golr.conf> object
  * 
  * Returns:
- *  REST manager object
+ *  golr manager object
  * 
  * See also:
- *  <bbop.rest.manager>
+ *  <bbop.golr.manager>
  */
-bbop.rest.manager.ringo = function(response_handler){
-    bbop.rest.manager.call(this, response_handler);
-    this._is_a = 'bbop.rest.manager.ringo';
+bbop.golr.manager.ringo = function (golr_loc, golr_conf_obj){
 
-    // Grab an http client.
+    // We are a registry like this:
+    bbop.golr.manager.call(this, golr_loc, golr_conf_obj);
+    this._is_a = 'bbop.golr.manager.ringo';
+
+    // Grab the http client.
     this._http_client = require("ringo/httpclient");
 };
-bbop.core.extend(bbop.rest.manager.ringo, bbop.rest.manager);
+bbop.core.extend(bbop.golr.manager.ringo, bbop.golr.manager);
 
 /*
  * Function: update
  *
- *  See the documentation in <bbop.rest.manager.js> on update to get more
- *  of the story. This override function adds functionality to RingoJS.
+ *  See the documentation in <golr_manager.js> on update to get more
+ *  of the story. This override function adds functionality to Ringo.
  *
  * Parameters: 
  *  callback_type - callback type string
+ *  rows - *[serially optional]* integer; the number of rows to return
+ *  start - *[serially optional]* integer; the offset of the returned rows
  *
  * Returns:
- *  the query url (with any RingoJS specific paramteters)
+ *  the query url (with any Ringo specific paramteters)
  * 
  * Also see:
  *  <get_query_url>
  */
-bbop.rest.manager.ringo.prototype.update = function(callback_type){
+bbop.golr.manager.ringo.prototype.update = function(callback_type,
+						    rows, start){
+    // Get "parents" url first.
+    var parent_update = bbop.golr.manager.prototype.update;
+    var qurl = parent_update.call(this, callback_type, rows, start);
+
+    // // 
+    // var logger = new bbop.logger(this._is_a);
+    // //this._logger = new bbop.logger(this._is_a);
+    // logger.DEBUG = true;
+    // function ll(str){ logger.kvetch(str); }
 
     var anchor = this;
-    var qurl = anchor.resource();
-    //console.log('qurl: ' + qurl);
-
+    
     // Grab the data from the server and pick the right callback group
     // accordingly.
-    //anchor._callbacker = function(exchange){
     anchor._callbacker = function(data, status, contentType, exchange){
-	// console.log('callback_type: ' + callback_type);
-	// console.log('data: ' + data);
-	// console.log('status: ' + status);
-	// console.log('contentType: ' + contentType);
-	// console.log('exchange: ' + exchange);
 
+	// 
 	var raw_str = exchange.content;
-	//var raw_str = data;
+	var json_data = null;
 	if( raw_str && raw_str != '' ){
-	    var response = new anchor._response_handler(raw_str);
-	    // console.log('response okay?: ' + response.okay());
-	    anchor.apply_callbacks(callback_type, [response, this]);
+	    json_data = JSON.parse(raw_str);
+	    if( json_data ){
+		var response = new bbop.golr.response(json_data);
+		anchor.apply_callbacks(callback_type, [response, this]);
+	    }else{
+		this.apply_callbacks('error', ['unparsable data', this]);
+	    }
 	}else{
-	    //this.apply_callbacks('error', ['no data', this]);
-	    throw new Error('explody');
+	    this.apply_callbacks('error', ['no data', this]);
 	}
     };
-    // In RingoJS.
     var exchange = this._http_client.get(qurl, null, anchor._callbacker);
-    // console.log('exchange.done: ' + exchange.done);
-
+    
     return qurl;
 };
+/* 
+ * Package: nodejs.js
+ * 
+ * Namespace: bbop.golr.manager.nodejs
+ * 
+ * NodeJS BBOP manager for dealing with remote calls. Remember,
+ * this is actually a "subclass" of <bbop.golr.manager>.
+ * 
+ * This may be madness.
+ */
+
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.golr == "undefined" ){ bbop.golr = {}; }
+if ( typeof bbop.golr.manager == "undefined" ){ bbop.golr.manager = {}; }
 
 /*
- * Function: fetch
+ * Constructor: nodejs
+ * 
+ * Contructor for the GOlr query manager; NodeJS flavor. YMMV.
+ * 
+ * Arguments:
+ *  golr_loc - string url to GOlr server;
+ *  golr_conf_obj - a <bbop.golr.conf> object
+ * 
+ * Returns:
+ *  golr manager object
+ * 
+ * See also:
+ *  <bbop.golr.manager>
+ */
+bbop.golr.manager.nodejs = function (golr_loc, golr_conf_obj){
+//function GOlrManager(in_args){
+    // We are a registry like this:
+    bbop.golr.manager.call(this, golr_loc, golr_conf_obj);
+    this._is_a = 'bbop.golr.manager.nodejs';
+
+    // Get a good self-reference point.
+    //var anchor = this;
+
+    // Per-manager logger.
+    //this._ll = ll;
+
+    // //
+    // ll('Alive.');
+
+};
+bbop.core.extend(bbop.golr.manager.nodejs, bbop.golr.manager);
+
+/*
+ * Function: update
  *
- * This is the synchronous data getter for RingoJS--probably your best
- * bet right now for scripting.
- * 
- * NOTE:
- * 
- * Parameters:
- *  url - url to get the data from
+ *  See the documentation in <golr_manager.js> on update to get more
+ *  of the story. This override function adds functionality to NodeJS.
+ *
+ * Parameters: 
+ *  callback_type - callback type string
+ *  rows - *[serially optional]* integer; the number of rows to return
+ *  start - *[serially optional]* integer; the offset of the returned rows
  *
  * Returns:
- *  a <bbop.rest.response> or null
+ *  the query url (with any NodeJS specific paramteters)
  * 
  * Also see:
- *  <update>
+ *  <get_query_url>
  */
-bbop.rest.manager.ringo.prototype.fetch = function(url){
+bbop.golr.manager.nodejs.prototype.update = function(callback_type,
+						     rows, start){
+    // Get "parents" url first.
+    var parent_update = bbop.golr.manager.prototype.update;
+    var qurl = parent_update.call(this, callback_type, rows, start);
+
+    // 
+    var logger = new bbop.logger(this._is_a);
+    //this._logger = new bbop.logger(this._is_a);
+    logger.DEBUG = true;
+    function ll(str){ logger.kvetch(str); }
+
+    var anchor = this;
+    this.last = null;
     
-    var retval = null;
-
-    var qurl = this.resource(url);
-
-    // Grab the data from the server and pick the right callback group
-    // accordingly.
-    var exchange = this._http_client.get(qurl); // in RingoJS
-    // BUG/TODO: until I figure out sync.
-    var raw_str = exchange.content;
-    if( raw_str && raw_str != '' ){
-	retval = new this._response_handler(raw_str);
-    }else{
-	//this.apply_callbacks('error', ['no data', this]);
-	throw new Error('explody');
+    //
+    function on_error(e) {
+	console.log('problem with request: ' + e.message);
     }
-
-    return retval;
+    function on_connect(res){
+	//console.log('STATUS: ' + res.statusCode);
+	//console.log('HEADERS: ' + JSON.stringify(res.headers));
+	res.setEncoding('utf8');
+	var raw_data = '';
+	res.on('data', function (chunk) {
+		   //console.log('BODY: ' + chunk);
+		   raw_data = raw_data + chunk;
+	       });
+	// Parse JS and call callback_type callbacks.
+	res.on('end', function () {
+		   var json_data = JSON.parse(raw_data);
+		   anchor.last = json_data;
+		   var response = new bbop.golr.response(json_data);
+		   anchor.apply_callbacks(callback_type, [response, anchor]);
+	       });
+    }
+    //debugger;
+    // WARNING: This should actually be passed in by the context.
+    var http = require('http');
+    var req = http.request(qurl, on_connect);
+    req.on('error', on_error);
+    
+    // write data to request body
+    //req.write('data\n');
+    //req.write('data\n');
+    req.end();
+    
+    return qurl;
 };
-
 /*
  * Package: clickable_object.js
  * 
@@ -11421,10 +12925,9 @@ bbop.rest.manager.ringo.prototype.fetch = function(url){
  * This is a method, not a constructor.
  */
 
-bbop.core.require('bbop', 'core');
-//bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'html');
-bbop.core.namespace('bbop', 'widget', 'display', 'clickable_object');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
 
 /*
  * Method: clickable_object
@@ -11485,10 +12988,9 @@ bbop.widget.display.clickable_object = function(label, source, id){
  * Note: this is a method, not a constructor.
  */
 
-bbop.core.require('bbop', 'core');
-//bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'html');
-bbop.core.namespace('bbop', 'widget', 'display', 'text_button_sim');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
 
 /*
  * Method: text_button_sim
@@ -11544,10 +13046,10 @@ bbop.widget.display.text_button_sim = function(label, title, id, add_attrs){
  * Note: this is a collection of methods, not a constructor/object.
  */
 
-bbop.core.require('bbop', 'core');
-//bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'html');
-bbop.core.namespace('bbop', 'widget', 'display', 'button_templates');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
+if ( typeof bbop.widget.display.button_templates == "undefined" ){ bbop.widget.display.button_templates = {}; }
 
 /*
  * Method: field_download
@@ -11983,9 +13485,9 @@ bbop.widget.display.button_templates.flexible_download = function(label, count,
  * Subclass of <bbop.html.tag>.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'html');
-bbop.core.namespace('bbop', 'widget', 'display', 'results_table_by_class_conf');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
 
 /*
  * Function: results_table_by_class_conf
@@ -12393,9 +13895,9 @@ bbop.widget.display.results_table_by_class = function(cclass,
  * Subclass of <bbop.html.tag>.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'html');
-bbop.core.namespace('bbop', 'widget', 'display', 'two_column_layout');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
 
 /*
  * Constructor: two_column_layout
@@ -12444,13 +13946,9 @@ bbop.widget.display.two_column_layout.prototype = new bbop.html.tag;
  * pane genre.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-//bbop.core.require('bbop', 'model');
-//bbop.core.require('bbop', 'model', 'graph', 'bracket');
-bbop.core.require('bbop', 'html');
-bbop.core.require('bbop', 'golr', 'manager', 'jquery');
-bbop.core.namespace('bbop', 'widget', 'display', 'filter_shield');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
 
 /*
  * Constructor: filter_shield
@@ -12650,12 +14148,9 @@ bbop.widget.display.filter_shield = function(spinner_img_src){
  *  <search_pane.js>
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'widget', 'display', 'clickable_object');
-bbop.core.require('bbop', 'widget', 'display', 'results_table_by_class_conf');
-bbop.core.require('bbop', 'widget', 'display', 'two_column_layout');
-bbop.core.namespace('bbop', 'widget', 'live_search');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
 
 /*
  * Constructor: live_search
@@ -14325,10 +15820,8 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
  * This is a completely self-contained UI.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'html');
-bbop.core.namespace('bbop', 'widget', 'spinner');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: spinner
@@ -14544,10 +16037,8 @@ bbop.widget.spinner = function(host_elt_id, img_src, argument_hash){
 
 // YANKED: ...apply the classes "even_row" and "odd_row" to the table.
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'widget', 'display', 'text_button_sim');
-bbop.core.require('bbop', 'widget', 'spinner');
-bbop.core.namespace('bbop', 'widget', 'filter_table');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Method: filter_table
@@ -14709,13 +16200,8 @@ bbop.widget.filter_table = function(elt_id, table_id, img_src,
  * This is a completely self-contained UI and manager.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'model');
-bbop.core.require('bbop', 'model', 'bracket', 'graph');
-bbop.core.require('bbop', 'html');
-bbop.core.require('bbop', 'golr', 'manager', 'jquery');
-bbop.core.namespace('bbop', 'widget', 'browse');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: browse
@@ -15018,11 +16504,8 @@ bbop.core.extend(bbop.widget.browse, bbop.golr.manager.jquery);
  * This is a completely self-contained UI and manager.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'template');
-bbop.core.require('bbop', 'golr', 'manager', 'jquery');
-bbop.core.namespace('bbop', 'widget', 'search_box');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: search_box
@@ -15193,10 +16676,8 @@ bbop.core.extend(bbop.widget.search_box, bbop.golr.manager.jquery);
  * This is a completely self-contained UI.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'html');
-bbop.core.namespace('bbop', 'widget', 'dialog');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: dialog
@@ -15277,13 +16758,8 @@ bbop.widget.dialog = function(item, in_argument_hash){
  * This is a completely self-contained UI and manager.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-//bbop.core.require('bbop', 'model');
-//bbop.core.require('bbop', 'model', 'graph', 'bracket');
-bbop.core.require('bbop', 'html');
-bbop.core.require('bbop', 'golr', 'manager', 'jquery');
-bbop.core.namespace('bbop', 'widget', 'term_shield');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: term_shield
@@ -15458,13 +16934,8 @@ bbop.core.extend(bbop.widget.term_shield, bbop.golr.manager.jquery);
  * This is a completely self-contained UI and manager.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-//bbop.core.require('bbop', 'model');
-//bbop.core.require('bbop', 'model', 'graph', 'bracket');
-bbop.core.require('bbop', 'html');
-bbop.core.require('bbop', 'golr', 'manager', 'jquery');
-bbop.core.namespace('bbop', 'widget', 'list_select_shield');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: list_select_shield
@@ -15695,13 +17166,8 @@ bbop.widget.list_select_shield = function(in_argument_hash){
  * This is a completely self-contained UI and manager.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-//bbop.core.require('bbop', 'model');
-//bbop.core.require('bbop', 'model', 'graph', 'bracket');
-bbop.core.require('bbop', 'html');
-bbop.core.require('bbop', 'golr', 'manager', 'jquery');
-bbop.core.namespace('bbop', 'widget', 'drop_select_shield');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: drop_select_shield
@@ -15911,11 +17377,8 @@ bbop.widget.drop_select_shield = function(in_argument_hash){
  * not to display the "more" option for the filters.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'html');
-bbop.core.require('bbop', 'golr', 'manager', 'jquery');
-bbop.core.namespace('bbop', 'widget', 'search_pane');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: search_pane
@@ -16330,11 +17793,8 @@ bbop.core.extend(bbop.widget.search_pane, bbop.golr.manager.jquery);
  * log.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'html');
-//bbop.core.require('bbop', 'golr', 'manager', 'jquery');
-bbop.core.namespace('bbop', 'widget', 'repl');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: repl
@@ -16772,12 +18232,9 @@ bbop.widget.repl = function(interface_id, initial_commands, in_argument_hash){
 
 
 // Module and namespace checking.
-//bbop.core.require('Raphael');
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'model');
-bbop.core.require('bbop', 'model', 'tree');
-bbop.core.namespace('bbop', 'widget', 'phylo_old');
-//bbop.core.namespace('bbop', 'widget', 'phylo_old', 'renderer');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.phylo_old == "undefined" ){ bbop.widget.phylo_old = {}; }
 
 ///
 /// PNodes (phylonode) object.
@@ -17788,8 +19245,9 @@ bbop.widget.phylo_old.renderer = function (element_id, info_box_p){
     };
 
 };
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'widget', 'phylo_tree');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.phylo_tree == "undefined" ){ bbop.widget.phylo_tree = {}; }
 
 (function() {
 
@@ -17864,7 +19322,9 @@ function renderer(parent, config){
         border: "1px solid black",
         "transition-property": "top, left",
         "transition-duration": this.config.transition_time,
-        "transition-timing-function": "ease-in-out, ease-in-out"
+        "transition-timing-function": "ease-in-out, ease-in-out",
+        "box-sizing": "content-box",
+        "-moz-box-sizing": "content-box"
     };
 
     this.leaf_style = {
@@ -17903,7 +19363,9 @@ function renderer(parent, config){
         "white-space": "nowrap",
         "transition-property": "top, left",
         "transition-duration": this.config.transition_time,
-        "transition-timing-function": "ease-in-out, ease-in-out"
+        "transition-timing-function": "ease-in-out, ease-in-out",
+        "box-sizing": "content-box",
+        "-moz-box-sizing": "content-box"
     };
 
     if (this.config.leaf_border > 0) {
@@ -18150,6 +19612,10 @@ renderer.prototype._do_layout = function() {
 // call this when the width of the tree's parent element changes
 renderer.prototype.width_changed = function(parent_width) {
     var leaves = this.leaves();
+    var avail_width = ( parent_width 
+                        - (this.config.node_size / 2)
+                        - (this.config.parent_padding * 2)
+                        - this.config.leaf_margin );
 
     var min_width = Number.MAX_VALUE;
     for (var li = 0; li < leaves.length; li++) {
@@ -18162,14 +19628,10 @@ renderer.prototype.width_changed = function(parent_width) {
         // all the potential widths we calculate here.
         var potential_width =
             // dividing px by 100 because px is in percentage units
-            (parent_width - phynode.width()) / (phynode.px / 100)
+            (avail_width - phynode.width()) / (phynode.px / 100)
         min_width = Math.min(min_width, potential_width);
     }
-    var new_width = Math.max(0, ( min_width
-				  - (this.config.node_size / 2)
-				  - (this.config.parent_padding * 2)
-                                  - this.config.leaf_margin ) );
-    this.container.style.width = new_width + "px";
+    this.container.style.width = Math.max(0, min_width | 0) + "px";
 };
 
 // hides the subtree under the given node_id; for that node,
@@ -18568,9 +20030,9 @@ function sum(list) {
 }
 
 })();
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'widget', 'phylo_tree');
-bbop.core.namespace('bbop', 'widget', 'phylo');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.phylo == "undefined" ){ bbop.widget.phylo = {}; }
 
 (function() {
 
@@ -18586,7 +20048,7 @@ function renderer(parent, golr_loc, golr_conf, config) {
         // vertical space between the contents of adjacent rows
         row_spacing: 2,
         font: "Helvetica, Arial, sans-serif",
-        mat_cell_width: 22,
+        mat_cell_width: 15,
         transition_time: "0.8s"
     };
 
@@ -18599,7 +20061,6 @@ function renderer(parent, golr_loc, golr_conf, config) {
         "phylo_graph_json",
         "score"
     ].join(",");
-    //].join("%2C");
     this.ann_facet_list = [
         "id",
         "bioentity",
@@ -18609,8 +20070,6 @@ function renderer(parent, golr_loc, golr_conf, config) {
         "annotation_class_list_map",
         "score"
     ].join(",");
-    // ].join("%2C");
-    //this.ann_facet_list = "*%2Cscore";
 
     var golr = new bbop.golr.manager.jquery(golr_loc, golr_conf);
     golr.set_personality('bbop_bio');
@@ -18686,40 +20145,68 @@ renderer.prototype.match_pnodes = function(pnodes, bioentities) {
             //console.log("no non-panther IDs for " + pnodes[n].id);
         }
     }
-    console.log(pnodes.length + " phylo nodes");
-    console.log(bioentities.length + " bioentities");
+    //console.log(pnodes.length + " phylo nodes");
+    //console.log(bioentities.length + " bioentities");
     
-    console.log(bioents_matched + " matched");
+    //console.log(bioents_matched + " matched");
     return bioents_by_pthr_id;
 };
 
 renderer.prototype.show_pgraph = function(pgraph) {
+    var self = this;
     this.parent = ( ( "string" == typeof this.parent )
 		    ? document.getElementById(this.parent)
 		    : this.parent );
+
     jQuery(this.parent).empty();
 
-    var parent_width = jQuery(this.parent).width();
-
-    var tree_container = document.createElement("div");
-    tree_container.style = "position:absolute; top: 0px; bottom: 100%; left: 0px;";
-    
-    var mat_container = document.createElement("div");
-    mat_container.style = "position:absolute; top: 0px; bottom: 100%;";
-
-    var col_count = 10;
-    var coldescs = new Array(col_count);
-    for (var ci = 0; ci < col_count; ci++) {
-        coldescs[ci] = "C" + ci;
+    var parentPos = getStyle(this.parent, "position");
+    if (! (("absolute" == parentPos) || ("relative" == parentPos))) {
+        this.parent.style.position = "relative";
     }
-    var mat_width = col_count * this.config.mat_cell_width;
-    tree_container.style.width = (parent_width - mat_width) + "px";
-    mat_container.style.width = mat_width + "px";
-    mat_container.style.left = (parent_width - mat_width) + "px";
 
-    this.parent.appendChild(tree_container);
-    this.parent.appendChild(mat_container);
-    var tree_renderer = new bbop.widget.phylo_tree.renderer(tree_container, {
+    this.tree_container = document.createElement("div");
+    this.tree_container.style.cssText = "position: absolute; top: 0px; bottom: 100%; left: 0px;";
+    
+    this.mat_container = document.createElement("div");
+    this.mat_container.style.cssText = "position: absolute; top: 0px; bottom: 100%;";
+
+    var all_go_terms = {};
+    var go_term_list = [];
+    var node_go_annots = {};
+    for (var nid in this.bioentity_map) {
+        var bioent = this.bioentity_map[nid];
+        var annots = JSON.parse(bioent.annotation_class_list_map);
+        node_go_annots[nid] = annots;
+        for (var goterm in annots) {
+            var term_desc = all_go_terms[goterm];
+            if (term_desc === undefined) {
+                term_desc = {
+                    count: 0,
+                    id: goterm,
+                    name: annots[goterm]
+                };
+                all_go_terms[goterm] = term_desc;
+                go_term_list.push(term_desc);
+            }
+            term_desc.count += 1;
+        }            
+    }
+
+    go_term_list.sort( function(a, b) { return b.count - a.count; } );
+    var coldescs = go_term_list.map( function(x) { return x.id; } );
+    //console.log(coldescs);
+
+    var mat_width = coldescs.length * this.config.mat_cell_width;
+    var tree_width = 500;
+    this.tree_container.style.width = tree_width + "px";
+    this.mat_container.style.width = mat_width + "px";
+    this.mat_container.style.left = tree_width + "px";
+    //this.parent.style.width = (tree_width + mat_width) + "px";
+
+    this.parent.appendChild(this.tree_container);
+    this.parent.appendChild(this.mat_container);
+    var tree_renderer = new bbop.widget.phylo_tree.renderer(this.tree_container, {
         box_height: this.config.row_height,
         box_spacing: this.config.row_spacing,
         leaf_font: this.config.font,
@@ -18735,14 +20222,13 @@ renderer.prototype.show_pgraph = function(pgraph) {
     var edges = pgraph.edges;
     //console.log(nodes.length + " nodes");
     //console.log(edges.length + " edges");
-
-    for (var i = 0; i < nodes.length; i++) {
+    function node_label(node) {
         var bioe =
-            nodes[i].id in this.bioentity_map ?
-            this.bioentity_map[nodes[i].id] :
+            node.id in self.bioentity_map ?
+            self.bioentity_map[node.id] :
             null;
 
-        var label = nodes[i].lbl;
+        var label = node.lbl;
         // abbreviate genus
         if (bioe) {
             var taxon_words = [];
@@ -18754,9 +20240,13 @@ renderer.prototype.show_pgraph = function(pgraph) {
             }
             label = taxon_words.join(" ") + ":" + bioe.bioentity_label;
         }
+        return label
+    }
+        
 
+    for (var i = 0; i < nodes.length; i++) {
         tree_renderer.add_node(nodes[i].id,
-                               label,
+                               node_label(nodes[i]),
                                nodes[i].meta);
     }
 
@@ -18770,7 +20260,6 @@ renderer.prototype.show_pgraph = function(pgraph) {
         return parseInt(a.meta.layout_index) - parseInt(b.meta.layout_index);
     });
 
-    var self = this;
     tree_renderer.node_clicked = function(node, node_elem) {
         if (tree_renderer.subtree_hidden(node.id)) {
             tree_renderer.show_subtree(node.id);
@@ -18834,22 +20323,35 @@ renderer.prototype.show_pgraph = function(pgraph) {
     this.tree_renderer = tree_renderer;
     this.render_tree();
 
-    var node_id_list = nodes.map(function(x) { return x.id });
-    
-    function cell_renderer(cell, row, col) {
-        cell.style.backgroundColor = (Math.random() > 0.8) ? "#aaa" : "#fff";
+    var node_id_list = tree_renderer.leaves().map(function(x) { return x.id });
+    var node_id_map = {};
+    for (var i = 0; i < nodes.length; i++) {
+        node_id_map[nodes[i].id] = nodes[i];
     }
-    var mat_renderer = new bbop.widget.matrix.renderer(mat_container,
-                                                       node_id_list,
-                                                       coldescs,
-                                                       cell_renderer,
-                                                       {
-                                                           cell_width: this.config.mat_cell_width,
-                                                           cell_height: this.config.row_height + 2,
-                                                           header_height: 0,
-                                                           show_headers: false,
-                                                           transition_time: this.config.transition_time
-                                                       });
+
+    function cell_renderer(cell, row, col) {
+        var node_go = node_go_annots[row];
+        if ((node_go !== undefined) && (col in node_go)) {
+            var cell = document.createElement("div");
+            cell.style.backgroundColor = "#555";
+            cell.title =
+                node_label(node_id_map[row]) + " - " + all_go_terms[col].name;
+            return cell;
+        }
+        return null;
+    }
+    
+    var mat_config = {
+        cell_width: this.config.mat_cell_width,
+        cell_height: this.config.row_height + 2,
+        header_height: 0,
+        show_headers: false,
+        transition_time: this.config.transition_time
+    };
+    var mat_renderer =
+        new bbop.widget.matrix.renderer(this.mat_container, node_id_list,
+                                        coldescs, cell_renderer, mat_config);
+
     var leaf_id_list = tree_renderer.leaves().map(
         function(x) { return x.id }
     );
@@ -18921,10 +20423,19 @@ renderer.prototype.render_tree = function() {
 
 };
 
+function getStyle(el, styleProp) {
+    if (el.currentStyle) {
+        var y = el.currentStyle[styleProp];
+    } else if (window.getComputedStyle) {
+        var y = window.getComputedStyle(el,null).getPropertyValue(styleProp);
+    }
+    return y;
+}
+
 })();
-bbop.core.require('bbop', 'core');
-//bbop.core.require('jQuery');
-bbop.core.namespace('bbop', 'widget', 'matrix');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
+if ( typeof bbop.widget.matrix == "undefined" ){ bbop.widget.matrix = {}; }
 
 (function() {
 
@@ -19000,31 +20511,88 @@ function renderer(parent, row_descriptors, col_descriptors,
     this.rowindex_map = Array(row_descriptors.length);
     //colindex_map: displayed col index -> matrix col index
     this.colindex_map = Array(col_descriptors.length);
-    //create the header row
+    this.grid_vert = [];
+    this.grid_horiz = [];
+
+    var vert_class = css_prefix + "_vert";
+    //create vertical grid lines
     for (var i = 0; i < col_descriptors.length; i++) {
-        var cell = document.createElement("div");
-        cell.className = header_class;
-        cell.title = col_descriptors[i];
+        var gridline = document.createElement("div");
+        gridline.className = vert_class;
+        gridline.style.top = "0px";
+        this.parent.appendChild(gridline);
+        this.grid_vert.push(gridline);
+    }
+    this.first_vert_gridline = document.createElement("div");
+    this.first_vert_gridline.className = vert_class;
+    this.first_vert_gridline.style.cssText = [
+        "top: 0px;", "width: 0px;", "left: 0px;",
+        "margin-left: 0px;", "margin-right: 0px;",
+        "padding-left: 0px;", "padding-right: 0px;"
+    ].join("\n");
+    this.parent.appendChild(this.first_vert_gridline);
+
+    var horiz_class = css_prefix + "_horiz";
+    //create horizontal grid lines
+    for (var i = 0; i < row_descriptors.length; i++) {
+        var gridline = document.createElement("div");
+        gridline.className = horiz_class;
+        gridline.style.left = "0px";
+        gridline.style.top = ( (this.config.show_headers ?
+                                this.config.header_height : 0)
+                               + (i * this.config.cell_height) ) + "px";
+        this.parent.appendChild(gridline);
+        this.grid_horiz.push(gridline);
+    }
+    this.first_horiz_gridline = document.createElement("div");
+    this.first_horiz_gridline.className = horiz_class;
+    this.first_horiz_gridline.style.cssText = [
+        "top: 0px;", "height: 0px;", "left: 0px;",
+        "margin-top: 0px;", "margin-bottom: 0px;",
+        "padding-top: 0px;", "padding-bottom: 0px;"
+    ].join("\n");
+    this.parent.appendChild(this.first_horiz_gridline);
+    if (this.config.show_headers) {
+        this.header_gridline = document.createElement("div");
+        this.header_gridline.className = horiz_class;
+        this.header_gridline.style.cssText = [
+            "top: " + ( this.config.header_height 
+                        - this.config.cell_border ) + "px;",
+            "height: 0px;", "left: 0px;",
+            //"margin-bottom: 0px;",
+            "padding-top: 0px;", "padding-bottom: 0px;"
+        ].join("\n");
+        this.parent.appendChild(this.header_gridline);
+    }
+
+    for (var i = 0; i < col_descriptors.length; i++) {
         if (this.config.show_headers) {
+            //create the header cells
+            var cell = document.createElement("div");
+            cell.className = header_class;
+            cell.title = col_descriptors[i];
             cell.appendChild(document.createTextNode(col_descriptors[i]));
+            cell.style.top = "0px";
+            this.parent.appendChild(cell);
+            this.headers.push(cell);
         }
-        cell.style.top = "0px";
-        this.parent.appendChild(cell);
-        this.headers.push(cell);
         this.colindex_map[i] = i;
         this.coldesc_map[col_descriptors[i]] = i;
     }
+
     for( var ri = 0; ri < row_descriptors.length; ri++ ){
         var row = [];
 
         for (var ci = 0; ci < col_descriptors.length; ci++) {
-            var cell = document.createElement("div");
-            cell.className = cell_class;
-            cell_renderer(cell, row_descriptors[ri], col_descriptors[ci]);
-            cell.title = row_descriptors[ri] + ", " + col_descriptors[ci];
-            cell.style.top = ( this.config.header_height
-                               + (ri * this.config.cell_height) ) + "px";
-            this.parent.appendChild(cell);
+            var cell = cell_renderer(cell, row_descriptors[ri],
+                                     col_descriptors[ci]);
+            if (null != cell) {
+                cell.className += " " + cell_class;
+                cell.style.top = ( (this.config.show_headers ?
+                                    this.config.header_height : 0)
+                                   + (ri * this.config.cell_height) ) + "px";
+                this.parent.appendChild(cell);
+            }
             row.push(cell);
         }
 
@@ -19033,17 +20601,45 @@ function renderer(parent, row_descriptors, col_descriptors,
         this.rowdesc_map[row_descriptors[ri]] = ri;
     }
 
+    this.vert_style = [
+        "  position: absolute;",
+        "  border-right: " + this.config.cell_border + "px solid black;",
+        "  padding: " + this.config.cell_padding + "px;",
+        "  margin-left: " + this.config.cell_border + "px;",
+        "  overflow: hidden;",
+        "  z-index: 0;",
+        "  box-sizing: content-box;",
+        "  -moz-box-sizing: content-box;"
+    ].join("\n");
+
+    this.horiz_style = [
+        "  position: absolute;",
+        "  border-bottom: " + this.config.cell_border + "px solid black;",
+        "  padding: " + this.config.cell_padding + "px;",
+        "  height: " + (this.config.cell_height
+                        - this.offset_size_delta) + "px;",
+        "  margin: 0px;",
+        "  margin-top: " + this.config.cell_border + "px;",
+        "  z-index: 1;",
+        "  overflow: hidden;",
+        "  box-sizing: content-box;",
+        "  -moz-box-sizing: content-box;"
+    ].join("\n");
+
     this.cell_style = [
         "  position: absolute;",
         "  white-space: nowrap;",
         "  height: " + (this.config.cell_height
                         - this.offset_size_delta) + "px;",
-        "  border: " + this.config.cell_border + "px solid black;",
+        "  margin: " + this.config.cell_border + "px;",
         "  padding: " + this.config.cell_padding + "px;",
-        "  margin: 0px;",
+        //"  margin: 0px;",
+        "  z-index: 10;",
         "  font: " + cell_font_size + "px" + " " + this.config.cell_font + ";",
         "  line-height: 0.7em;",
-        "  overflow: hidden;"
+        "  overflow: hidden;",
+        "  box-sizing: content-box;",
+        "  -moz-box-sizing: content-box;"
     ].join("\n");
 
     this.header_style = [
@@ -19051,12 +20647,15 @@ function renderer(parent, row_descriptors, col_descriptors,
         "  white-space: nowrap;",
         "  height: " + (this.config.header_height
                         - this.offset_size_delta) + "px;",
-        "  border: " + this.config.cell_border + "px solid black;",
+        //"  border: " + this.config.cell_border + "px solid black;",
+        "  margin: " + this.config.cell_border + "px;",
         "  padding: " + this.config.cell_padding + "px;",
         "  font: " + header_font_size + "px" + " "
             + this.config.header_font + ";",
         "  line-height: 0.7em;",
-        "  overflow: hidden;"
+        "  overflow: hidden;",
+        "  box-sizing: content-box;",
+        "  -moz-box-sizing: content-box;"
     ].join("\n");
 
     this.transition_style = [
@@ -19073,11 +20672,17 @@ function renderer(parent, row_descriptors, col_descriptors,
         "}",
         "div." + cell_class + " { ",
         this.cell_style,
+        "}",
+        "div." + vert_class + " { ",
+        this.vert_style,
+        "}",
+        "div." + horiz_class + " { ",
+        this.horiz_style,
         "}"
     ].join("\n"));
 
     this.update_height();
-    this.width = this.update_widths() + this.offset_size_delta;
+    this.width = this.update_widths();// + this.offset_size_delta;
     this.parent.style.width = this.width + this.config.cell_border + "px";
 
     this.set_styles([
@@ -19088,14 +20693,28 @@ function renderer(parent, row_descriptors, col_descriptors,
         "div." + cell_class + " { ",
         this.cell_style,
         this.transition_style,
+        "}",
+        "div." + vert_class + " { ",
+        this.vert_style,
+        this.transition_style,
+        "}",
+        "div." + horiz_class + " { ",
+        this.horiz_style,
+        this.transition_style,
         "}"
     ].join("\n"));
 }
 
 renderer.prototype.update_height = function() {
-    this.height = ( this.config.header_height + 
-                    ( this.config.cell_height * this.rowindex_map.length ) );
-    this.parent.style.height = this.height + this.config.cell_border + "px";
+    this.height = ( (this.config.show_headers ? this.config.header_height : 0)
+                    + (this.config.cell_height * this.rowindex_map.length) );
+    var grid_height = ( this.height - this.offset_size_delta
+                        + (2 * this.config.cell_border) ) + "px";
+    for (var ci = 0; ci < this.colindex_map.length; ci++) {
+        this.grid_vert[this.colindex_map[ci]].style.height = grid_height;
+    }
+    this.first_vert_gridline.style.height = grid_height;
+    this.parent.style.height = (this.height + this.config.cell_border) + "px";
 };
 
 renderer.prototype.set_styles = function(css_string) {
@@ -19123,7 +20742,7 @@ renderer.prototype.update_widths = function() {
         for (var row = 0; row < matrix.length; row++) {
             for (var col = 0; col < matrix[row].length; col++) {
                 var cell = matrix[row][col];
-                if (cell !== undefined) {
+                if (cell) {
                     cell.style.width = "";
                     if (! (col in widths)) widths[col] = 0;
                     widths[col] = Math.max(widths[col], cell.offsetWidth);
@@ -19137,8 +20756,11 @@ renderer.prototype.update_widths = function() {
         var left = 0;
         for (var col = 0; col < colindex_map.length; col++) {
             var cell = row[colindex_map[col]];
-            cell.style.width = (widths[colindex_map[col]] - offset_delta) + "px";
-            cell.style.left = left + "px";
+            if (cell) {
+                cell.style.width =
+                    (widths[colindex_map[col]] - offset_delta) + "px";
+                cell.style.left = left + "px";
+            }
             left += widths[col];
         }
     }
@@ -19162,14 +20784,29 @@ renderer.prototype.update_widths = function() {
         }
     }
 
-    set_widths(this.headers, this.colindex_map, widths, this.offset_size_delta);
+    if (this.config.show_headers) {
+        set_widths(this.headers, this.colindex_map, widths,
+                   this.offset_size_delta);
+    }
     for (var ri = 0; ri < this.matrix.length; ri++) {
         set_widths(this.matrix[ri], this.colindex_map, widths,
                    this.offset_size_delta);
     }
+    set_widths(this.grid_vert, this.colindex_map, widths,
+               this.offset_size_delta);
 
+    var grid_width = ( totalWidth - this.offset_size_delta
+                       + (2 * this.config.cell_border) ) + "px";
+    for (var ri = 0; ri < this.grid_horiz.length; ri++) {
+        this.grid_horiz[ri].style.width = grid_width;
+    }
+    this.first_horiz_gridline.style.width = grid_width;
+    if (this.config.show_headers) {
+        this.header_gridline.style.width = grid_width;
+    }
+        
     this.widths = widths;
-    return totalWidth - this.offset_size_delta;
+    return totalWidth;
 };
 
 renderer.prototype.show_rows = function(row_list) {
@@ -19180,31 +20817,36 @@ renderer.prototype.show_rows = function(row_list) {
     for (var dci = 0; dci < this.colindex_map.length; dci++) {
         displayed_colindices[this.colindex_map[dci]] = dci;
     }
-    var displayed_rowindices = Array(this.num_rows);
-    for (var dri = 0; dri < this.rowindex_map.length; dri++) {
-        displayed_rowindices[this.rowindex_map[dri]] = dri;
-    }
 
     // set new row y-positions
     for( var ri = 0; ri < row_list.length; ri++ ){
-        var matrix_row_index = this.rowdesc_map[row_list[ri]];
-        var row = this.matrix[matrix_row_index];
+        if (row_list[ri] in this.rowdesc_map) {
+            var matrix_row_index = this.rowdesc_map[row_list[ri]];
+            var row = this.matrix[matrix_row_index];
+            var row_top = ( (this.config.show_headers ?
+                             this.config.header_height : 0)
+                            + (ri * this.config.cell_height) ) + "px";
 
-        for (var ci = 0; ci < this.num_cols; ci++) {
-            var cell = row[ci];
-            cell.style.top = ( this.config.header_height
-                               + (ri * this.config.cell_height) ) + "px";
+            var horiz_gridline = this.grid_horiz[matrix_row_index];
+            horiz_gridline.style.top = row_top;
+            horiz_gridline.style.display = "";
 
-            var displayed_colindex = displayed_colindices[ci];
-            if (displayed_colindex == undefined) {
-                cell.style.display = "none";
-            } else {
-                cell.style.display = "";
+            for (var ci = 0; ci < this.num_cols; ci++) {
+                var cell = row[ci];
+                if (cell) {
+                    cell.style.top = row_top;
+                    var displayed_colindex = displayed_colindices[ci];
+                    if (displayed_colindex == undefined) {
+                        cell.style.display = "none";
+                    } else {
+                        cell.style.display = "";
+                    }
+                }
             }
-        }
 
-        new_rowindex_map[ri] = matrix_row_index;
-        new_row_map[row_list[ri]] = 1;
+            new_rowindex_map[ri] = matrix_row_index;
+            new_row_map[row_list[ri]] = 1;
+        }
     }
 
     this.rowindex_map = new_rowindex_map;
@@ -19213,9 +20855,14 @@ renderer.prototype.show_rows = function(row_list) {
     for(var i = 0; i < this.row_descriptors.length; i++) {
         var rowdesc = this.row_descriptors[i];
         if (! (rowdesc in new_row_map)) {
-            var row = this.matrix[this.rowdesc_map[rowdesc]];
+            var row_index = this.rowdesc_map[rowdesc];
+
+            this.grid_horiz[row_index].style.display = "none";
+
+            var row = this.matrix[row_index];
             for (var j = 0; j < row.length; j++) {
-                row[j].style.display = "none";
+                var cell = row[j];
+                if (cell) cell.style.display = "none";
             }
         }
     }
@@ -19236,20 +20883,27 @@ renderer.prototype.show_cols = function(col_list) {
     for( var ci = 0; ci < col_list.length; ci++ ){
         matrix_col_index = this.coldesc_map[col_list[ci]];
 
+        var vert_gridline = this.grid_vert[matrix_col_index];
+        vert_gridline.style.left = left + "px";
+        vert_gridline.style.display = "";
         for (var ri = 0; ri < this.num_rows; ri++) {
             var row = this.matrix[ri];
             var cell = row[matrix_col_index];
-            cell.style.left = left + "px";
+            if (cell) {
+                cell.style.left = left + "px";
 
-            var displayed_rowindex = displayed_rowindices[ri];
-            if (displayed_rowindex == undefined) {
-                cell.style.display = "none";
-            } else {
-                cell.style.display = "";
+                var displayed_rowindex = displayed_rowindices[ri];
+                if (displayed_rowindex == undefined) {
+                    cell.style.display = "none";
+                } else {
+                    cell.style.display = "";
+                }
             }
         }
-        this.headers[matrix_col_index].style.left = left + "px";
-        this.headers[matrix_col_index].style.display = "";
+        if (this.config.show_headers) {
+            this.headers[matrix_col_index].style.left = left + "px";
+            this.headers[matrix_col_index].style.display = "";
+        }
 
         new_colindex_map[ci] = matrix_col_index;
         new_col_map[col_list[ci]] = 1;
@@ -19265,13 +20919,25 @@ renderer.prototype.show_cols = function(col_list) {
             matrix_col_index = this.coldesc_map[coldesc];
             for (var j = 0; j < this.matrix.length; j++) {
                 var cell = this.matrix[j][matrix_col_index];
-                cell.style.display = "none";
+                if (cell) cell.style.display = "none";
             }
-            this.headers[matrix_col_index].style.display = "none";
+            this.grid_vert[matrix_col_index].style.display = "none";
+            if (this.config.show_headers) {
+                this.headers[matrix_col_index].style.display = "none";
+            }
         }
     }
 
     this.width = left;
+    var grid_width = ( left - this.offset_size_delta
+                       + (2 * this.config.cell_border) ) + "px";
+    for (var ri = 0; ri < this.rowindex_map.length; ri++) {
+        this.grid_horiz[this.rowindex_map[ri]].style.width = grid_width;
+    }
+    this.first_horiz_gridline.style.width = grid_width;
+    if (this.config.show_headers) {
+        this.header_gridline.style.width = grid_width;
+    }
     this.parent.style.width = this.width + this.config.cell_border + "px";
 };
 
@@ -19300,10 +20966,8 @@ renderer.prototype.show_cols = function(col_list) {
  * This is a completely self-contained UI.
  */
 
-bbop.core.require('bbop', 'core');
-bbop.core.require('bbop', 'logger');
-bbop.core.require('bbop', 'html');
-bbop.core.namespace('bbop', 'widget', 'message');
+if ( typeof bbop == "undefined" ){ var bbop = {}; }
+if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
 
 /*
  * Constructor: message
@@ -19409,164 +21073,12 @@ bbop.widget.message = function(){
     };
 
 };
-/*
- * Package: overlay.js
- * 
- * Namespace: bbop.contrib.go.overlay
- * 
- * This package contributes some very high-level functions to make
- * using things like the web REPL easier to use with GOlr data
- * sources.
- * 
- * It is suggested that you *[not]* use this if you are seriously
- * programming for BBOP JS since it plays fast and loose with the
- * dynamic environment, as well as polluting the global namespace.
- * 
- * NOTE: Again, this overlay is only usable in a (jQuery) browser
- * environment--the JS environments are too varied for this to work
- * arbitrarily, but similar approaches might work in other
- * envorinments.
- */
 
-// Setup the internal requirements.
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('bbop', 'contrib', 'go', 'overlay');
+// If it looks like we're in an environment that supports CommonJS
+// Modules 1.0, take the bbop namespace whole and export it. Otherwise
+// (browser environment, etc.), take no action and depend on the
+// global namespace.
+if( typeof(exports) != 'undefined' ){
+    exports.bbop = bbop;    
+}
 
-/*
- * Function: overlay
- * 
- * Put a set of useful functions into the global namespace for use
- * with REPLs and the like.
- * 
- * Arguments:
- *  manager_type - the manager type to use, or null (no sublcass)
- * 
- * Returns:
- *  boolean on whether any errors were thrown
- */
-bbop.contrib.go.overlay = function(manager_type){
-
-    //var anchor = this;
-    var global_ret = true;
-
-    // Either the base manager, or a manager subclass.
-    var mtype = '';
-    if( manager_type ){
-	mtype = '.' + manager_type;
-    }
-
-    // Well, for now, this is what we will do--see bbop.core.evaluate
-    // for a start on a more general ability. I could likely remove
-    // the "var" and have everything out in the global, but it looks
-    // like that might case errors too.
-    if( manager_type != 'jquery' ){
-	throw new Error('Cannot create non-jquery overlays at this time!');
-    }
-
-    var env = [
-	'var loop = bbop.core.each;',
-	'var dump = bbop.core.dump;',
-	'var what_is = bbop.core.what_is;',
-
-	// Defined a global logger.
-	'var logger = new bbop.logger();',
-	'logger.DEBUG = true;',
-	'function ll(str){ return logger.kvetch(str); }',
-	
-	// Get our data env right.
-	'var server_meta = new amigo.data.server();',
-	'var gloc = server_meta.golr_base();',
-	'var gconf = new bbop.golr.conf(amigo.data.golr);',
-
-	// Support a call back to data.
-	'var data = null;',
-	"function callback(json){ ll('// Returned with \"data\".'); data = new bbop.golr.response(json); }",
-
-	// Get a global manager.
-	'var go = new bbop.golr.manager' + mtype + '(gloc, gconf);',
-	"go.register('search', 's', callback);",
-
-	// Add GO-specific methods to our manager.
-	"bbop.golr.manager.prototype.gaf_url = function(){ return this.get_download_url(['source', 'bioentity_label', 'annotation_class', 'reference', 'evidence_type', 'evidence_with', 'taxon', 'date', 'annotation_extension_class', 'bioentity']); };",
-	"bbop.golr.manager.prototype.doc_type = function(t){ return this.add_query_filter('document_type', t); };",
-	"bbop.golr.manager.prototype.filter = function(f, t, p){ var pol = p || \'+'; return this.add_query_filter(f, t, [p]); };"
-    ];
-
-    var jquery_env = [
-	"var empty = function(did){ jQuery('#' + did).empty(); };",
-	"var append = function(did, str){ jQuery('#' + did).append(str); };"
-    ];
-
-    function _b_eval(to_eval){
-	return window.eval(to_eval);
-    }
-    function _s_eval(to_eval){
-	return eval(to_eval);
-    }
-
-    // The main evaluation function.
-    function _eval(to_eval){
-	
-	var retval = '';
-
-	// Try and detect our environment.
-	var env_type = 'server';
-	try{
-	    if( bbop.core.is_defined(window) &&
-		bbop.core.is_defined(window.eval) &&
-		bbop.core.what_is(window.eval) == 'function' ){
-		    env_type = 'browser';
-		}
-	} catch (x) {
-	    // Probably not a browser then, right?
-	}
-
-	// Now try for the execution.
-	try{
-	    // Try and generically evaluate.
-	    var tmp_ret = null;
-	    if( env_type == 'browser' ){
-		tmp_ret = _b_eval(to_eval);
-	    }else{
-		// TODO: Does this work?
-		tmp_ret = _s_eval(to_eval);		
-	    }
-
-	    // Make whatever the tmp_ret is prettier for the return
-	    // val.
-	    if( bbop.core.is_defined(tmp_ret) ){
-		if( bbop.core.what_is(tmp_ret) == 'string' ){
-		    retval = '"' + tmp_ret + '"';
-		}else{
-		    retval = tmp_ret;
-		}
-	    }else{
-		// ...
-	    }
-	}catch (x){
-	    // Bad things happened.
-	    //print('fail on: (' + tmp_ret +'): ' + to_eval);
-	    retval = '[n/a]';
-	    global_ret = false;
-	}
-	
-	return retval;
-    }
-
-    // Now cycle through the command list.
-    bbop.core.each(env,
-		   function(line){
-		       _eval(line);
-		   });
-    
-    // Add a few specific things if we're in a jQuery REPL
-    // environment.
-    if( manager_type && manager_type == 'jquery' ){	
-	bbop.core.each(jquery_env,
-		       function(line){
-			   _eval(line);
-		       });
-    }
-    
-    return global_ret;
-};

@@ -1,24 +1,18 @@
 ////
 //// Some unit testing for linker.js (even though its data is generated).
 ////
-//// Usage:
-////    Command line: "rhino -f linker.js.tests"
-////    Interactive: "rhino -f linker.js.tests -f -"
-////
 
-// Load testing and correct environment.
-load('../../../_data/bbop.js');
-load('data/server.js');
-load('data/xrefs.js');
+// Correct environment, ready testing.
+var bbop = require('bbop').bbop;
+var amigo = require('amigo2').amigo;
 var mr_t = new bbop.test();
-load('linker.js');
 
 ///
 /// Start unit testing.
 ///
 
+(function(){
 
-//(function(){
 var sd = new amigo.data.server();
 var wa = sd.app_base();
 var l = new amigo.linker();
@@ -68,7 +62,35 @@ mr_t.is_not_defined(l.url(null), 'null url');
 mr_t.is_not_defined(l.url(''), "'' url");
 mr_t.is_not_defined(l.anchor(null), 'null anchor');
 
-// })();
+// Some hard-wirder internal link testing.
+function _ends_with(str, suff){
+    var off = str.length - suff.length;
+    var ret = false;
+    if( str.indexOf(suff, off) != -1 ){
+	ret = true;
+    }
+    return ret;
+}
+mr_t.is_true(_ends_with(l.url(null, 'medial_search'),
+			'/amigo/medial_search'),
+	     'interlink: medial_search special (1)');
+mr_t.is_true(_ends_with(l.url('', 'medial_search'),
+			'/amigo/medial_search?q='),
+	     'interlink: medial_search special (2)');
+mr_t.is_true(_ends_with(l.url('foo', 'medial_search'),
+			'/amigo/medial_search?q=foo'),
+	     'interlink: medial_search special (3)');
+mr_t.is_true(_ends_with(l.url(null, 'grebe'),
+			'/grebe'),
+	     'interlink: grebe not special (1)');
+mr_t.is_true(_ends_with(l.url('', 'grebe'),
+			'/grebe'),
+	     'interlink: grebe not special (2)');
+mr_t.is_true(_ends_with(l.url('foo', 'grebe'),
+			'/grebe'),
+	     'interlink: grebe not special (3): ' + l.url('foo', 'grebe'));
+
+ })();
 
 ///
 /// End unit testing.

@@ -7,7 +7,7 @@
  * 
  * Purpose: Useful numbers about the current data in the store.
  * 
- * Requirements: amigo.js for bbop.amigo namespace.
+ * Requirements: amigo2.js for bbop.amigo namespace.
  * 
  * NOTE: This file is generated dynamically at installation time.
  *       Hard to work with unit tests--hope it's not too bad.
@@ -15,8 +15,9 @@
  */
 
 // Module and namespace checking.
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('amigo', 'data', 'statistics');
+if ( typeof amigo == "undefined" ){ var amigo = {}; }
+if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
+if ( typeof amigo.data.statistics == "undefined" ){ amigo.data.statistics = {}; }
 
 /*
  * Variable: annotation_evidence

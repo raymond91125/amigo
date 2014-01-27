@@ -7,6 +7,7 @@
 
 use utf8;
 use strict;
+use Template;
 use File::Basename;
 use Cwd;
 use vars qw(
@@ -96,17 +97,23 @@ open(OUTFILE, ">$bundle_output_fname") or
 open(MAPFILE, "<$file_map_fname") or die "cannot open $file_map_fname: $!";
 while( my $js_file_fname = <MAPFILE> ){
 
-  ## Go through each js file line by line.
-  open(JSFILE, "<$js_file_fname") or die "cannot open $js_file_fname: $!";
-  while( <JSFILE> ){
+  ## Allow for comments ("#", ";;", and "//") in the mapping file.
+  if( $js_file_fname !~ /^\#/ &&
+      $js_file_fname !~ /^\;\;/ &&
+      $js_file_fname !~ /^\/\// ){
 
-    ## TODO?: Remove bbop.core.require lines from the input?
+    ## Go through each js file line by line.
+    open(JSFILE, "<$js_file_fname") or die "cannot open $js_file_fname: $!";
+    while( <JSFILE> ){
 
-    ## Dump to target site.
-    print OUTFILE $_;
+      ## TODO?: Remove bbop.core.require lines from the input?
+
+      ## Dump to target site.
+      print OUTFILE $_;
+    }
+    $exported_file_count++;
+    close(JSFILE);
   }
-  $exported_file_count++;
-  close(JSFILE);
 }
 
 close(MAPFILE);
@@ -162,48 +169,22 @@ sub version_to_js {
 
   my $location = $dirs . '/version.js';
 
-  ## Make nice namespace call through BBOPJS.
-  my $ns_head = "bbop.core.namespace('";
-  my $ns_tail = "')";
-  my @nss = split('.', $namespace);
-  push @nss, $namespace if scalar(@nss) == 0; # use if no split
-  push @nss, 'version';
-  my $ns_call = $ns_head . join("', '", @nss) . $ns_tail;
-
   ## If the file is already there, blow it away.
   unlink $location if -f $location;
   open(FILE, ">$location") or die "cannot open $location: $!";
 
-  ## 
-  print FILE <<EOJS;
-/* 
- * Package: version.js
- * 
- * Namespace: $namespace.version
- * 
- * This package was automatically created during the release process
- * and contains its version information--this is the release of the 
- * API that you have.
- */
-
-$ns_call;
-$namespace.version = {};
-
-/*
- * Variable: revision
- *
- * Partial version for this library; revision (major/minor version numbers)
- * information.
- */
-$namespace.version.revision = "$revision";
-
-/*
- * Variable: release
- *
- * Partial version for this library: release (date-like) information.
- */
-$namespace.version.release = "$release";
-EOJS
+  ## Template to string output.
+  my $output = '';
+  my $tt = Template->new();
+  $tt->process('templates/conf/version.js',
+	       {
+		namespace => $namespace,
+		revision => $revision,
+		release => $release,
+	       },
+	       \$output)
+    || die $tt->error;
+  print FILE $output;
 
   ## Close file.
   close(FILE);

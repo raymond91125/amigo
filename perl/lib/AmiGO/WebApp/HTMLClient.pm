@@ -13,7 +13,6 @@ use base 'AmiGO::WebApp';
 use strict;
 use utf8;
 use Data::Dumper;
-#use AmiGO::JavaS
 
 ##
 use AmiGO::Input;
@@ -113,7 +112,7 @@ sub mode_landing {
       'com.bootstrap',
       'com.jquery-ui',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -175,7 +174,7 @@ sub mode_browse {
       'com.bootstrap',
       'com.jquery-ui',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -389,7 +388,7 @@ sub mode_simple_search {
       'com.bootstrap',
       'com.jquery-ui',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -516,7 +515,7 @@ sub mode_medial_search {
       'com.bootstrap',
       'com.jquery-ui',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -550,9 +549,9 @@ sub mode_software_list {
   $self->set_template_parameter('page_title', 'AmiGO 2: Tools and Resources');
   $self->set_template_parameter('content_title', 'Tools and Resources');
 
-  ## Where would the ancient demos page hide...?
-  my $foo = $self->{CORE}->amigo_env('AMIGO_CGI_PARTIAL_URL');
-  $self->set_template_parameter('OLD_LOC', $foo);
+  # ## Where would the ancient demos page hide...?
+  # my $foo = $self->{CORE}->amigo_env('AMIGO_CGI_PARTIAL_URL');
+  # $self->set_template_parameter('OLD_LOC', $foo);
 
   ## Get Galaxy, and add a variable for it in the page.
   $self->set_template_parameter('GO_GALAXY',
@@ -584,7 +583,7 @@ sub mode_software_list {
       'com.jquery-ui',
       #'com.jquery.tablesorter',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -641,7 +640,7 @@ sub mode_schema_details {
       'com.jquery-ui',
       'com.jquery.tablesorter',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -730,7 +729,7 @@ sub mode_load_details {
       'com.jquery-ui',
       'com.jquery.tablesorter',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -795,7 +794,7 @@ sub mode_visualize {
 	'com.bootstrap',
 	'com.jquery-ui',
 	'bbop',
-	'amigo'
+	'amigo2'
        ],
        javascript =>
        [
@@ -897,7 +896,7 @@ sub mode_visualize_freeform {
 	'com.bootstrap',
 	'com.jquery-ui',
 	'bbop',
-	'amigo'
+	'amigo2'
        ],
        javascript =>
        [
@@ -1055,7 +1054,7 @@ sub mode_search {
       'com.bootstrap',
       'com.jquery-ui',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -1364,7 +1363,7 @@ sub mode_term_details {
       'com.jquery-ui',
       'com.jquery.tablesorter',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -1509,7 +1508,7 @@ sub mode_gene_product_details {
       'com.bootstrap',
       'com.jquery-ui',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -1571,7 +1570,6 @@ sub mode_complex_annotation_details {
   ## Get the data from the store.
   #AmiGO::Worker::GOlr::ComplexAnnotationUnit->new($input_id);
   my $ca_worker =
-
     AmiGO::Worker::GOlr::ComplexAnnotationGroup->new($input_id);
   my $ca_info_hash = $ca_worker->get_info();
 
@@ -1632,7 +1630,7 @@ sub mode_complex_annotation_details {
       'com.bootstrap',
       'com.jquery-ui',
       'bbop',
-      'amigo'
+      'amigo2'
      ],
      javascript =>
      [
@@ -1706,7 +1704,7 @@ sub mode_phylo_graph {
      css_library =>
      [
       #'standard',
-      #'com.bootstrap',
+      'com.bootstrap',
       'com.jquery.jqamigo.custom',
       'amigo',
       'bbop'
@@ -1714,12 +1712,12 @@ sub mode_phylo_graph {
      javascript_library =>
      [
       'com.jquery',
-      #'com.bootstrap',
+      'com.bootstrap',
       'com.jquery-ui',
       #'com.raphael',
       #'com.raphael.graffle',
       'bbop',
-      'amigo'
+      'amigo2'
       #'bbop.model',
       #'bbop.model.tree',
       #'bbop.graph.render.phylo',
@@ -1750,8 +1748,8 @@ sub mode_phylo_graph {
 
   ## Nothing for now.
   return $self->generate_template_page_with({
-					     header=>0,
-					     footer=>0,
+					     #header=>0,
+					     #footer=>0,
 					    });
 }
 

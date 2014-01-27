@@ -3,7 +3,7 @@
  * 
  * Namespace: amigo.data.server
  * 
- * This package was automatically created during an AmiGO 2 installation.
+ * This package was automatically created during AmiGO 2 installation.
  * 
  * Purpose: Useful information about GO and the AmiGO installation.
  *          Also serves as a repository and getter for web
@@ -15,8 +15,8 @@
  */
 
 // Module and namespace checking.
-bbop.core.require('bbop', 'core');
-bbop.core.namespace('amigo', 'data', 'server');
+if ( typeof amigo == "undefined" ){ var amigo = {}; }
+if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
 
 /*
  * Constructor: server
