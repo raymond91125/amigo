@@ -47,7 +47,8 @@ ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
 ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.obo
 DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.obo
-GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.obo
+GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
+# GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.obo
 LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/worm_development.obo
 PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.obo
  
