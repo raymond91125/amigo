@@ -44,76 +44,19 @@ SCHEMA_METADATA ?= \
  ../metadata/general-config.yaml \
  ../metadata/ann_ev_agg-config.yaml
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
-ONTOLOGIES ?= \
- http://purl.obolibrary.org/obo/go.owl \
- http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim.owl \
- http://purl.obolibrary.org/obo/cl/cl-basic.owl \
- http://purl.obolibrary.org/obo/eco.owl \
- http://geneontology.org/ontology/extensions/gorel.owl \
- http://purl.obolibrary.org/obo/ma.owl \
- http://purl.obolibrary.org/obo/emap.owl
-WBONTOLOGIES ?= \
- http://purl.obolibrary.org/obo/wbbt.owl \
- http://caltech.wormbase.org/ontology/disease_ontology.obo \
- http://caltech.wormbase.org/ontology/gene_ontology.obo \
- http://caltech.wormbase.org/ontology/worm_development.obo \
- http://caltech.wormbase.org/ontology/phenotype_ontology.obo
- 
 
 ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.obo
 DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.obo
 GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.obo
 LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/worm_development.obo
 PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.obo
-
-
-// http://caltech.wormbase.org/ONTOLOGY/anatomy_ontology.WS240.obo
  
 ## Next:
 # http://purl.obolibrary.org/obo/uberon/basic.owl
 
 ALL_GAFS ?= \
-	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Lmajor.gz \
-	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Pfalciparum.gz \
-	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Spombe.gz  \
-	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Tbrucei.gz \
-	http://www.geneontology.org/gene-associations/gene_association.GeneDB_tsetse.gz \
-	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Atumefaciens.gz \
-	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Ddadantii.gz \
-	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Mgrisea.gz \
-	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Oomycetes.gz \
-	http://www.geneontology.org/gene-associations/gene_association.aspgd.gz \
-	http://www.geneontology.org/gene-associations/gene_association.cgd.gz \
-	http://www.geneontology.org/gene-associations/gene_association.dictyBase.gz \
-	http://www.geneontology.org/gene-associations/gene_association.ecocyc.gz \
-	http://www.geneontology.org/gene-associations/gene_association.fb.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_arabidopsis.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_chicken.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_cow.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_dog.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_human.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_mouse.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_pig.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_rat.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_uniprot_noiea.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_zebrafish.gz \
-	http://www.geneontology.org/gene-associations/gene_association.gonuts.gz \
-	http://www.geneontology.org/gene-associations/gene_association.gramene_oryza.gz \
-	http://www.geneontology.org/gene-associations/gene_association.jcvi.gz \
-	http://www.geneontology.org/gene-associations/gene_association.mgi.gz \
-	http://www.geneontology.org/gene-associations/gene_association.pombase.gz \
-	http://www.geneontology.org/gene-associations/gene_association.pseudocap.gz \
-	http://www.geneontology.org/gene-associations/gene_association.reactome.gz \
-	http://www.geneontology.org/gene-associations/gene_association.rgd.gz \
-	http://www.geneontology.org/gene-associations/gene_association.sgd.gz \
-	http://www.geneontology.org/gene-associations/gene_association.sgn.gz \
-	http://www.geneontology.org/gene-associations/gene_association.tair.gz \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
-	http://www.geneontology.org/gene-associations/gene_association.zfin.gz \
-	http://www.geneontology.org/gene-associations/submission/paint/pre-submission/gene_association.paint_other.gaf # And higher-level PAINT annotations.
-MGI_GAF = http://www.geneontology.org/gene-associations/gene_association.mgi.gz
-MGI_TEST_GAF = ./_test/mgi-limited.gaf
-MGI_NANO_GAF = ./_test/mgi-limited-100.gaf
+
 ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.wb
 GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.wb
 PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.wb
@@ -188,35 +131,6 @@ load-ontology: owltools-build
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general
 	make message-load-clear
 
-## Test GAF.
-.PHONY: load-mgi-gaf
-load-mgi-gaf: owltools-build
-	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(MGI_GAF) --solr-load-panther --solr-load-panther-general
-	make message-load-clear
-
-## Test GAF: A test load with the MGI GAF--column 16, etc.
-.PHONY: load-mgi-test-gaf
-load-mgi-test-gaf: owltools-build
-	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(MGI_TEST_GAF) --solr-load-panther --solr-load-panther-general
-	make message-load-clear
-
-## Test GAF: A super minimal tiny test load with the MGI GAF--column 16, etc.
-## No PANTHER.
-.PHONY: load-mgi-nano-gaf
-load-mgi-nano-gaf: owltools-build
-	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(MGI_NANO_GAF)
-	make message-load-clear
-
-## Test PANTHER: A test load with just PANTHER (no GAF info).
-.PHONY: load-just-panther
-load-just-panther: owltools-build
-	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-panther --solr-load-panther-general
-	make message-load-clear
-
 ## The full and final load.
 
 .PHONY: load-wb-full
@@ -230,14 +144,13 @@ load-wb-full:
 .PHONY: load-wb-anatomy
 load-wb-anatomy: owltools-build clear-load-log
 	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ANATOMYONTOLOGY) --merge-support-ontologies --reasoner elk --solr-url $(ANATOMY_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(ANATOMY_GAF)
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ANATOMYONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(ANATOMY_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(ANATOMY_GAF)
 	make message-load-clear
 .PHONY: load-wb-disease
 load-wb-disease: owltools-build clear-load-log
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(DISEASEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(DISEASE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general
 	make message-load-clear
-	
 .PHONY: load-wb-go
 load-wb-go: owltools-build clear-load-log
 	make message-load-start
@@ -248,7 +161,6 @@ load-wb-lifestage: owltools-build clear-load-log
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(LIFESTAGEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(LIFESTAGE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general
 	make message-load-clear
-	
 .PHONY: load-wb-phenotype	
 load-wb-phenotype: owltools-build clear-load-log
 	make message-load-start
@@ -267,16 +179,6 @@ load-test: owltools-build clear-load-log
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(TESTONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(TEST_GAFS)
 	make message-load-clear	
-.PHONY: load-full-nopanther
-load-full-nopanther: owltools-build clear-load-log
-	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(ALL_GAFS)
-	make message-load-clear
-.PHONY: load-full
-load-full: owltools-build clear-load-log
-	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --read-panther $(PANTHER_FILES_DIR) --solr-load-gafs $(ALL_GAFS) --solr-load-panther --solr-load-panther-general
-	make message-load-clear
 ## "Silent" variation--useful w/o amigo.
 .PHONY: load-full-silent
 load-full-silent: owltools-build clear-load-log
