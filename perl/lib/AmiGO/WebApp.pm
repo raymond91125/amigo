@@ -732,6 +732,10 @@ sub _common_params_settings {
     $self->{CORE}->get_interlink({mode=>'gannet'});
   $params->{interlink_repl} =
     $self->{CORE}->get_interlink({mode=>'repl'});
+  $params->{interlink_xrefs} =
+    $self->{CORE}->get_interlink({mode=>'xrefs'});
+  $params->{interlink_rte} =
+    $self->{CORE}->get_interlink({mode=>'rte'});
   ## Since there is no default search page, arrange for one.
   my $def_search = $self->{CORE}->get_amigo_search_default();
   $params->{interlink_search_default} =
@@ -749,23 +753,33 @@ sub _common_params_settings {
     $self->{CORE}->amigo_env('AMIGO_PUBLIC_CGI_BASE_URL');
   $params->{public_opensearch} =
     $self->{CORE}->amigo_env('AMIGO_PUBLIC_OPENSEARCH_URL');
-  $params->{BETA} = $self->_atoi($self->{CORE}->amigo_env('AMIGO_BETA'));
-  $params->{VERBOSE} = $self->_atoi($self->{CORE}->amigo_env('AMIGO_VERBOSE'));
-  $params->{last_load_date} = $self->{CORE}->amigo_env('GOLR_TIMESTAMP_LAST');
+  $params->{public_1x_base} =
+    $self->{CORE}->amigo_env('AMIGO_1X_PUBLIC_CGI_BASE_URL') ||
+      $params->{public_base};
+  $params->{BETA} =
+    $self->_atoi($self->{CORE}->amigo_env('AMIGO_BETA'));
+  $params->{VERBOSE} =
+    $self->_atoi($self->{CORE}->amigo_env('AMIGO_VERBOSE'));
+  $params->{last_load_date} =
+    $self->{CORE}->amigo_env('GOLR_TIMESTAMP_LAST');
   #$params->{release_name} = $self->{CORE}->release_name();
   #$params->{release_type} = $self->{CORE}->release_type();
   $params->{release_date} = $params->{release_name};
   $params->{page_name} = 'amigo';
   $params->{amigo_mode} = $additional->{amigo_mode} || '';
   $params->{search_layout_list} = $self->{AW_SEARCH_LIST}; # for menus
-  $params->{image_dir} = $self->{CORE}->amigo_env('AMIGO_HTML_URL') . '/images';
-  $params->{js_dir} = $self->{CORE}->amigo_env('AMIGO_HTML_URL') .'/javascript';
-  $params->{css_dir} = $self->{CORE}->amigo_env('AMIGO_HTML_URL') . '/css';
+  $params->{image_dir} =
+    $self->{CORE}->amigo_env('AMIGO_HTML_URL') . '/images';
+  $params->{js_dir} =
+    $self->{CORE}->amigo_env('AMIGO_HTML_URL') .'/javascript';
+  $params->{css_dir} =
+    $self->{CORE}->amigo_env('AMIGO_HTML_URL') . '/css';
   $params->{html_url} = $self->{CORE}->amigo_env('AMIGO_HTML_URL');
   $params->{version} = $self->{CORE}->amigo_env('AMIGO_VERSION');
   my $sid = $params->{session_id} || '';
   $params->{session_id_for_url} = 'session_id=' . $sid;
-  $params->{server_name} = $self->{CORE}->amigo_env('AMIGO_SERVER_NAME') || '';
+  $params->{server_name} =
+    $self->{CORE}->amigo_env('AMIGO_SERVER_NAME') || '';
 
   ## Titles seems to be the odds ones out for some reason.
   $params->{page_title} = 'AmiGO';

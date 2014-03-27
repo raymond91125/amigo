@@ -55,7 +55,38 @@ PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.obo
 ## Next:
 # http://purl.obolibrary.org/obo/uberon/basic.owl
 
-ALL_GAFS ?= \
+GENE_ASSOCIATION_FILES ?= \
+	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Lmajor.gz \
+	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Pfalciparum.gz \
+	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Spombe.gz  \
+	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Tbrucei.gz \
+	http://www.geneontology.org/gene-associations/gene_association.GeneDB_tsetse.gz \
+	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Atumefaciens.gz \
+	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Ddadantii.gz \
+	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Mgrisea.gz \
+	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Oomycetes.gz \
+	http://www.geneontology.org/gene-associations/gene_association.aspgd.gz \
+	http://www.geneontology.org/gene-associations/gene_association.cgd.gz \
+	http://www.geneontology.org/gene-associations/gene_association.dictyBase.gz \
+	http://www.geneontology.org/gene-associations/gene_association.ecocyc.gz \
+	http://www.geneontology.org/gene-associations/gene_association.fb.gz \
+	http://www.geneontology.org/gene-associations/gene_association.goa_chicken.gz \
+	http://www.geneontology.org/gene-associations/gene_association.goa_cow.gz \
+	http://www.geneontology.org/gene-associations/gene_association.goa_dog.gz \
+	http://www.geneontology.org/gene-associations/gene_association.goa_human.gz \
+	http://www.geneontology.org/gene-associations/gene_association.goa_pig.gz \
+	http://www.geneontology.org/gene-associations/gene_association.goa_uniprot_noiea.gz \
+	http://www.geneontology.org/gene-associations/gene_association.gonuts.gz \
+	http://www.geneontology.org/gene-associations/gene_association.gramene_oryza.gz \
+	http://www.geneontology.org/gene-associations/gene_association.jcvi.gz \
+	http://www.geneontology.org/gene-associations/gene_association.mgi.gz \
+	http://www.geneontology.org/gene-associations/gene_association.pombase.gz \
+	http://www.geneontology.org/gene-associations/gene_association.pseudocap.gz \
+	http://www.geneontology.org/gene-associations/gene_association.reactome.gz \
+	http://www.geneontology.org/gene-associations/gene_association.rgd.gz \
+	http://www.geneontology.org/gene-associations/gene_association.sgd.gz \
+	http://www.geneontology.org/gene-associations/gene_association.sgn.gz \
+	http://www.geneontology.org/gene-associations/gene_association.tair.gz \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
 
 ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.wb

@@ -174,9 +174,10 @@ $env_conf{AMIGO_CGI_URL} =
 ## URL for AmiGO services.
 $env_conf{AMIGO_SERVICE_URL} = $env_conf{AMIGO_CGI_URL} . '/aserve';
 
-## URL for the public production AmiGO.
-$env_conf{AMIGO_PUBLIC_CGI_BASE_URL} =
-  $env_conf{AMIGO_PUBLIC_CGI_BASE_URL} =~ s/\/$//;
+## URL for the public production AmiGO
+my $tmp_pbase = $env_conf{AMIGO_PUBLIC_CGI_BASE_URL};
+$tmp_pbase =~ s/\/$//;
+$env_conf{AMIGO_PUBLIC_CGI_BASE_URL} = $tmp_pbase;
 
 ## Root AmiGO URL.
 $env_conf{AMIGO_HTML_URL} =
@@ -395,6 +396,8 @@ if( ! $opt_b ){
 	  pgraph
 	  matrix
 	  facet_matrix
+	  rte
+	  xrefs
        );
   }
 
@@ -583,10 +586,13 @@ sub xref_abbs_to_meta_js {
        name => undef,
        fullname => undef,
        datatype => undef,
+       database => undef,
+       object => undef,
+       example_id => undef,
        generic_url => undef,
        url_syntax => undef,
        url_example => undef,
-       uri_prefix => undef,
+       uri_prefix => undef
        #synonym => [], # legit use?
       };
     ## Split on ':' and trim; add it to the above template.

@@ -18,15 +18,26 @@ JS_TESTS = \
  $(wildcard javascript/lib/amigo/handlers/*.js.tests)
 #BENCHMARKS = $(wildcard _benchmark/*.js)
 
+## Perl lib test setup.
+TEST_PERL ?= perl
+TEST_PERL_FLAGS ?= -I ./perl/lib/
+PERL_TESTS = \
+ $(wildcard perl/lib/t/*.t)
+
 ## JSs for (currently) non-core purposes.
 RINGO_JS ?= /usr/bin/ringo
 NODE_JS ?= /usr/bin/node
-##
-AMIGO_VERSION ?= 2.0.0-rc1
+
+## Handle versioning. The patch level is automatically incremented on
+## after every release.
+AMIGO_BASE_VERSION = 2.0
+AMIGO_PATCH_LEVEL = `cat version-patch.lvl`
+AMIGO_VERSION_TAG = "" # e.g. -alpha
+AMIGO_VERSION ?= $(AMIGO_BASE_VERSION).$(AMIGO_PATCH_LEVEL)$(AMIGO_VERSION_TAG)
 
 all:
 	@echo "Default JS engine: $(TEST_JS)"
-	@echo "See: http://wiki.geneontology.org/index.php/AmiGO_Manual:_Installation_2.0"
+	@echo "See: http://wiki.geneontology.org/index.php/AmiGO_Manual:_Installation_2"
 	@echo "for more details."
 #	@echo "All JS engines: $(JSENGINES)"
 #	@echo "Try make: 'test', 'docs', 'install', 'bundle', 'data', or 'release'"
@@ -41,6 +52,13 @@ $(JS_TESTS): bundle
 	echo "trying: $@"
 	$(TEST_JS) $(TEST_JS_FLAGS) -f $(@D)/$(@F)
 #	cd $(@D) && $(TEST_JS) $(TEST_JS_FLAGS) -f $(@F)
+
+## Unit tests for the perl.
+.PHONY: test-perl $(PERL_TESTS)
+test-perl: $(PERL_TESTS)
+$(PERL_TESTS):
+	echo "trying: $@"
+	$(TEST_PERL) $(TEST_PERL_FLAGS) $(@D)/$(@F)
 
 ###
 ### Check the metadata using kwalify.
@@ -82,6 +100,22 @@ bundle-uncompressed:
 	./install -b -u -V $(AMIGO_VERSION)
 
 ###
+### Build version control.
+###
+
+.PHONY: version
+version:
+	@echo Current version: $(AMIGO_VERSION)
+
+.PHONY: patch-reset
+patch-reset:
+	echo 0 > version-patch.lvl
+
+.PHONY: patch-incr
+patch-incr:
+	echo $$(( $(AMIGO_PATCH_LEVEL) + 1 )) > version-patch.lvl
+
+###
 ### Create exportable JS NPM directory.
 ###
 
@@ -90,6 +124,7 @@ npm: bundle
 	./scripts/release-npm.pl -v -i javascript/staging/amigo2.js -o javascript/npm/amigo2 -r $(AMIGO_VERSION)
 	npm unpublish amigo2@$(AMIGO_VERSION)
 	npm publish javascript/npm/amigo2
+	make patch-incr
 
 # ###
 # ### Produce static statistics data files for landing page.
@@ -106,13 +141,13 @@ npm: bundle
 
 .PHONY: install
 install: test docs
-	./install -v -e -g -V $(AMIGO_VERSION)
+	./install -v -g -V $(AMIGO_VERSION)
 #	 AMIGO_VERSION = $(AMIGO_VERSION) ./install -v -e -g
 
 ## This target skips testing.
 .PHONY: install-uncompressed
 install-uncompressed: docs
-	./install -v -e -g -u -V $(AMIGO_VERSION)
+	./install -v -g -u -V $(AMIGO_VERSION)
 
 ###
 ### Copy in the standard inital values for installation.
@@ -135,7 +170,7 @@ dummy:
 ###
 
 .PHONY: release
-release: bundle docs
+release: bundle npm docs
 	s3cmd -P put javascript/staging/amigo*.js s3://bbop/jsapi/
 
 ###
@@ -162,7 +197,7 @@ refresh: tags bundle
 	cp $(BBOP_JS)/staging/bbop.js ./_data
 	cp ./javascript/lib/amigo/data/*.js $(BBOP_JS)/_data/
 	cp ./javascript/lib/amigo/data/golr.js $(BBOP_JS)/demo/
-	./install -v -e -g -V $(AMIGO_VERSION)
+	./install -v -g -V $(AMIGO_VERSION)
 	./scripts/blank-kvetch.pl
 
 ###
@@ -182,7 +217,7 @@ clean-filesystem:
 
 .PHONY: rollout
 rollout:
-	./install -v -e -g -V $(AMIGO_VERSION)
+	./install -v -g -V $(AMIGO_VERSION)
 	./scripts/blank-kvetch.pl
 
 ###

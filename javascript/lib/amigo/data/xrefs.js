@@ -22,11 +22,13 @@ if ( typeof amigo.data == "undefined" ){ amigo.data = {}; }
  */
 amigo.data.xrefs = {
    "bhf-ucl" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "The Cardiovascular Gene Ontology Annotation Initiative is supported by the British Heart Foundation (BHF) and located at University College London (UCL).",
       "database" : "Cardiovascular Gene Ontology Annotation Initiative",
+      "example_id" : null,
       "generic_url" : "http://www.ucl.ac.uk/cardiovasculargeneontology/",
       "fullname" : null,
       "id" : null,
@@ -139,6 +141,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ro" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://purl.obolibrary.org/obo/RO_0002211",
@@ -228,6 +231,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "geo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=GDS2223",
@@ -314,14 +318,16 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ri" : {
+      "object" : null,
       "name" : null,
       "uri_prefix" : null,
       "url_example" : null,
       "database" : "Roslin Institute",
+      "example_id" : null,
       "generic_url" : "http://www.roslin.ac.uk/",
       "fullname" : null,
-      "id" : null,
       "abbreviation" : "RI",
+      "id" : null,
       "url_syntax" : null,
       "datatype" : null
    },
@@ -355,11 +361,13 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "locsvmpsi" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "Subcellular localization for eukayotic proteins based on SVM and PSI-BLAST",
       "database" : "LOCSVMPSI",
+      "example_id" : null,
       "generic_url" : "http://bioinformatics.ustc.edu.cn/locsvmpsi/locsvmpsi.php",
       "fullname" : null,
       "id" : null,
@@ -421,6 +429,7 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : null,
       "database" : "Catalog of Fishes species database",
+      "example_id" : null,
       "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
       "fullname" : null,
       "id" : null,
@@ -448,6 +457,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "url_example" : null,
       "database" : "Catalog of Fishes species database",
+      "example_id" : null,
       "generic_url" : "http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html",
       "fullname" : null,
       "abbreviation" : "CAS_SPC",
@@ -456,11 +466,13 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "pinc" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "represents GO annotations created in 2001 for NCBI and extracted into UniProtKB-GOA from EntrezGene",
       "database" : "Proteome Inc.",
+      "example_id" : null,
       "generic_url" : "http://www.proteome.com/",
       "fullname" : null,
       "id" : null,
@@ -483,10 +495,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "yeastfunc" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Yeast Function",
+      "example_id" : null,
       "generic_url" : "http://func.med.harvard.edu/yeast/",
       "fullname" : null,
       "id" : null,
@@ -535,6 +549,20 @@ amigo.data.xrefs = {
       "id" : null,
       "abbreviation" : "Prosite",
       "url_syntax" : "http://www.expasy.ch/cgi-bin/prosite-search-ac?[example_id]",
+      "datatype" : null
+   },
+   "reac" : {
+      "object" : "Identifier",
+      "name" : null,
+      "uri_prefix" : null,
+      "url_example" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=REACT_604",
+      "database" : "Reactome - a curated knowledgebase of biological pathways",
+      "example_id" : "Reactome:REACT_604",
+      "generic_url" : "http://www.reactome.org/",
+      "fullname" : null,
+      "abbreviation" : "REAC",
+      "id" : null,
+      "url_syntax" : "http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=[example_id]",
       "datatype" : null
    },
    "pfamb" : {
@@ -773,10 +801,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "smd" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Stanford Microarray Database",
+      "example_id" : null,
       "generic_url" : "http://genome-www.stanford.edu/microarray",
       "fullname" : null,
       "id" : null,
@@ -812,6 +842,21 @@ amigo.data.xrefs = {
       "url_syntax" : "http://vega.sanger.ac.uk/perl/searchview?species=all&idx=All&q=[example_id]",
       "datatype" : null
    },
+   "gorel" : {
+      "object" : null,
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "description" : "Additional relations pending addition into RO",
+      "database" : "GO Extensions to OBO Relation Ontology Ontology",
+      "example_id" : null,
+      "generic_url" : "http://purl.obolibrary.org/obo/ro",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "GOREL",
+      "url_syntax" : null,
+      "datatype" : null
+   },
    "ddb_ref" : {
       "object" : "Literature Reference Identifier",
       "name" : null,
@@ -832,6 +877,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.gramene.org/db/literature/pub_search?ref_id=659",
+      "database" : null,
       "example_id" : "GR_REF:659",
       "generic_url" : "http://www.gramene.org/",
       "fullname" : null,
@@ -841,6 +887,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "imgt_ligm" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
@@ -874,6 +921,7 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : null,
       "database" : "University of Minnesota Biocatalysis/Biodegradation Database",
+      "example_id" : null,
       "generic_url" : "http://umbbd.msi.umn.edu/",
       "fullname" : null,
       "id" : null,
@@ -918,6 +966,7 @@ amigo.data.xrefs = {
       "url_example" : "http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?PF00046",
       "description" : "Pfam is a collection of protein families represented by sequence alignments and hidden Markov models (HMMs)",
       "database" : "Pfam database of protein families",
+      "!entity_type" : "SO:0000110 ! sequence feature",
       "example_id" : "Pfam:PF00046",
       "generic_url" : "http://www.sanger.ac.uk/Software/Pfam/",
       "fullname" : null,
@@ -946,6 +995,7 @@ amigo.data.xrefs = {
       "name" : null,
       "uri_prefix" : null,
       "url_example" : "http://www.gramene.org/db/genes/search_gene?acc=GR:0060198",
+      "database" : null,
       "example_id" : "GR_GENE:GR:0060198",
       "generic_url" : "http://www.gramene.org/",
       "fullname" : null,
@@ -955,8 +1005,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_spombe" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Spombe",
+      "object" : "Gene identifier",
       "uri_prefix" : null,
       "local_id_syntax" : "^SP[A-Z0-9]+\\.[A-Za-z0-9]+$",
       "example_id" : "GeneDB_Spombe:SPAC890.04C",
@@ -989,10 +1039,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "poc" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Plant Ontology Consortium",
+      "example_id" : null,
       "generic_url" : "http://www.plantontology.org/",
       "fullname" : null,
       "id" : null,
@@ -1018,14 +1070,14 @@ amigo.data.xrefs = {
       "object" : "Protein family tree identifier",
       "uri_prefix" : null,
       "name" : null,
-      "url_example" : "http://pantree.org/node/annotationNode.jsp?id=PTN000000084",
+      "url_example" : "http://www.pantherdb.org/panther/lookupId.jsp?id=PTHR10000",
       "database" : "Protein ANalysis THrough Evolutionary Relationships Classification System",
-      "example_id" : "PANTHER:PTN000000084",
+      "example_id" : "PANTHER:PTHR11455",
       "generic_url" : "http://www.pantherdb.org/",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "PANTHER",
-      "url_syntax" : "http://pantree.org/node/annotationNode.jsp?id=[example_id]",
+      "url_syntax" : "http://www.pantherdb.org/panther/lookupId.jsp?id=[example_id]",
       "datatype" : null
    },
    "jcvi_tba1" : {
@@ -1088,10 +1140,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "sanger" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Wellcome Trust Sanger Institute",
+      "example_id" : null,
       "generic_url" : "http://www.sanger.ac.uk/",
       "fullname" : null,
       "id" : null,
@@ -1100,8 +1154,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_lmajor" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Lmajor",
+      "object" : "Gene identifier",
       "uri_prefix" : null,
       "local_id_syntax" : "^LmjF\\.\\d+\\.\\d+$",
       "example_id" : "GeneDB_Lmajor:LM5.32",
@@ -1147,10 +1201,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "mitre" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "The MITRE Corporation",
+      "example_id" : null,
       "generic_url" : "http://www.mitre.org/",
       "fullname" : null,
       "id" : null,
@@ -1159,10 +1215,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "phenoscape" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "PhenoScape Knowledgebase",
+      "example_id" : null,
       "generic_url" : "http://phenoscape.org/",
       "fullname" : null,
       "id" : null,
@@ -1182,6 +1240,21 @@ amigo.data.xrefs = {
       "abbreviation" : "ECOCYC_REF",
       "id" : null,
       "url_syntax" : "http://biocyc.org/ECOLI/reference.html?type=CITATION-FRAME&object=[example_id]",
+      "datatype" : null
+   },
+   "syscilia_ccnet" : {
+      "object" : null,
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "description" : "A systems biology approach to dissect cilia function and its disruption in human genetic disease",
+      "database" : "Syscilia",
+      "example_id" : null,
+      "generic_url" : "http://syscilia.org/",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "SYSCILIA_CCNET",
+      "url_syntax" : null,
       "datatype" : null
    },
    "metacyc" : {
@@ -1214,10 +1287,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "omssa" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Open Mass Spectrometry Search Algorithm",
+      "example_id" : null,
       "generic_url" : "http://pubchem.ncbi.nlm.nih.gov/omssa/",
       "fullname" : null,
       "id" : null,
@@ -1343,10 +1418,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "germonline" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "GermOnline",
+      "example_id" : null,
       "generic_url" : "http://www.germonline.org/",
       "fullname" : null,
       "id" : null,
@@ -1371,10 +1448,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "mengo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Microbial ENergy processes Gene Ontology Project",
+      "example_id" : null,
       "generic_url" : "http://mengo.vbi.vt.edu/",
       "fullname" : null,
       "id" : null,
@@ -1426,10 +1505,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "eurofung" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Eurofungbase community annotation",
+      "example_id" : null,
       "generic_url" : "http://www.eurofung.net/option=com_content&task=section&id=3&Itemid=4",
       "fullname" : null,
       "id" : null,
@@ -1584,6 +1665,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "imgt_hla" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
@@ -1640,6 +1722,20 @@ amigo.data.xrefs = {
       "url_syntax" : "http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=[example_id]",
       "datatype" : null
    },
+   "alzheimers_university_of_toronto" : {
+      "object" : null,
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "database" : "Alzheimers Project at University of Toronto",
+      "example_id" : null,
+      "generic_url" : "http://www.ims.utoronto.ca/",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "Alzheimers_University_of_Toronto",
+      "url_syntax" : null,
+      "datatype" : null
+   },
    "pmid" : {
       "object" : "Identifier",
       "uri_prefix" : null,
@@ -1669,12 +1765,14 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ecoliwiki" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "EcoliHub's subsystem for community annotation of E. coli K-12",
       "database" : "EcoliWiki from EcoliHub",
       "local_id_syntax" : "^[A-Za-z]{3,4}$",
+      "example_id" : null,
       "generic_url" : "http://ecoliwiki.net/",
       "fullname" : null,
       "id" : null,
@@ -1743,6 +1841,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "pharmgkb" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.pharmgkb.org/do/serve?objId=PA267",
@@ -1770,6 +1869,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "phi" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
@@ -1977,10 +2077,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "jcvi" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "J. Craig Venter Institute",
+      "example_id" : null,
       "generic_url" : "http://www.jcvi.org/",
       "fullname" : null,
       "id" : null,
@@ -2066,10 +2168,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "biopixie_mefit" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "biological Process Inference from eXperimental Interaction Evidence/Microarray Experiment Functional Integration Technology",
+      "example_id" : null,
       "generic_url" : "http://pixie.princeton.edu/pixie/",
       "fullname" : null,
       "id" : null,
@@ -2135,11 +2239,13 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "trait" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "description" : "an integrated database of transcripts expressed in human skeletal muscle",
       "database" : "TRAnscript Integrated Table",
+      "example_id" : null,
       "generic_url" : "http://muscle.cribi.unipd.it/",
       "fullname" : null,
       "id" : null,
@@ -2164,10 +2270,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "transfac" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "TRANSFAC database of eukaryotic transcription factors",
+      "example_id" : null,
       "generic_url" : "http://www.gene-regulation.com/pub/databases.html#transfac",
       "fullname" : null,
       "id" : null,
@@ -2196,6 +2304,7 @@ amigo.data.xrefs = {
       "url_example" : null,
       "! url_example" : "http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=",
       "database" : "National Center for Biotechnology Information",
+      "example_id" : null,
       "generic_url" : "http://www.ncbi.nlm.nih.gov/",
       "fullname" : null,
       "id" : null,
@@ -2209,6 +2318,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://cgsc.biology.yale.edu/Site.php?ID=315",
+      "database" : null,
       "example_id" : "CGSC:rbsK",
       "database: CGSC" : "E.coli Genetic Stock Center",
       "generic_url" : "http://cgsc.biology.yale.edu/",
@@ -2234,8 +2344,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_tbrucei" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Tbrucei",
+      "object" : "Gene identifier",
       "uri_prefix" : null,
       "local_id_syntax" : "^Tb\\d+\\.\\d+\\.\\d+$",
       "example_id" : "GeneDB_Tbrucei:Tb927.1.5250",
@@ -2287,9 +2397,10 @@ amigo.data.xrefs = {
       "name" : null,
       "uri_prefix" : null,
       "url_example" : "http://www.gramene.org/db/protein/protein_search?acc=Q6VSV0",
+      "database" : null,
+      "example_id" : "GR_PROTEIN:Q6VSV0",
       "!entity_type" : "PR:000000001 ! protein",
       "local_id_syntax" : "^[A-Z][0-9][A-Z0-9]{3}[0-9]$",
-      "example_id" : "GR_PROTEIN:Q6VSV0",
       "generic_url" : "http://www.gramene.org/",
       "fullname" : null,
       "abbreviation" : "GR_protein",
@@ -2342,10 +2453,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "parkinsonsuk-ucl" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Parkinsons Disease Gene Ontology Initiative",
+      "example_id" : null,
       "generic_url" : "http://www.ucl.ac.uk/cardiovasculargeneontology",
       "fullname" : null,
       "id" : null,
@@ -2400,10 +2513,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "vida" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Virus Database at University College London",
+      "example_id" : null,
       "generic_url" : "http://www.biochem.ucl.ac.uk/bsm/virus_database/VIDA.html",
       "fullname" : null,
       "id" : null,
@@ -2573,10 +2688,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "pamgo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Plant-Associated Microbe Gene Ontology Interest Group",
+      "example_id" : null,
       "generic_url" : "http://pamgo.vbi.vt.edu/",
       "fullname" : null,
       "id" : null,
@@ -2590,6 +2707,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.gramene.org/db/searches/browser?search_type=All&RGN=on&query=sd1",
+      "database" : null,
       "!entity_type" : "PR:000000001 ! protein",
       "local_id_syntax" : "^[A-Z][0-9][A-Z0-9]{3}[0-9]$",
       "example_id" : "GR:sd1",
@@ -2601,10 +2719,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "tgd" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Tetrahymena Genome Database",
+      "example_id" : null,
       "generic_url" : "http://www.ciliate.org/",
       "fullname" : null,
       "id" : null,
@@ -2613,10 +2733,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "roslin_institute" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Roslin Institute",
+      "example_id" : null,
       "generic_url" : "http://www.roslin.ac.uk/",
       "fullname" : null,
       "id" : null,
@@ -2716,10 +2838,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "hugo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Human Genome Organisation",
+      "example_id" : null,
       "generic_url" : "http://www.hugo-international.org/",
       "fullname" : null,
       "id" : null,
@@ -2801,10 +2925,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "agbase" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "AgBase resource for functional analysis of agricultural plant and animal gene products",
+      "example_id" : null,
       "generic_url" : "http://www.agbase.msstate.edu/",
       "fullname" : null,
       "id" : null,
@@ -2881,6 +3007,7 @@ amigo.data.xrefs = {
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.gramene.org/db/qtl/qtl_display?qtl_accession_id=CQU7",
+      "database" : null,
       "example_id" : "GR_QTL:CQU7",
       "generic_url" : "http://www.gramene.org/",
       "fullname" : null,
@@ -2919,10 +3046,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ptarget" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "pTARGET Prediction server for protein subcellular localization",
+      "example_id" : null,
       "generic_url" : "http://bioinformatics.albany.edu/~ptarget/",
       "fullname" : null,
       "id" : null,
@@ -2945,14 +3074,16 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "tigr" : {
+      "object" : null,
       "name" : null,
       "uri_prefix" : null,
       "url_example" : null,
       "database" : "J. Craig Venter Institute",
+      "example_id" : null,
       "generic_url" : "http://www.jcvi.org/",
       "fullname" : null,
-      "id" : null,
       "abbreviation" : "TIGR",
+      "id" : null,
       "url_syntax" : null,
       "datatype" : null
    },
@@ -3044,11 +3175,13 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "muscletrait" : {
+      "object" : null,
       "name" : null,
       "uri_prefix" : null,
       "url_example" : null,
       "description" : "an integrated database of transcripts expressed in human skeletal muscle",
       "database" : "TRAnscript Integrated Table",
+      "example_id" : null,
       "generic_url" : "http://muscle.cribi.unipd.it/",
       "fullname" : null,
       "abbreviation" : "MuscleTRAIT",
@@ -3071,8 +3204,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_pfalciparum" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Pfalciparum",
+      "object" : "Gene identifier",
       "uri_prefix" : null,
       "local_id_syntax" : "^SP[A-Z0-9]+\\.[A-Za-z0-9]+$",
       "example_id" : "GeneDB_Pfalciparum:PFD0755c",
@@ -3133,10 +3266,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "h-invdb" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "H-invitational Database",
+      "example_id" : null,
       "generic_url" : "http://www.h-invitational.jp/",
       "fullname" : null,
       "id" : null,
@@ -3150,6 +3285,7 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : null,
       "database" : "Kyoto Encyclopedia of Genes and Genomes",
+      "example_id" : null,
       "generic_url" : "http://www.genome.ad.jp/kegg/",
       "fullname" : null,
       "id" : null,
@@ -3247,10 +3383,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "psort" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "PSORT protein subcellular localization databases and prediction tools for bacteria",
+      "example_id" : null,
       "generic_url" : "http://www.psort.org/",
       "fullname" : null,
       "id" : null,
@@ -3378,20 +3516,6 @@ amigo.data.xrefs = {
       "url_syntax" : "http://db.yeastgenome.org/cgi-bin/locus.pl?dbid=[example_id]",
       "datatype" : null
    },
-   "pato" : {
-      "object" : "Identifier",
-      "uri_prefix" : null,
-      "name" : null,
-      "url_example" : null,
-      "database" : "Phenotypic quality ontology",
-      "example_id" : "PATO:0001420",
-      "generic_url" : "http://www.bioontology.org/wiki/index.php/PATO:Main_Page",
-      "fullname" : null,
-      "id" : null,
-      "abbreviation" : "PATO",
-      "url_syntax" : null,
-      "datatype" : null
-   },
    "sgn" : {
       "object" : "Gene identifier",
       "uri_prefix" : null,
@@ -3406,11 +3530,27 @@ amigo.data.xrefs = {
       "url_syntax" : "http://www.sgn.cornell.edu/phenome/locus_display.pl?locus_id=[example_id]",
       "datatype" : null
    },
+   "pato" : {
+      "object" : "Identifier",
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : null,
+      "database" : "Phenotypic quality ontology",
+      "example_id" : "PATO:0001420",
+      "generic_url" : "http://www.bioontology.org/wiki/index.php/PATO:Main_Page",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "PATO",
+      "url_syntax" : null,
+      "datatype" : null
+   },
    "goc" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Gene Ontology Consortium",
+      "example_id" : null,
       "generic_url" : "http://www.geneontology.org/",
       "fullname" : null,
       "id" : null,
@@ -3419,10 +3559,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genprotec" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "GenProtEC E. coli genome and proteome database",
+      "example_id" : null,
       "generic_url" : "http://genprotec.mbl.edu/",
       "fullname" : null,
       "id" : null,
@@ -3431,10 +3573,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "nc-iubmb" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Nomenclature Committee of the International Union of Biochemistry and Molecular Biology",
+      "example_id" : null,
       "generic_url" : "http://www.chem.qmw.ac.uk/iubmb/",
       "fullname" : null,
       "id" : null,
@@ -3457,6 +3601,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ec" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://www.expasy.org/enzyme/1.4.3.6",
@@ -3575,10 +3720,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "cog" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "NCBI Clusters of Orthologous Groups",
+      "example_id" : null,
       "generic_url" : "http://www.ncbi.nlm.nih.gov/COG/",
       "fullname" : null,
       "id" : null,
@@ -3587,10 +3734,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "dflat" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Developmental FunctionaL Annotation at Tufts",
+      "example_id" : null,
       "generic_url" : "http://bcb.cs.tufts.edu/dflat/",
       "fullname" : null,
       "id" : null,
@@ -3731,6 +3880,7 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "bfo" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : "http://purl.obolibrary.org/obo/BFO_0000066",
@@ -3745,10 +3895,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "refgenome" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "GO Reference Genomes",
+      "example_id" : null,
       "generic_url" : "http://www.geneontology.org/GO.refgenome.shtml",
       "fullname" : null,
       "id" : null,
@@ -3800,10 +3952,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "iuphar" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "International Union of Pharmacology",
+      "example_id" : null,
       "generic_url" : "http://www.iuphar.org/",
       "fullname" : null,
       "id" : null,
@@ -3872,10 +4026,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "prow" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Protein Reviews on the Web",
+      "example_id" : null,
       "generic_url" : "http://www.ncbi.nlm.nih.gov/prow/",
       "fullname" : null,
       "id" : null,
@@ -3900,10 +4056,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "mtbbase" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Collection and Refinement of Physiological Data on Mycobacterium tuberculosis",
+      "example_id" : null,
       "generic_url" : "http://www.ark.in-berlin.de/Site/MTBbase.html",
       "fullname" : null,
       "id" : null,
@@ -4002,6 +4160,20 @@ amigo.data.xrefs = {
       "url_syntax" : "http://www.ensembl.org/id/[example_id]",
       "datatype" : null
    },
+   "sgd_ref" : {
+      "object" : "Literature Reference Identifier",
+      "uri_prefix" : null,
+      "name" : null,
+      "url_example" : "http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=S000049602",
+      "database" : "Saccharomyces Genome Database",
+      "example_id" : "SGD_REF:S000049602",
+      "generic_url" : "http://www.yeastgenome.org/",
+      "fullname" : null,
+      "id" : null,
+      "abbreviation" : "SGD_REF",
+      "url_syntax" : "http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
+      "datatype" : null
+   },
    "tigr_pfa1" : {
       "object" : "Accession",
       "name" : null,
@@ -4015,20 +4187,6 @@ amigo.data.xrefs = {
       "id" : null,
       "url_syntax" : null,
       "is_obsolete" : "true",
-      "datatype" : null
-   },
-   "sgd_ref" : {
-      "object" : "Literature Reference Identifier",
-      "uri_prefix" : null,
-      "name" : null,
-      "url_example" : "http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=S000049602",
-      "database" : "Saccharomyces Genome Database",
-      "example_id" : "SGD_REF:S000049602",
-      "generic_url" : "http://www.yeastgenome.org/",
-      "fullname" : null,
-      "id" : null,
-      "abbreviation" : "SGD_REF",
-      "url_syntax" : "http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]",
       "datatype" : null
    },
    "vmd" : {
@@ -4114,7 +4272,7 @@ amigo.data.xrefs = {
       "local_id_syntax" : "^\\d{7}$",
       "example_id" : "SO:0000195",
       "generic_url" : "http://sequenceontology.org/",
-      "entity_type" : "SO:0000400 ! sequence attribute ",
+      "entity_type" : "SO:0000110 ! sequence feature",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "SO",
@@ -4151,8 +4309,8 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "genedb_gmorsitans" : {
-      "object" : "Gene identifier",
       "shorthand_name" : "Tsetse",
+      "object" : "Gene identifier",
       "replaced_by" : "GeneDB",
       "uri_prefix" : null,
       "name" : null,
@@ -4173,10 +4331,10 @@ amigo.data.xrefs = {
       "name" : null,
       "url_example" : "http://www.pombase.org/spombe/result/SPBC11B10.09",
       "database" : "PomBase",
-      "!entity_type" : "SO:0000704 ! gene ",
       "local_id_syntax" : "^S\\w+(\\.)?\\w+(\\.)?$",
       "example_id" : "PomBase:SPBC11B10.09",
       "generic_url" : "http://www.pombase.org/",
+      "entity_type" : "SO:0000704 ! gene ",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "PomBase",
@@ -4212,10 +4370,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ppi" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Pseudomonas syringae community annotation project",
+      "example_id" : null,
       "generic_url" : "http://genome.pseudomonas-syringae.org/",
       "fullname" : null,
       "id" : null,
@@ -4299,10 +4459,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "ntnu_sb" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Norwegian University of Science and Technology, Systems Biology team",
+      "example_id" : null,
       "generic_url" : "http://www.ntnu.edu/nt/systemsbiology",
       "fullname" : null,
       "id" : null,
@@ -4372,10 +4534,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "multifun" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "MultiFun cell function assignment schema",
+      "example_id" : null,
       "generic_url" : "http://genprotec.mbl.edu/files/MultiFun.html",
       "fullname" : null,
       "id" : null,
@@ -4447,14 +4611,14 @@ amigo.data.xrefs = {
       "object" : "Identifier",
       "uri_prefix" : null,
       "name" : null,
-      "url_example" : "http://us.expasy.org/unirules/MF_00031",
+      "url_example" : "http://hamap.expasy.org/unirule/MF_00131",
       "database" : "High-quality Automated and Manual Annotation of microbial Proteomes",
       "example_id" : "HAMAP:MF_00031",
-      "generic_url" : "http://us.expasy.org/sprot/hamap/",
+      "generic_url" : "http://hamap.expasy.org/",
       "fullname" : null,
       "id" : null,
       "abbreviation" : "HAMAP",
-      "url_syntax" : "http://us.expasy.org/unirules/[example_id]",
+      "url_syntax" : "http://hamap.expasy.org/unirule/[example_id]",
       "datatype" : null
    },
    "aracyc" : {
@@ -4472,10 +4636,12 @@ amigo.data.xrefs = {
       "datatype" : null
    },
    "broad" : {
+      "object" : null,
       "uri_prefix" : null,
       "name" : null,
       "url_example" : null,
       "database" : "Broad Institute",
+      "example_id" : null,
       "generic_url" : "http://www.broad.mit.edu/",
       "fullname" : null,
       "id" : null,

@@ -436,7 +436,7 @@ bbop.core.pare = function(in_thing, filter_function, sort_function){
     var ret = [];
     
     // Probably an not array then.
-    if( typeof(in_thing) == 'undefined' ){
+    if( typeof(in_thing) === 'undefined' ){
 	// this is a nothing, to nothing....
     }else if( typeof(in_thing) != 'object' ){
 	throw new Error('Unsupported type in bbop.core.pare: ' +
@@ -494,23 +494,23 @@ bbop.core.clone = function(thing){
 
     var clone = null;
 
-    if( typeof(thing) == 'undefined' ){
+    if( typeof(thing) === 'undefined' ){
 	// Nothin' doin'.
 	//print("looks undefined");
-    }else if( typeof(thing) == 'function' ){
+    }else if( typeof(thing) === 'function' ){
 	// Dunno about this case...
 	//print("looks like a function");
 	clone = thing;
-    }else if( typeof(thing) == 'boolean' ||
-	      typeof(thing) == 'number' ||
-	      typeof(thing) == 'string' ){
+    }else if( typeof(thing) === 'boolean' ||
+	      typeof(thing) === 'number' ||
+	      typeof(thing) === 'string' ){
 	// Atomic types can be returned as-is (i.e. assignment in
 	// JS is the same as copy for atomic types).
 	//print("cloning atom: " + thing);
 	clone = thing;
-    }else if( typeof(thing) == 'object' ){
+    }else if( typeof(thing) === 'object' ){
 	// Is it a hash or an array?
-	if( typeof(thing.length) == 'undefined' ){
+	if( typeof(thing.length) === 'undefined' ){
 	    // Looks like a hash!
 	    //print("looks like a hash");
 	    clone = {};
@@ -688,84 +688,88 @@ bbop.core.get_assemble = function(qargs){
     for( var qname in qargs ){
 	var qval = qargs[qname];
 
-	if( typeof qval == 'string' || typeof qval == 'number' ){
-	    // Is standard name/value pair.
-	    var nano_buffer = [];
-	    nano_buffer.push(qname);
-	    nano_buffer.push('=');
-	    nano_buffer.push(qval);
-	    mbuff.push(nano_buffer.join(''));
-	}else if( typeof qval == 'object' ){
-	    if( typeof qval.length != 'undefined' ){
-		// Is array (probably).
-		// Iterate through and double on.
-		for(var qval_i = 0; qval_i < qval.length ; qval_i++){
-		    var nano_buff = [];
-		    nano_buff.push(qname);
-		    nano_buff.push('=');
-		    nano_buff.push(qval[qval_i]);
-		    mbuff.push(nano_buff.join(''));
-		}
-	    }else{
-		// // TODO: The "and" case is pretty much like
-		// // the array, the "or" case needs to be
-		// // handled carefully. In both cases, care will
-		// // be needed to show which filters are marked.
-		// Is object (probably).
-		// Special "Solr-esque" handling.
-		for( var sub_name in qval ){
-		    var sub_vals = qval[sub_name];
-
-		    // Since there might be an array down there,
-		    // ensure that there is an iterate over it.
-		    if( bbop.core.what_is(sub_vals) != 'array' ){
-			sub_vals = [sub_vals];
+	// null is technically an object, but we don't want to render
+	// it.
+	if( qval != null ){
+	    if( typeof qval == 'string' || typeof qval == 'number' ){
+		// Is standard name/value pair.
+		var nano_buffer = [];
+		nano_buffer.push(qname);
+		nano_buffer.push('=');
+		nano_buffer.push(qval);
+		mbuff.push(nano_buffer.join(''));
+	    }else if( typeof qval == 'object' ){
+		if( typeof qval.length != 'undefined' ){
+		    // Is array (probably).
+		    // Iterate through and double on.
+		    for(var qval_i = 0; qval_i < qval.length ; qval_i++){
+			var nano_buff = [];
+			nano_buff.push(qname);
+			nano_buff.push('=');
+			nano_buff.push(qval[qval_i]);
+			mbuff.push(nano_buff.join(''));
 		    }
-
-		    var loop = bbop.core.each;
-		    loop(sub_vals,
-			 function(sub_val){
-			     var nano_buff = [];
-			     nano_buff.push(qname);
-			     nano_buff.push('=');
-			     nano_buff.push(sub_name);
-			     nano_buff.push(':');
-			     if( typeof sub_val !== 'undefined' && sub_val ){
-				 // Do not double quote strings.
-				 // Also, do not requote if we already
-				 // have parens in place--that
-				 // indicates a complicated
-				 // expression. See the unit tests.
-				 var val_is_a = bbop.core.what_is(sub_val);
-				 if( val_is_a == 'string' &&
-				     sub_val.charAt(0) == '"' &&
-				     sub_val.charAt(sub_val.length -1) == '"' ){
-				     nano_buff.push(sub_val);
-				 }else if( val_is_a == 'string' &&
-				     sub_val.charAt(0) == '(' &&
-				     sub_val.charAt(sub_val.length -1) == ')' ){
-				     nano_buff.push(sub_val);
+		}else{
+		    // // TODO: The "and" case is pretty much like
+		    // // the array, the "or" case needs to be
+		    // // handled carefully. In both cases, care will
+		    // // be needed to show which filters are marked.
+		    // Is object (probably).
+		    // Special "Solr-esque" handling.
+		    for( var sub_name in qval ){
+			var sub_vals = qval[sub_name];
+			
+			// Since there might be an array down there,
+			// ensure that there is an iterate over it.
+			if( bbop.core.what_is(sub_vals) != 'array' ){
+			    sub_vals = [sub_vals];
+			}
+			
+			var loop = bbop.core.each;
+			loop(sub_vals,
+			     function(sub_val){
+				 var nano_buff = [];
+				 nano_buff.push(qname);
+				 nano_buff.push('=');
+				 nano_buff.push(sub_name);
+				 nano_buff.push(':');
+				 if( typeof sub_val !== 'undefined' && sub_val ){
+				     // Do not double quote strings.
+				     // Also, do not requote if we already
+				     // have parens in place--that
+				     // indicates a complicated
+				     // expression. See the unit tests.
+				     var val_is_a = bbop.core.what_is(sub_val);
+				     if( val_is_a == 'string' &&
+					 sub_val.charAt(0) == '"' &&
+					 sub_val.charAt(sub_val.length -1) == '"' ){
+					     nano_buff.push(sub_val);
+					 }else if( val_is_a == 'string' &&
+						   sub_val.charAt(0) == '(' &&
+						   sub_val.charAt(sub_val.length -1) == ')' ){
+						       nano_buff.push(sub_val);
+						   }else{
+						       nano_buff.push('"' + sub_val + '"');
+						   }
 				 }else{
-				     nano_buff.push('"' + sub_val + '"');
+				     nano_buff.push('""');
 				 }
-			     }else{
-				 nano_buff.push('""');
-			     }
-			     mbuff.push(nano_buff.join(''));
-			 });
+				 mbuff.push(nano_buff.join(''));
+			     });
+		    }
 		}
+	    }else if( typeof qval == 'undefined' ){
+		// This happens in some cases where a key is tried, but no
+		// value is found--likely equivalent to q="", but we'll
+		// let it drop.
+		// var nano_buff = [];
+		// nano_buff.push(qname);
+		// nano_buff.push('=');
+		// mbuff.push(nano_buff.join(''));	    
+	    }else{
+		throw new Error("bbop.core.get_assemble: unknown type: " + 
+				typeof(qval));
 	    }
-	}else if( typeof qval == 'undefined' ){
-	    // This happens in some cases where a key is tried, but no
-	    // value is found--likely equivalent to q="", but we'll
-	    // let it drop.
-	    // var nano_buff = [];
-	    // nano_buff.push(qname);
-	    // nano_buff.push('=');
-	    // mbuff.push(nano_buff.join(''));	    
-	}else{
-	    throw new Error("bbop.core.get_assemble: unknown type: " + 
-			    typeof(qval));
 	}
     }
     
@@ -1873,14 +1877,14 @@ if ( typeof bbop.version == "undefined" ){ bbop.version = {}; }
  * Partial version for this library; revision (major/minor version numbers)
  * information.
  */
-bbop.version.revision = "2.0.0-rc1";
+bbop.version.revision = "2.0.2";
 
 /*
  * Variable: release
  *
  * Partial version for this library: release (date-like) information.
  */
-bbop.version.release = "20140124";
+bbop.version.release = "20140318";
 /*
  * Package: logger.js
  * 
@@ -5920,7 +5924,7 @@ bbop.model.bracket.graph = function(){
     this._is_a = 'bbop.model.bracket.graph';
 
     var anchor = this;
-    var loop = bbop.core.each;
+    var each = bbop.core.each;
     anchor._logger.DEBUG = true;
     function ll(str){ anchor._logger.kvetch(str); }
 
@@ -5946,63 +5950,141 @@ bbop.model.bracket.graph = function(){
      */
     this.bracket_layout = function(term_acc){
 	
+	// // This is the actual path climbing agent.
+	// function max_info_climber(in_curr_term, in_curr_term_dist,
+	// 			  in_max_hist, in_enc_hist){
+
+	//     // We either bootstrap (first run) or pull them in.
+	//     var curr_term = in_curr_term || term_acc;
+	//     var curr_term_distance = in_curr_term_dist || 0;
+	//     var max_hist = in_max_hist || {};
+	//     var encounter_hist = in_enc_hist || {};
+
+	//     // ll('looking at: ' + curr_term + ' at ' + curr_term_distance);
+
+	//     // Only recur if our encounter history sez that either
+	//     // this node is new or if we have a higher distance count
+	//     // (in which case we add it and continue on our merry
+	//     // way).
+	//     if( ! bbop.core.is_defined(encounter_hist[curr_term]) ){
+	// 	// ll(curr_term + ' is a new encounter at distance ' +
+	// 	//    curr_term_distance);
+
+	// 	// Note that we have encountered this node before.
+	// 	encounter_hist[curr_term] = 1;
+
+	// 	// Our first distance is the current one!
+	// 	max_hist[curr_term] = curr_term_distance;
+
+	// 	// Increment our distance.
+	// 	curr_term_distance++;
+
+	// 	// Take a look at all the parents of our current term.
+	// 	each(anchor.get_parent_nodes(curr_term),
+	// 	     function(p){
+	// 		 // Since this is a new node encounter, let's
+	// 		 // see what else is out there to discover.
+	// 		 max_info_climber(p.id(), curr_term_distance,
+	// 				  max_hist, encounter_hist);
+	// 	     });
+
+	//     }else if( encounter_hist[curr_term] ){
+	// 	// ll(curr_term + ' has been seen before');
+
+	// 	// If we're seeing this node again, but with a
+	// 	// separate history, we'll add the length or our
+	// 	// history to the current, but will not recur in any
+	// 	// case (we've been here before).
+	// 	if( max_hist[curr_term] < curr_term_distance ){
+	// 	    // ll(curr_term +' has a new max of '+ curr_term_distance);
+	// 	    max_hist[curr_term] = curr_term_distance;
+	// 	}
+	//     }
+
+	//     // Return the collected histories.
+	//     return max_hist;
+	// }
+
 	// This is the actual path climbing agent.
-	function max_info_climber(in_curr_term, in_curr_term_dist,
+	function max_info_climber(in_curr_list, in_curr_term_dist,
 				  in_max_hist, in_enc_hist){
 
 	    // We either bootstrap (first run) or pull them in.
-	    var curr_term = in_curr_term || term_acc;
+	    var curr_list = in_curr_list || [];
+	    // curr_list must be a list.
+	    if( ! bbop.core.is_array(curr_list) ){ curr_list = [curr_list]; }
 	    var curr_term_distance = in_curr_term_dist || 0;
 	    var max_hist = in_max_hist || {};
 	    var encounter_hist = in_enc_hist || {};
 
-	    // ll('looking at: ' + curr_term + ' at ' + curr_term_distance);
+	    function update_info_for(update_item, update_distance){
+		if( ! encounter_hist[update_item] ){
+		    // ll('first time encountering: ' +
+		    //    update_item + ', @:' + update_distance);
+		    // Note that we have encountered this node before.
+		    encounter_hist[update_item] = 1;
+		    // Our first distance is the current one!
+		    max_hist[update_item] = update_distance;
+		}else{
+		    // ll('have seen before: ' + update_item + '...' +
+		    //    max_hist[update_item] + '/' + update_distance);
+		    // If we're seeing this node again, but with a
+		    // separate history, we'll add the length or our
+		    // history to the current, but will not recur in
+		    // any case (we've been here before).
+		    if( max_hist[update_item] < update_distance ){
+			// ll('   new high at current: ' + update_distance);
+			max_hist[update_item] = update_distance;
+		    }else{
+			// ll('   keeping current: ' + max_hist[update_item]);
+		    }
+		}
+	    }
 
-	    // Only recur if our encounter history sez that either
-	    // this node is new or if we have a higher distance count
-	    // (in which case we add it and continue on our merry
-	    // way).
-	    if( ! bbop.core.is_defined(encounter_hist[curr_term]) ){
-		// ll(curr_term + ' is a new encounter at distance ' +
-		//    curr_term_distance);
+	    // //
+	    // ll('new set @' + curr_term_distance + ' looks like: ' +
+	    //    bbop.core.dump(curr_list));
 
-		// Note that we have encountered this node before.
-		encounter_hist[curr_term] = 1;
+	    // Only work if we have things in our list.
+	    if( curr_list && curr_list.length > 0 ){
 
-		// Our first distance is the current one!
-		max_hist[curr_term] = curr_term_distance;
+		// Process everything in the list.
+		each(curr_list,
+		     function(item){
+			 update_info_for(item, curr_term_distance);
+		     });
+
+		// Collect the parents of everything in the list.
+		var next_round = {};
+		each(curr_list,
+		     function(item){
+			 each(anchor.get_parent_nodes(item),
+			      function(p){
+				  var pid = p.id();
+				  next_round[pid] = true;
+			      });
+		     });
+		var next_list = bbop.core.get_keys(next_round);
 
 		// Increment our distance.
 		curr_term_distance++;
 
-		// Take a look at all the parents of our current term.
-		loop(anchor.get_parent_nodes(curr_term),
-		     function(p){
-			 // Since this is a new node encounter, let's
-			 // see what else is out there to discover.
-			 max_info_climber(p.id(), curr_term_distance,
-					  max_hist, encounter_hist);
-		     });
+		// //
+		// ll('future @' + curr_term_distance + ' looks like: ' +
+		//    bbop.core.dump(next_list));
 
-	    }else if( encounter_hist[curr_term] ){
-		// ll(curr_term + ' has been seen before');
-
-		// If we're seeing this node again, but with a
-		// separate history, we'll add the length or our
-		// history to the current, but will not recur in any
-		// case (we've been here before).
-		if( max_hist[curr_term] < curr_term_distance ){
-		    // ll(curr_term +' has a new max of '+ curr_term_distance);
-		    max_hist[curr_term] = curr_term_distance;
-		}
+		// Recur on new parent list.
+		max_info_climber(next_list, curr_term_distance,
+				 max_hist, encounter_hist);
 	    }
 
 	    // Return the collected histories.
 	    return max_hist;
 	}
+
 	// A hash of the maximum distance from the node-in-question to
 	// the roots.
-	var max_node_dist_from_root = max_info_climber();
+	var max_node_dist_from_root = max_info_climber(term_acc);
 	// ll('max_node_dist_from_root: ' +
 	//    bbop.core.dump(max_node_dist_from_root));
 
@@ -6013,7 +6095,7 @@ bbop.model.bracket.graph = function(){
 	// First, invert hash.
 	// E.g. from {x: 1, y: 1, z: 2} to {1: [x, y], 2: [z]} 
 	var lvl_lists = {};
-	loop(max_node_dist_from_root,
+	each(max_node_dist_from_root,
 	    function(node_id, lvl){
 		// Make sure that level is defined before we push.
 		if( ! bbop.core.is_defined(lvl_lists[lvl]) ){
@@ -6030,10 +6112,10 @@ bbop.model.bracket.graph = function(){
 	var levels = bbop.core.get_keys(lvl_lists);
 	levels.sort(bbop.core.numeric_sort_ascending);
 	// ll('levels: ' + bbop.core.dump(levels));
-	loop(levels,
+	each(levels,
 	    function(level){
 		var bracket = [];
-		loop(lvl_lists[level],
+		each(lvl_lists[level],
 		     function(item){
 			 bracket.push(item);
 		     });
@@ -6048,7 +6130,7 @@ bbop.model.bracket.graph = function(){
 	// Only add another level when there are actually kids.
 	if( c_nodes && ! bbop.core.is_empty(c_nodes) ){ 
 	    var kid_bracket = [];
-	    loop(c_nodes,
+	    each(c_nodes,
 		 function(c){
 		     kid_bracket.push(c.id());
 		 });
@@ -6181,10 +6263,10 @@ bbop.model.bracket.graph = function(){
 	// So, let's go through all the rows, looking on the
 	// transitivity graph to see if we can find the predicates.
 	var bracket_list = [];
-	loop(layout,
+	each(layout,
 	    function(layout_level){
 		var bracket = [];
-		loop(layout_level,
+		each(layout_level,
 		     function(layout_item){
 
 			 // The defaults for what we'll pass back out.
@@ -6271,8 +6353,8 @@ if ( typeof bbop.layout == "undefined" ){ bbop.layout = {}; }
 if ( typeof bbop.layout.sugiyama == "undefined" ){ bbop.layout.sugiyama = {}; }
 
 // Speciality variables in the namespace.
-bbop.layout.sugiyama.DEBUG = true;
-//bbop.layout.sugiyama.DEBUG = false;
+//bbop.layout.sugiyama.DEBUG = true;
+bbop.layout.sugiyama.DEBUG = false;
 bbop.layout.sugiyama.iterations = 10;
 
 ///
@@ -6594,7 +6676,6 @@ bbop.layout.sugiyama.partitioner = function(graph){
 	}
     }
     
-
     // Run the partitioner after getting the root values (or whatever)
     // bootstrapped in.
     //var roots = graph.get_root_nodes(rel);
@@ -6611,7 +6692,8 @@ bbop.layout.sugiyama.partitioner = function(graph){
     	// TODO: Test this.
     	var a_node = graph.all_nodes()[0] || null;
     	if( ! a_node ){
-    	    throw new Error('apparently the graph is empty--stop it!');
+    	    ll('warning: apparently the graph is empty');
+    	    //throw new Error('apparently the graph is empty--stop it!');
     	}else{
 	    _new_node_at(a_node, 0);
     	    recursivePartitioner(graph, a_node, [a_node.id()]);
@@ -7262,7 +7344,7 @@ bbop.rest.response.mmm = function(raw_data){
     bbop.rest.response.call(this);
     this._is_a = 'bbop.rest.response.mmm';
 
-    // Add the required commentary and data
+    // Add the required commentary, inconsistency, and data.
     this._commentary = null;
     this._data = null;
 
@@ -7318,6 +7400,7 @@ bbop.rest.response.mmm = function(raw_data){
 
 		    var odata = data['data'] || null;
 		    var cdata = data['commentary'] || null;
+
 		    // If data, object or array.
 		    if( odata && bbop.core.what_is(odata) != 'object' &&
 			bbop.core.what_is(odata) != 'array' ){
@@ -7370,7 +7453,7 @@ bbop.rest.response.mmm.prototype.commentary = function(){
  * Function: data
  * 
  * Returns the data object (whatever that might be in any given
- * case).
+ * case). This grossly returns all response data, if any.
  * 
  * Arguments:
  *  n/a
@@ -7382,6 +7465,128 @@ bbop.rest.response.mmm.prototype.data = function(){
     var ret = null;
     if( this._data ){
 	ret = bbop.core.clone(this._data);
+    }
+    return ret;
+};
+
+/*
+ * Function: model_id
+ * 
+ * Returns the model id of the response.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  string or null
+ */
+bbop.rest.response.mmm.prototype.model_id = function(){
+    var ret = null;
+    if( this._data && this._data['id'] ){
+	ret = this._data['id'];
+    }
+    return ret;
+};
+
+/*
+ * Function: inconsistent_p
+ * 
+ * Returns true or false on whether or not the returned model is
+ * thought to be inconsistent. Starting assumption is that it is not.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  true or false
+ */
+bbop.rest.response.mmm.prototype.inconsistent_p = function(){
+    var ret = false;
+    if( this._data &&
+	typeof(this._data['inconsistent_p']) !== 'undefined' &&
+	this._data['inconsistent_p'] == true ){
+	ret = true;
+    }
+    return ret;
+};
+
+/*
+ * Function: facts
+ * 
+ * Returns a list of the facts in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop.rest.response.mmm.prototype.facts = function(){
+    var ret = [];
+    if( this._data && this._data['facts'] && 
+	bbop.core.is_array(this._data['facts']) ){
+	ret = this._data['facts'];
+    }
+    return ret;
+};
+
+/*
+ * Function: properties
+ * 
+ * Returns a list of the properties in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop.rest.response.mmm.prototype.properties = function(){
+    var ret = [];
+    if( this._data && this._data['properties'] && 
+	bbop.core.is_array(this._data['properties']) ){
+	ret = this._data['properties'];
+    }
+    return ret;
+};
+
+/*
+ * Function: individuals
+ * 
+ * Returns a list of the individuals in the response. Empty list if none.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop.rest.response.mmm.prototype.individuals = function(){
+    var ret = [];
+    if( this._data && this._data['individuals'] && 
+	bbop.core.is_array(this._data['individuals']) ){
+	ret = this._data['individuals'];
+    }
+    return ret;
+};
+
+/*
+ * Function: relations
+ * 
+ * Returns a list of the relations found in the response. Likely not
+ * to be there, so check the return.
+ * 
+ * Arguments:
+ *  n/a
+ * 
+ * Returns:
+ *  list
+ */
+bbop.rest.response.mmm.prototype.relations = function(){
+    var ret = [];
+    if( this._data && this._data['relations'] && 
+	bbop.core.is_array(this._data['relations']) ){
+	ret = this._data['relations'];
     }
     return ret;
 };
@@ -13960,11 +14165,12 @@ if ( typeof bbop.widget.display == "undefined" ){ bbop.widget.display = {}; }
  * 
  * Arguments:
  *  spinner_img_src - *[optional]* optional source of a spinner image to use
+ *  wait_msg - *[optional]* the wait message to use; may be a string or bbop.html; defaults to "Waiting..."
  * 
  * Returns:
  *  self
  */
-bbop.widget.display.filter_shield = function(spinner_img_src){
+bbop.widget.display.filter_shield = function(spinner_img_src, wait_msg){
 
     this._is_a = 'bbop.widget.display.filter_shield';
 
@@ -13975,10 +14181,17 @@ bbop.widget.display.filter_shield = function(spinner_img_src){
     logger.DEBUG = true;
     function ll(str){ logger.kvetch('W (filter_shield): ' + str); }
 
+    // Determine wait_msg, if any.
+    if( ! wait_msg ){
+	wait_msg = 'Waiting...';
+    }else{
+	// pass it through
+    }
+
     // Variables that we'll need to keep.
     var is_open_p = false;
     var parea = new bbop.html.tag('div', {'generate_id': true});
-    var pmsg = new bbop.html.tag('div', {'generate_id': true}, "Waiting...");
+    var pmsg = new bbop.html.tag('div', {'generate_id': true}, wait_msg);
     parea.add_to(pmsg);
 
     var div = new bbop.html.tag('div', {'generate_id': true}, parea);
@@ -14236,6 +14449,7 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
     // Globally declared (or not) icons.
     var ui_spinner_search_source = '';
     var ui_spinner_shield_source = '';
+    var ui_spinner_shield_message = null;
     var ui_icon_positive_label = '';
     var ui_icon_positive_source = '';
     var ui_icon_negative_label = '';
@@ -14575,13 +14789,15 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
      *  icon_negative_label - *[optional]* string or bbop.html for positive icon
      *  icon_negative_source - *[optional]* string to define the src of img 
      *  spinner_shield_source - *[optional]* string to define the src of img 
+     *  spinner_shield_message - *[optional]* string or bbop.html for message 
      *
      * Returns: 
      *  n/a
      */
     this.setup_accordion = function(icon_positive_label, icon_positive_source,
 				    icon_negative_label, icon_negative_source,
-				    spinner_shield_source){
+				    spinner_shield_source,
+				    spinner_shield_message){
 	
 	ll('setup_accordion UI for class configuration: ' +
 	   this.class_conf.id());
@@ -14589,6 +14805,8 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
 	// Set the class variables for use when we do the redraws.
 	if( spinner_shield_source ){
 	    ui_spinner_shield_source = spinner_shield_source; }
+	if( spinner_shield_message ){
+	    ui_spinner_shield_message = spinner_shield_message; }
 	if( icon_positive_label ){
 	    ui_icon_positive_label = icon_positive_label; }
 	if( icon_positive_source ){
@@ -15636,7 +15854,8 @@ bbop.widget.display.live_search = function(interface_id, conf_class){
 			 // Create the shield and pop-up the
 			 // placeholder.
 			 var fs = bbop.widget.display.filter_shield;
-			 var filter_shield = new fs(ui_spinner_shield_source); 
+			 var filter_shield = new fs(ui_spinner_shield_source,
+						    ui_spinner_shield_message); 
 			 filter_shield.start_wait();
 
 			 // Open the populated shield.
@@ -17400,6 +17619,7 @@ if ( typeof bbop.widget == "undefined" ){ bbop.widget = {}; }
  *  show_checkboxes_p - show/enable the item select checkboxes (default true)
  *  spinner_search_source - source for the spinner used during typical searching
  *  spinner_shield_source - source for the spinner used shield waiting
+ *  spinner_shield_message - message to display on the spinner shield while waiting
  *  icon_clear_label - (default: text button based on 'X')
  *  icon_clear_source - (default: '')
  *  icon_reset_label - (default: text button based on 'X')
@@ -17468,6 +17688,7 @@ bbop.widget.search_pane = function(golr_loc, golr_conf_obj, interface_id,
     	    'show_checkboxes_p' : true,
     	    'spinner_search_source' : '',
     	    'spinner_shield_source' : '',
+    	    'spinner_shield_message' : null,
 	    'icon_clear_label': _button_wrapper('X', 'Clear text from query'),
 	    'icon_clear_source': '',
 	    'icon_reset_label': _button_wrapper('!','Reset user query filters'),
@@ -17494,6 +17715,7 @@ bbop.widget.search_pane = function(golr_loc, golr_conf_obj, interface_id,
     var show_checkboxes_p = arg_hash['show_checkboxes_p'];
     var spinner_search_source = arg_hash['spinner_search_source'];
     var spinner_shield_source = arg_hash['spinner_shield_source'];
+    var spinner_shield_message = arg_hash['spinner_shield_message'];
     var icon_clear_label = arg_hash['icon_clear_label'];
     var icon_clear_source = arg_hash['icon_clear_source'];
     var icon_reset_label = arg_hash['icon_reset_label'];
@@ -17628,7 +17850,8 @@ bbop.widget.search_pane = function(golr_loc, golr_conf_obj, interface_id,
 				      icon_positive_source,
 				      icon_negative_label,
 				      icon_negative_source,
-				      spinner_shield_source);
+				      spinner_shield_source,
+				      spinner_shield_message);
 	}
     	anchor.ui.setup_results({'meta': show_pager_p,
 				 'spinner_source': spinner_search_source});
@@ -19277,7 +19500,7 @@ function renderer(parent, config){
         var node_elem =
             (event.currentTarget) ? event.currentTarget : event.srcElement;
         var node = self.tree.nodes[node_elem.node_id];
-        if (node) self.node_clicked(node, node_elem);
+        if (node) return self.node_clicked(node, node_elem, event);
     };
 
     var default_config = {
@@ -19542,11 +19765,20 @@ renderer.prototype._update_layout = function() {
     });
     this._leaves = visible_leaves;
 
+    var roots = this.tree.roots();
+    var root_distances = [];
+    for (var i = 0; i < roots.length; i++) {
+        root_distances.push(roots[i].parent_distance);
+    }
+    // if we're only showing a subtree, position the leftmost subtree
+    // root all the way to the left
+    this.x_offset = -min(root_distances);
+
     this._max_distance = max(this.tree.traverse(
         function(node, down_data) {
             return down_data + node.parent_distance;
         },
-        0,
+        this.x_offset,
         function(node, child_results, down_data) {
             if (self.node_hidden[node.id]) return 0;
 
@@ -19566,7 +19798,7 @@ renderer.prototype._do_layout = function() {
         function(node, down_data) {
             return down_data + node.parent_distance;
         },
-        0,
+        this.x_offset,
         function(node, child_results, down_data) {
             // don't lay out the node if it's hidden
             if (self.node_hidden[node.id]) return [];
@@ -19591,10 +19823,12 @@ renderer.prototype._do_layout = function() {
                 x: down_data,
                 y: ( ( node.is_leaf() || self.children_hidden[node.id] )
                      // The traverse method goes depth-first, so we'll
-                     // encounter the leaves in leaf-order.  So the y-coord
-                     // is just the number of leaves we've seen so far.
+                     // encounter the leaves in leaf-order.  So the
+                     // y-coord for leaves is just the number of
+                     // leaves we've seen so far.
                      ? leaf_counter++
-                     // internal node y-coord is the mean of its child y-coords
+                     // The internal node y-coord is the mean of its
+                     // child y-coords
                      : ( immediate_child_y_sum / child_results.length ) )
             }];
             // flatten child result arrays and append the result to my_pos
@@ -19671,7 +19905,7 @@ renderer.prototype.show_subtree = function(node_id) {
     // remove this node from children_hidden
     delete self.children_hidden[to_show_under.id];
     to_show_under.iterate_preorder(function(node) {
-        if (node == to_show_under) return;
+        if (node === to_show_under) return;
 
         delete self.node_hidden[node.id];
         self._phynodes[node.id].show();
@@ -19683,6 +19917,63 @@ renderer.prototype.show_subtree = function(node_id) {
         if (self.children_hidden[node.id]) return true;
     });
     self._phynodes[to_show_under.id].set_children_visible();
+
+    this._layout_dirty = true;
+    this.position_nodes();
+    this.width_changed(this.parent.clientWidth);
+};
+
+// hide everything except the subtree rooted at the given node
+renderer.prototype.show_only_subtree = function(node_id) {
+    var to_show = this.tree.nodes[node_id];
+    if (to_show === undefined) {
+        throw "asked to show non-existent node " + node_id;
+    }
+
+    // hide all nodes except those under the given node
+    var self = this;
+    this.tree.iterate_preorder(function(node) {
+        // returning true stops the iteration: we don't want to hide
+        // any nodes under this node, so we'll stop the iteration here
+        // for the subtree rooted at the current node
+        if (node === to_show) return true;
+
+        self.node_hidden[node.id] = true;
+        self._phynodes[node.id].hide();
+    });
+    this.tree.set_roots([to_show.id]);
+    this._phynodes[node_id].hide_connector();
+
+    this._layout_dirty = true;
+    this.position_nodes();
+
+    this.width_changed(this.parent.clientWidth);
+};
+
+// returns true if we're showing only a subtree rooted at the node
+// with the given id, false otherwise
+renderer.prototype.only_subtree_shown = function(node_id) {
+    var node = this.tree.nodes[node_id];
+    return contains(this.tree.roots(), node) && node.has_parent();
+};
+
+// undo show_only_subtree
+renderer.prototype.show_global_root = function() {
+    this.tree.clear_roots();
+    
+    var self = this;
+    this.tree.iterate_preorder(function(node) {
+        delete self.node_hidden[node.id];
+        var phynode = self._phynodes[node.id];
+        phynode.show();
+        if (! phynode.connector_shown) phynode.show_connector();
+        
+        // returning true stops the iteration: if we encounter a
+        // previously-hidden subtree under the node that we're
+        // showing, we'll leave its children hidden unless it's
+        // specifically shown
+        if (self.children_hidden[node.id]) return true;
+    });
 
     this._layout_dirty = true;
     this.position_nodes();
@@ -19757,6 +20048,7 @@ function graph_pnode(node, node_class, leaf_class, height){
     this.node = node;
     this.height = height;
     this.leaf_class = leaf_class;
+    this.connector_shown = false;
 
     var node_elem = document.createElement("div");
     if (node.is_leaf()) {
@@ -19792,14 +20084,25 @@ graph_pnode.prototype.set_children_visible = function() {
     this._width = this.node_elem.offsetWidth;
     this.node_elem.removeChild(this.subtree_box);
 };
+
 graph_pnode.prototype.hide = function() {
     this.node_elem.style.display = "none";
     if (this.parent) this.conn_elem.style.display = "none";
 };
 
+graph_pnode.prototype.hide_connector = function() {
+    if (this.parent) this.conn_elem.style.display = "none";
+    this.connector_shown = false;
+};
+
 graph_pnode.prototype.show = function() {
     this.node_elem.style.display = "";
     if (this.parent) this.conn_elem.style.display = "";
+};
+
+graph_pnode.prototype.show_connector = function() {
+    if (this.parent) this.conn_elem.style.display = "";
+    this.connector_shown = true;
 };
 
 graph_pnode.prototype.set_position = function(x, y) {
@@ -19809,7 +20112,7 @@ graph_pnode.prototype.set_position = function(x, y) {
     this.node_elem.style.left = x + "%";
     this.node_elem.style.top = y + "px";
 
-    if (this.parent) {
+    if (this.parent && this.connector_shown) {
         var conn_style =
             "top: " + Math.min(this.parent.py, this.py) + "px;"
             + "left: " + this.parent.px + "%;"
@@ -19831,6 +20134,8 @@ graph_pnode.prototype.set_parent = function(parent, conn_class) {
     this.parent = parent;
     this.conn_elem = document.createElement("div");
     this.conn_elem.className = conn_class;
+    this.conn_elem.id=parent.node.id + "-" + this.node.id;
+    this.connector_shown = true;
 };
 
 graph_pnode.prototype.width = function() {
@@ -19873,9 +20178,6 @@ tree.prototype.sort_children = function(compare_fun) {
     for (var i = 0; i < roots.length; i++) {
         roots[i].sort_children(compare_fun);
     }
-    // this can change the leaf ordering, so we'll want to
-    // recompute the leaf list.
-    this._dirty = true;
 };
 
 tree.prototype.iterate_preorder = function(fun) {
@@ -19894,21 +20196,35 @@ tree.prototype.iterate_edges = function(fun) {
     }
 };
 
-// computes and stores a list of leaves, list of roots, max distance, etc.
 tree.prototype._summarize = function() {
-    var roots = [];
-    for (var id in this.nodes) {
-        var node = this.nodes[id];
-        if( ! node.has_parent() ) roots.push(node);
-    }
-    this._roots = roots;
-    
+    if (this._dirty) this.clear_roots();
     this._dirty = false;
 };
 
 tree.prototype.roots = function() {
     if (this._dirty) this._summarize();
     return this._roots;
+};
+
+// set the roots to be specific nodes
+// i.e. to only show a subtree, set_roots(subtree_node_id)
+tree.prototype.set_roots = function(root_ids) {
+    var roots = [];
+    for (var i = 0; i < root_ids.length; i++) {
+        roots.push(this.nodes[root_ids[i]]);
+    }
+    this._roots = roots;
+};
+
+// set the list of roots back to the "natural" list of nodes without
+// parents
+tree.prototype.clear_roots = function() {
+    var roots = [];
+    for (var id in this.nodes) {
+        var node = this.nodes[id];
+        if( ! node.has_parent() ) roots.push(node);
+    }
+    this._roots = roots;
 };
 
 // see node.traverse for description
@@ -20003,6 +20319,13 @@ function css_string(css_object) {
     return result;
 }
 
+function contains(arr, elem) {
+    for (var i = 0; i < arr.length; i++) {
+        if (elem == arr[i]) return true;
+    }
+    return false;
+}
+
 function max(list) {
     if (0 == list.length) return null;
     var result = list[0];
@@ -20048,8 +20371,10 @@ function renderer(parent, golr_loc, golr_conf, config) {
         // vertical space between the contents of adjacent rows
         row_spacing: 2,
         font: "Helvetica, Arial, sans-serif",
-        mat_cell_width: 15,
-        transition_time: "0.8s"
+        mat_cell_width: 20,
+        mat_cell_border: 1,
+        transition_time: "0.8s",
+        header_height: 100
     };
 
     this.config = ("object" == typeof config
@@ -20165,8 +20490,17 @@ renderer.prototype.show_pgraph = function(pgraph) {
         this.parent.style.position = "relative";
     }
 
+    this.parent_top_border =
+        parseInt(getStyle(this.parent, "border-top-width"));
+    this.parent_bot_border =
+        parseInt(getStyle(this.parent, "border-bottom-width"));
+
     this.tree_container = document.createElement("div");
-    this.tree_container.style.cssText = "position: absolute; top: 0px; bottom: 100%; left: 0px;";
+    this.tree_container.style.position = "absolute";
+    this.tree_container.style.top =
+        (this.config.header_height + this.config.mat_cell_border) + "px";
+    //this.tree_container.style.bottom = "100%";
+    this.tree_container.style.left = "0px";
     
     this.mat_container = document.createElement("div");
     this.mat_container.style.cssText = "position: absolute; top: 0px; bottom: 100%;";
@@ -20194,10 +20528,10 @@ renderer.prototype.show_pgraph = function(pgraph) {
     }
 
     go_term_list.sort( function(a, b) { return b.count - a.count; } );
-    var coldescs = go_term_list.map( function(x) { return x.id; } );
+    //var coldescs = go_term_list.map( function(x) { return x.id; } );
     //console.log(coldescs);
 
-    var mat_width = coldescs.length * this.config.mat_cell_width;
+    var mat_width = go_term_list.length * this.config.mat_cell_width;
     var tree_width = 500;
     this.tree_container.style.width = tree_width + "px";
     this.mat_container.style.width = mat_width + "px";
@@ -20216,6 +20550,7 @@ renderer.prototype.show_pgraph = function(pgraph) {
         transition_time: this.config.transition_time
     });
     tree_renderer.leaf_style.background = "none";
+    tree_renderer.leaf_style.cursor = "pointer";
     tree_renderer.node_style.cursor = "pointer";
 
     var nodes = pgraph.nodes;
@@ -20260,22 +20595,8 @@ renderer.prototype.show_pgraph = function(pgraph) {
         return parseInt(a.meta.layout_index) - parseInt(b.meta.layout_index);
     });
 
-    tree_renderer.node_clicked = function(node, node_elem) {
-        if (tree_renderer.subtree_hidden(node.id)) {
-            tree_renderer.show_subtree(node.id);
-            var leaf_id_list = tree_renderer.leaves().map(
-                function(x) { return x.id }
-            );
-            mat_renderer.show_rows(leaf_id_list);
-            self.update_heights();
-        } else {
-            tree_renderer.hide_subtree(node.id);
-            var leaf_id_list = tree_renderer.leaves().map(
-                function(x) { return x.id }
-            );
-            mat_renderer.show_rows(leaf_id_list);
-            self.update_heights();
-        }
+    tree_renderer.node_clicked = function(node, node_elem, event) {
+        return self.node_clicked(node, node_elem, event);
     };
 
     var node_colors = {};
@@ -20323,6 +20644,13 @@ renderer.prototype.show_pgraph = function(pgraph) {
     this.tree_renderer = tree_renderer;
     this.render_tree();
 
+    // dismiss popovers by clicking outside them
+    jQuery(this.tree_container).on("click", function (e) {
+        if (self.popover_elem === undefined) return;
+        self.popover_elem.popover("destroy");
+        self.popover_elem = undefined;
+    });
+
     var node_id_list = tree_renderer.leaves().map(function(x) { return x.id });
     var node_id_map = {};
     for (var i = 0; i < nodes.length; i++) {
@@ -20343,28 +20671,126 @@ renderer.prototype.show_pgraph = function(pgraph) {
     
     var mat_config = {
         cell_width: this.config.mat_cell_width,
+        cell_border: this.config.mat_cell_border,
         cell_height: this.config.row_height + 2,
-        header_height: 0,
-        show_headers: false,
+        header_height: this.config.header_height,
+        show_headers: true,
         transition_time: this.config.transition_time
     };
-    var mat_renderer =
+    this.mat_renderer =
         new bbop.widget.matrix.renderer(this.mat_container, node_id_list,
-                                        coldescs, cell_renderer, mat_config);
+                                        go_term_list, cell_renderer,
+                                        mat_config);
+
 
     var leaf_id_list = tree_renderer.leaves().map(
         function(x) { return x.id }
     );
-    mat_renderer.show_rows(leaf_id_list);
+    this.mat_renderer.show_rows(leaf_id_list);
     this.parent.style.transition =
         "height " + this.config.transition_time + " ease-in-out";
     this.update_heights();
     
-    this.mat_renderer = mat_renderer;
+};
+
+renderer.prototype.toggle_subtree_shown = function(node_id) {
+    if (this.tree_renderer.subtree_hidden(node_id)) {
+        this.tree_renderer.show_subtree(node_id);
+    } else {
+        this.tree_renderer.hide_subtree(node_id);
+    }
+    this.show_mat_rows_for_tree_leaves();
+};
+
+renderer.prototype.show_global_root = function(node_id) {
+    this.tree_renderer.show_global_root();
+    this.show_mat_rows_for_tree_leaves();
+};
+
+renderer.prototype.show_only_subtree = function(node_id) {
+    this.tree_renderer.show_only_subtree(node_id);
+    this.show_mat_rows_for_tree_leaves();
+};
+
+renderer.prototype.show_mat_rows_for_tree_leaves = function() {
+    var leaf_id_list = jQuery.map( this.tree_renderer.leaves(),
+                                   function(x) { return x.id; } );
+    this.mat_renderer.show_rows(leaf_id_list);
+    this.update_heights();
 };
 
 renderer.prototype.update_heights = function() {
-    this.parent.style.height = this.tree_renderer.tree_height + "px";
+    this.parent.style.height =
+        ( this.tree_renderer.tree_height
+          + this.config.header_height
+          + this.config.mat_cell_border
+          + this.parent_top_border
+          + this.parent_bot_border ) + "px";
+};
+
+renderer.prototype.node_clicked = function(node, node_elem, event) {
+    var buttons = [];
+    var jqElem = jQuery(node_elem);
+    var self = this;
+
+    // if there's an existing popover,
+    if (this.popover_elem !== undefined) {
+        // destroy it
+        this.popover_elem.popover("destroy");
+        // if this click is on the same node that the popover was on,
+        // then return
+        if (this.popover_elem[0] === jqElem[0]) {
+            this.popover_elem = undefined;
+            return;
+        }
+        // otherwise this.popover_elem becomes the new popover element
+        // (below)
+    }
+    this.popover_elem = jqElem;
+    jQuery.Event(event).stopPropagation();
+
+    var podata = jqElem.data("bs.popover");
+
+    jqElem.popover({
+        html: true,
+        placement: "auto top",
+        container: "body",
+        title: node.label
+    });
+    var podata = jqElem.data("bs.popover");
+
+    if (! node.is_leaf()) {
+        podata.tip().append("&nbsp;");
+
+        var hideButton = jQuery("<button type='button' class='btn btn-primary btn-xs'></button>");
+        hideButton.click(function() {
+            jqElem.popover("destroy");
+            self.popover_elem = undefined;
+            self.toggle_subtree_shown(node.id);
+        });
+
+        hideButton.text( self.tree_renderer.subtree_hidden(node.id)
+                         ? "Show subtree" : "Hide subtree" );
+        podata.tip().append(hideButton);
+    }
+
+    podata.tip().append("&nbsp;");
+    var rootButton = jQuery("<button type='button' class='btn btn-primary btn-xs'></button>");
+    rootButton.click(function() {
+        jqElem.popover("destroy");
+        self.popover_elem = undefined;
+        if (self.tree_renderer.only_subtree_shown(node.id)) {
+            self.show_global_root();
+        } else {
+            self.show_only_subtree(node.id);
+        }
+    });
+    rootButton.text( self.tree_renderer.only_subtree_shown(node.id)
+                     ? "Show global root" : "Show only subtree" );
+    podata.tip().append(rootButton);
+    podata.tip().append("&nbsp;");
+
+    jqElem.popover("show");
 };
 
 renderer.prototype.render_tree = function() {
@@ -20420,7 +20846,6 @@ renderer.prototype.render_tree = function() {
             }
         }
     );
-
 };
 
 function getStyle(el, styleProp) {
@@ -20453,7 +20878,7 @@ function renderer(parent, row_descriptors, col_descriptors,
         cell_width: null,
         cell_height: 24,
 	cell_border: 1,
-        cell_padding: 6,
+        cell_padding: 4,
         cell_font: "Helvetica, Arial, sans-serif",
 
         header_height: 30,
@@ -20486,13 +20911,20 @@ function renderer(parent, row_descriptors, col_descriptors,
     var cell_font_size = ( ( this.config.cell_height
                              - this.offset_size_delta )
                            / 0.7 );
-    var header_font_size = ( ( this.config.header_height
+    var header_font_size;
+    if (null == this.config.cell_width) {
+        header_font_size = ( ( this.config.header_height
                                - this.offset_size_delta )
-                           / 0.7 );
-    
+                             / 0.7 );
+    } else {
+        header_font_size = ( ( this.config.cell_width
+                               - this.offset_size_delta )
+                             / 0.7 );
+    }
 
     var css_prefix = "matrix_" + this_id++;
     var header_class = css_prefix + "_header";
+    var inner_header_class = css_prefix + "_inner";
     var cell_class = css_prefix + "_cell";
     this.fixed_width = (null != this.config.cell_width);
 
@@ -20570,14 +21002,23 @@ function renderer(parent, row_descriptors, col_descriptors,
             //create the header cells
             var cell = document.createElement("div");
             cell.className = header_class;
-            cell.title = col_descriptors[i];
-            cell.appendChild(document.createTextNode(col_descriptors[i]));
             cell.style.top = "0px";
+            if (null == this.config.cell_width) {
+                cell.title = col_descriptors[i].name;
+                cell.appendChild(document.createTextNode(col_descriptors[i].name));
+            } else {
+                // create inner rotated element
+                var inner = document.createElement("div");
+                inner.className = inner_header_class;
+                inner.title = col_descriptors[i].name;
+                inner.appendChild(document.createTextNode(col_descriptors[i].name));
+                cell.appendChild(inner);
+            }
             this.parent.appendChild(cell);
             this.headers.push(cell);
         }
         this.colindex_map[i] = i;
-        this.coldesc_map[col_descriptors[i]] = i;
+        this.coldesc_map[col_descriptors[i].id] = i;
     }
 
     for( var ri = 0; ri < row_descriptors.length; ri++ ){
@@ -20585,7 +21026,7 @@ function renderer(parent, row_descriptors, col_descriptors,
 
         for (var ci = 0; ci < col_descriptors.length; ci++) {
             var cell = cell_renderer(cell, row_descriptors[ri],
-                                     col_descriptors[ci]);
+                                     col_descriptors[ci].id);
             if (null != cell) {
                 cell.className += " " + cell_class;
                 cell.style.top = ( (this.config.show_headers ?
@@ -20658,6 +21099,17 @@ function renderer(parent, row_descriptors, col_descriptors,
         "  -moz-box-sizing: content-box;"
     ].join("\n");
 
+    var inner_offset = -(this.config.header_height
+                         - header_font_size
+                         - this.config.cell_padding);
+    this.inner_header_style = [
+        "-webkit-transform: rotate(-90deg) translate(" + inner_offset + "px);",
+        "transform: rotate(-90deg) translate(" + inner_offset + "px);",
+        "-ms-transform: rotate(-90deg) translate(" + inner_offset + "px);",
+        "-o-transform: rotate(-90deg) translate(" + inner_offset + "px);",
+        "filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);"
+    ].join("\n");
+
     this.transition_style = [
         "  transition-property: top, left;",
         "  transition-duration:" +  this.config.transition_time + ";",
@@ -20669,6 +21121,9 @@ function renderer(parent, row_descriptors, col_descriptors,
     this.set_styles([
         "div." + header_class + " { ",
         this.header_style,
+        "}",
+        "div." + inner_header_class + " { ",
+        this.inner_header_style,
         "}",
         "div." + cell_class + " { ",
         this.cell_style,
@@ -20688,6 +21143,10 @@ function renderer(parent, row_descriptors, col_descriptors,
     this.set_styles([
         "div." + header_class + " { ",
         this.header_style,
+        this.transition_style,
+        "}",
+        "div." + inner_header_class + " { ",
+        this.inner_header_style,
         this.transition_style,
         "}",
         "div." + cell_class + " { ",
@@ -20915,8 +21374,8 @@ renderer.prototype.show_cols = function(col_list) {
     // hide non-shown cols
     for(var i = 0; i < this.col_descriptors.length; i++) {
         var coldesc = this.col_descriptors[i];
-        if (! (coldesc in new_col_map)) {
-            matrix_col_index = this.coldesc_map[coldesc];
+        if (! (coldesc.id in new_col_map)) {
+            matrix_col_index = this.coldesc_map[coldesc.id];
             for (var j = 0; j < this.matrix.length; j++) {
                 var cell = this.matrix[j][matrix_col_index];
                 if (cell) cell.style.display = "none";
