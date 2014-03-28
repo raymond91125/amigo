@@ -91,7 +91,7 @@ GENE_ASSOCIATION_FILES ?= \
 
 ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.wb
 GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.wb
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.wb
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.wb.NOTsRemoved
 
 ##
 DATE = `date +'%Y-%m-%d'`
