@@ -1256,6 +1256,7 @@ sub get_interlink {
      'schema_details' => sub { $ilink = 'amigo/schema_details'; },
      'load_details' => sub { $ilink = 'amigo/load_details'; },
      'browse' => sub { $ilink = 'amigo/browse'; },
+     'free_browse' => sub { $ilink = 'amigo/free_browse'; },
      'goose' => sub { $ilink = 'goose'; },
      'grebe' => sub { $ilink = 'grebe'; },
      'gannet' => sub { $ilink = 'gannet'; },
@@ -1509,6 +1510,25 @@ sub get_interlink {
        }
      },
 
+     'bulk_search' =>
+     sub {
+       if( ! $self->empty_hash_p($args) ){
+	 my $type = $args->{type} ||
+	   die "require a type for non-default searches";
+	 $ilink = 'amigo/bulk_search/' . $type;
+
+	 # ## In the case that we also have an incoming query, add that.
+	 # if( defined $args->{query} && $args->{query} ne '' ){
+	 #   $ilink = $ilink . '?q=' . $args->{query};
+	 # }
+
+       }else{
+	 ## Just the most generic search we have.
+	 ## TODO/BUG: Likely DEFUNCT at this point.
+	 $ilink = 'amigo/bulk_search';
+       }
+     },
+
      'id_request' =>
      sub {
        my $data = $args->{data} || '';
@@ -1652,14 +1672,16 @@ sub render_json {
       ref($perl_var) eq "ARRAY" ){
     ## Try the new version, if not, use the old version.
     eval{
-      $retval = $self->{JSON}->encode($perl_var);
+      $retval = JSON::XS->new->utf8->allow_blessed->encode($perl_var);
     };
     if ($@) {
       #    $retval = $self->{JSON}->to_json($perl_var);
-      $retval = JSON::XS->new->utf8->allow_blessed->encode($perl_var);
+      $retval = $self->{JSON}->encode($perl_var);
     }
   }else{
-    $retval = $self->emit_json_scalar($perl_var);
+    #$retval = $self->emit_json_scalar($perl_var);
+    $retval =
+      JSON::XS->new->utf8->allow_blessed->allow_nonref->encode($perl_var);
   }
 
   return $retval;

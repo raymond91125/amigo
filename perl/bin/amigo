@@ -31,11 +31,15 @@ my $dispatch_table =
    'schema_details'      => { app => $app, rm => 'schema_details' },
    'load_details'        => { app => $app, rm => 'load_details' },
    'browse'              => { app => $app, rm => 'browse' },
+   'free_browse'              => { app => $app, rm => 'free_browse' },
    ##
    ## Soft applications (may take some parameters, browser-only).
    ##
    'medial_search'       => { app => $app, rm => 'medial_search' },
    'simple_search'       => { app => $app, rm => 'simple_search' },
+   'bulk_search/:personality' => { app => $app, rm => 'bulk_search',
+				   personality => 'personality' },
+   'bulk_search' => { app => $app, rm => 'bulk_search'},
    'search/:personality' => { app => $app, rm => 'specific_search',
 			      personality => 'personality' },
    'search'              => { app => $app, rm => 'search' },

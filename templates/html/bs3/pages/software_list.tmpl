@@ -1,6 +1,6 @@
 <!-- Begin: software_list.tmpl -->
 
-<h2>Interactively explore GO data</h2>
+<h2>Explore GO data</h2>
 
 <ul class="list-group">
 
@@ -22,16 +22,12 @@
       [%   a2_search_id = a2_search_blob.id %]
       [%   a2_search_name = a2_search_blob.display_name %]
       [%   a2_search_desc = a2_search_blob.description %]
-      [%   a2_search_link = a2_search_blob.amigo_interlink %]
+      [%   a2_search_link = a2_search_blob.amigo_live_search_interlink %]
       <li>
 	<a href="[% a2_search_link %]"
 	   title="[% a2_search_desc %]">[% a2_search_name %]</a>:
 	[% a2_search_desc %]
       </li>
-      <!-- [% a2_search_id %] -->
-      <!-- [% a2_search_name %] -->
-      <!-- [% a2_search_desc %] -->
-      <!-- [% a2_search_link %] -->
       [% END %]
     </ul>
   </li>
@@ -92,6 +88,13 @@
 <ul class="list-group">
 
   <li class="list-group-item">
+    <a href="[% interlink_rte %]">Term Enrichment Services</a> offers
+    access to term enrichment analysis, finding significant shared GO
+    terms or parents of those GO terms to help discover what input
+    genes may have in common.
+  </li>
+  
+  <li class="list-group-item">
     <a href="[% public_1x_base %]/term_enrichment"
        title="">Term Enrichment</a>
     <span class="label label-default">AmiGO 1.8</span>
@@ -133,6 +136,25 @@
     is the GO Online SQL Environment. Using this, users may query the
     a GO SQL database directly using SQL, or edit one of the already
     made templates.
+  </li>
+  
+  <li class="list-group-item">
+    <p>
+      Search the GO data for groups of identifiers.
+    </p>
+    <ul class="list-unstyled">
+      [% FOREACH a2_search_blob = search_layout_list %]
+      [%   a2_search_id = a2_search_blob.id %]
+      [%   a2_search_name = a2_search_blob.display_name %]
+      [%   a2_search_desc = a2_search_blob.description %]
+      [%   a2_search_link = a2_search_blob.amigo_bulk_search_interlink %]
+      <li>
+	<a href="[% a2_search_link %]"
+	   title="[% a2_search_desc %]">[% a2_search_name %]</a>:
+	[% a2_search_desc %]
+      </li>
+      [% END %]
+    </ul>
   </li>
   
 </ul>
@@ -205,11 +227,6 @@
 <ul class="list-group">
   
   <li class="list-group-item">
-    <a href="[% interlink_rte %]">Remote term enrichment</a> is a
-    viewer for standardized term enrichment offered as a service.
-  </li>
-  
-  <li class="list-group-item">
     <a href="[% interlink_browse %]">Browse</a> the Gene Ontology
     term data in an interactive hierarchical form.
   </li>
@@ -240,6 +257,10 @@
 
   <li class="list-group-item">
     <a href="[% interlink_phylo_graph %]">Experimental tree viewer</a> test (Mitch's widget).
+  </li>
+  
+  <li class="list-group-item">
+    <a href="[% interlink_free_browse %]">Experimental graph browser</a> using cytoscape.js.
   </li>
   
   <li class="list-group-item">

@@ -64,7 +64,9 @@ sub setup {
 		   #'search'              => 'mode_live_search',
 		   'search'              => 'mode_search',
 		   'specific_search'     => 'mode_search',
+		   'bulk_search'         => 'mode_bulk_search',
 		   'browse'              => 'mode_browse',
+		   'free_browse'         => 'mode_free_browse',
 		   'term'                => 'mode_term_details',
 		   'gene_product'        => 'mode_gene_product_details',
 		   'complex_annotation'  => 'mode_complex_annotation_details',
@@ -73,7 +75,7 @@ sub setup {
 		   'software_list'       => 'mode_software_list',
 		   'schema_details'      => 'mode_schema_details',
 		   'load_details'        => 'mode_load_details',
-		   'medial_search'       =>  'mode_medial_search',
+		   'medial_search'       => 'mode_medial_search',
 		   ## ???
 		   'phylo_graph'         => 'mode_phylo_graph',
 		   ## Fallback.
@@ -189,6 +191,68 @@ sub mode_browse {
      content =>
      [
       'pages/browse.tmpl'
+     ]
+    };
+  $self->add_template_bulk($prep);
+
+  return $self->generate_template_page_with();
+}
+
+
+##
+sub mode_free_browse {
+
+  my $self = shift;
+
+  my $i = AmiGO::Input->new($self->query());
+  my $params = $i->input_profile();
+
+  ## Page settings.
+  $self->set_template_parameter('page_name', 'free_browse');
+  $self->set_template_parameter('page_title', 'AmiGO 2: Free Browse');
+  $self->set_template_parameter('content_title', 'Free Browse');
+
+  ## Get the layout info to describe which buttons should be
+  ## generated.
+  #my $bbinfo = $self->{CORE}->get_amigo_layout('AMIGO_LAYOUT_BROWSE');
+  #$self->set_template_parameter('browse_button_info', $bbinfo);
+  ## Pick the first to be the default.
+  #my $sb = $$bbinfo[0]->{id};
+  #$self->set_template_parameter('starting_button', $sb);
+
+  ## Our AmiGO services CSS.
+  my $prep =
+    {
+     css_library =>
+     [
+      #'standard',
+      'com.bootstrap',
+      'com.jquery.jqamigo.custom',
+      'amigo',
+      'bbop'
+     ],
+     javascript_library =>
+     [
+      'com.jquery',
+      'com.bootstrap',
+      'com.jquery-ui',
+      'org.cytoscape',
+      'bbop',
+      'amigo2'
+     ],
+     javascript =>
+     [
+      $self->{JS}->get_lib('GeneralSearchForwarding.js'),
+      $self->{JS}->get_lib('FreeBrowse.js')
+     ],
+     javascript_init =>
+     [
+      'GeneralSearchForwardingInit();',
+      'FreeBrowseInit();'
+     ],
+     content =>
+     [
+      'pages/free_browse.tmpl'
      ]
     };
   $self->add_template_bulk($prep);
@@ -409,8 +473,9 @@ sub mode_simple_search {
 }
 
 
-## WARNING: Without pivot tables, this is expensive, taking multiple
-## passes at the server to assemble the necessarily grouped data.
+## WARNING/TODO: Without pivot tables, this is expensive, taking
+## multiple passes at the server to assemble the necessarily grouped
+## data.
 sub mode_medial_search {
 
   my $self = shift;
@@ -431,6 +496,34 @@ sub mode_medial_search {
 
   $self->set_template_parameter('query', $q);
   $self->{CORE}->kvetch('query: ' . $q);
+
+  ## Try and figure out if the user might be trying to get annotation
+  ## information about a specific internal term.
+  my $probable_term = undef;
+  my $probable_term_info = undef;
+  if( $q ){
+    ## Clean input and make sure it is a single item.
+    my $tlist = $self->{CORE}->clean_term_list($q);
+    $self->{CORE}->kvetch('have query: ' . $q);
+    if( @$tlist && scalar(@$tlist) == 1 ){
+      ## Make sure the one item is an internal term that we'll have
+      ## info about.
+      my $tid = $tlist->[0];
+      $self->{CORE}->kvetch('have t: ' . $tid);
+      if( $self->{CORE}->is_term_acc_p($tid) ){
+	## Okay, we're good--get info.
+	my $tworker = AmiGO::Worker::GOlr::Term->new($tid);
+	my $tinfo_hash = $tworker->get_info();
+	if( defined($tinfo_hash) ){ # check again
+	  $probable_term = $tid;
+	  $probable_term_info = $tinfo_hash->{$tid};
+	}
+      }
+    }
+  }
+  ## The consumable from the above.
+  $self->set_template_parameter('TERM_INFO', $probable_term_info);
+
 
   ## Get the layout info to describe which personalities are
   ## available.
@@ -495,8 +588,8 @@ sub mode_medial_search {
   ## Page settings.
   $self->set_template_parameter('page_name', 'medial_search');
   $self->set_template_parameter('page_title',
-				'AmiGO 2: Advanced Search Directory');
-  $self->set_template_parameter('content_title', 'Advanced Search Directory');
+				'AmiGO 2: Search Directory');
+  $self->set_template_parameter('content_title', 'Search Directory');
 
   ## The rest of our environment.
   my $prep =
@@ -519,11 +612,14 @@ sub mode_medial_search {
      ],
      javascript =>
      [
-      $self->{JS}->get_lib('GeneralSearchForwarding.js')
+      $self->{JS}->get_lib('GeneralSearchForwarding.js'),
+      $self->{JS}->get_lib('Medial.js'),
+      $self->{JS}->make_var('global_acc', $probable_term)
      ],
      javascript_init =>
      [
-      'GeneralSearchForwardingInit();'
+      'GeneralSearchForwardingInit();',
+      'MedialInit();'
      ],
      content =>
      [
@@ -1081,6 +1177,109 @@ sub mode_search {
 }
 
 
+## Largely the same as mode_search. Simpiler in some cases, like no
+## bookmarking, not particularly dynamic, etc.
+sub mode_bulk_search {
+
+  my $self = shift;
+
+  ## Pull out the bookmark parameter.
+  my $i = AmiGO::Input->new($self->query());
+  my $params = $i->input_profile('live_search');
+  ## Deal with the different types of dispatch we might be facing.
+  $params->{personality} = $self->param('personality')
+    if ! $params->{personality} && $self->param('personality');
+
+  ## Page settings.
+  $self->set_template_parameter('page_title', 'AmiGO 2: Bulk Search');
+  $self->set_template_parameter('page_name', 'bulk_search');
+  $self->set_template_parameter('content_title', 'Bulk Search');
+
+  ## Make sure the personality is in our known set if it's even
+  ## defined.
+  my $personality = $params->{personality} || '';
+  my $personality_name = 'n/a';
+  my $personality_desc = 'No description.';
+  if( $personality ){
+
+    ## Get the layout info to describe which personalities are
+    ## available.
+    my $stinfo = $self->{CORE}->get_amigo_layout('AMIGO_LAYOUT_SEARCH');
+
+    ## Check that it is in our search set.
+    my $allowed_personality = 0;
+    foreach my $sti (@$stinfo){
+      my $stid = $sti->{id};
+      if( $personality eq $stid ){
+	$allowed_personality = 1;
+	$personality_name = $sti->{display_name};
+	$personality_desc = $sti->{description};
+	last;
+      }
+    }
+
+    ## If not, kick out to error.
+    if( ! $allowed_personality ){
+      $self->set_template_parameter('content_title', '');
+      #$self->set_template_parameter('STANDARD_CSS', 'yes');
+      return $self->mode_not_found($personality, 'search personality');
+    }
+  }else{
+    ## No incoming personality.
+    return $self->mode_not_found('undefined', 'search personality');
+  }
+
+  ## Set personality for template, and later JS var.
+  $self->set_template_parameter('personality', $personality);
+  $self->set_template_parameter('content_subtitle', $personality_name);
+  $self->set_template_parameter('personality_name', $personality_name);
+  $self->set_template_parameter('personality_description', $personality_desc);
+
+  # ## Temporary test of new template system based on BS3.
+  # my $template_system = $self->template_set() || die 'no template system set';
+  # if( $template_system && $template_system eq 'bs3' ){
+  my $prep =
+    {
+     css_library =>
+     [
+      #'standard',
+      'com.bootstrap',
+      'com.jquery.jqamigo.custom',
+      'amigo',
+      'bbop'
+     ],
+     javascript_library =>
+     [
+      'com.jquery',
+      'com.bootstrap',
+      'com.jquery-ui',
+      'bbop',
+      'amigo2'
+     ],
+     javascript =>
+     [
+      $self->{JS}->make_var('global_live_search_personality', $personality),
+      # $self->{JS}->make_var('global_live_search_query', $query),
+      # $self->{JS}->make_var('global_live_search_filters', $filters),
+      # $self->{JS}->make_var('global_live_search_pins', $pins),
+      $self->{JS}->get_lib('GeneralSearchForwarding.js'),
+      $self->{JS}->get_lib('BulkSearch.js')
+     ],
+     javascript_init =>
+     [
+      'GeneralSearchForwardingInit();',
+      'BulkSearchInit();'
+     ],
+     content =>
+     [
+      'pages/bulk_search.tmpl'
+     ]
+    };
+  $self->add_template_bulk($prep);
+  return $self->generate_template_page_with();
+}
+
+
 ## Experimental try at the term details page, in perl, backed by the
 ## solr index.
 sub mode_term_details {
@@ -1186,6 +1385,14 @@ sub mode_term_details {
 		  ' please refer to the originating resource.');
   }
   $self->set_template_parameter('EXOTIC_P', $exotic_p);
+
+  ## Link to GO histories if available; obviously only for GO terms.
+  my $go_hist = undef;
+  if( $input_term_id =~ /^GO\:\d{7}/ ){
+    my $qg_term = AmiGO::External::QuickGO::Term->new();
+    $go_hist = $qg_term->get_term_link($input_term_id) . '#term=history';
+   }
+  $self->set_template_parameter('GO_HISTORY_LINK', $go_hist);
 
   ###
   ### Bail with JS here is we're going to.
