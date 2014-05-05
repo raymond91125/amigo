@@ -101,10 +101,10 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
 
 ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.wb.clean
-GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.wb
+GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.wb.clean
 PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.wb.clean
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.wb
-LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.wb
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.wb.clean
+LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.wb.clean
 
 ##
 DATE = `date +'%Y-%m-%d'`
