@@ -102,7 +102,7 @@ GENE_ASSOCIATION_FILES ?= \
 
 ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.wb.clean
 GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.wb.clean
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.wb.clean
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.wb.clean.col7
 DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.wb.clean
 LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.wb.clean
 
