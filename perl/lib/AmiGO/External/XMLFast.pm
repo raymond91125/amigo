@@ -6,8 +6,9 @@ Specialize onto XML resources. Add XPATH for EXT_DATA and such.
 
 use utf8;
 use strict;
+#use Try::Tiny;
 use XML::LibXML;
-use Carp;
+#use Carp;
 
 package AmiGO::External::XMLFast;
 
@@ -29,10 +30,47 @@ sub new {
   ## A little XML readying.
   $self->{EXT_DATA} = undef;
 
+  ##
+  $self->{RTE_DOM} = undef;
+  $self->{RTE_XPATH} = undef;
+
+  ## Error notes--assume upstream error until proven otherwise.
+  $self->{XMLF_UPSTREAM_ERROR} = 1;
+
   bless $self, $class;
   return $self;
 }
 
+
+=item get_local_data
+
+Bring in a local file in for testing...or whatever.
+
+my $te = AmiGO::External::XMLFast->new();
+my $xmlout = $te->get_local_data(...);
+
+## Print out XML to STDERR.
+print STDERR $xmlout . "\n";
+
+=cut
+sub get_local_data {
+
+  my $self = shift;
+  my $string  = shift || die 'need a string to make a local fetch';
+
+  ## Has no upstream.
+  $self->{XMLF_UPSTREAM_ERROR} = 0;
+
+  ## If we got the URL together properly, go get it.
+  my $ret = $string;
+  $self->{EXT_DATA} = XML::LibXML->load_xml(string => $string);
+
+  ## Setup the methods we'll use.
+  $self->{RTE_DOM} = $self->{EXT_DATA};
+  $self->{RTE_XPATH} = XML::LibXML::XPathContext->new($self->{EXT_DATA});
+
+  return $ret;
+}
 
 =item get_external_data
 
@@ -65,6 +103,10 @@ sub get_external_data {
       eval {
 	my $dom = XML::LibXML->load_xml(string => $doc);
 	$self->{EXT_DATA} = $dom;
+
+	## Setup the methods we'll use.
+	$self->{RTE_DOM} = $self->{EXT_DATA};
+	$self->{RTE_XPATH} = XML::LibXML::XPathContext->new($self->{EXT_DATA});
       };
 
       ## Check for errors.
@@ -72,7 +114,8 @@ sub get_external_data {
 	$@ =~ s/at \/.*?$//s;
 	$self->kvetch("Error in document from: '$url': $@");
       }else{
-	## Looks like it's well-formed--yay!
+	## Looks like it's extant and well-formed--yay!
+	$self->{XMLF_UPSTREAM_ERROR} = 0;
       }
     }
   }
@@ -101,7 +144,8 @@ sub post_external_data {
     $mech->post($url, $form);
   };
   if( $@ ){
-    $self->kvetch("error in POSTing to: '$url': $@");
+    die;
+    # die("error in POSTing to: '$url': $@");
   }else{
 
     if ( ! $mech->success() ){
@@ -113,6 +157,10 @@ sub post_external_data {
       eval {
 	my $dom = XML::LibXML->load_xml(string => $doc);
 	$self->{EXT_DATA} = $dom;
+
+	## Setup the methods we'll use.
+	$self->{RTE_DOM} = $self->{EXT_DATA};
+	$self->{RTE_XPATH} = XML::LibXML::XPathContext->new($self->{EXT_DATA});
       };
 
       ## Check for errors.
@@ -120,12 +168,25 @@ sub post_external_data {
 	$@ =~ s/at \/.*?$//s;
 	$self->kvetch("error in document from: '$url': $@");
       }else{
-	## Looks like it's well-formed--yay!
+	## Looks like it's extant and well-formed--yay!
+	$self->{XMLF_UPSTREAM_ERROR} = 0;
       }
     }
   }
 
   return $doc;
+}
+
+
+=item upstream_okay_p
+
+After a *_external_data() call, will tell you if the upstream resource
+is though to be okay.
+
+=cut
+sub upstream_okay_p {
+  my $self = shift;
+  return ! $self->{XMLF_UPSTREAM_ERROR};
 }
 
 
@@ -156,6 +217,38 @@ sub try {
   }
 
   return $retval;
+}
+
+=item get_value_list
+
+try to recover a value list, needs default value, rets empty list by defult
+
+=cut
+sub get_value_list {
+  my $self= shift;
+  my $xpath = shift || die "need path";
+  my $defval = shift || die "need default value";
+
+  my $ret = [];
+
+  ## First, get list.
+  my $results = [];
+  eval { # sorry: ns collision
+    $results = $self->{RTE_XPATH}->findnodes($xpath) || [];
+  };
+  if( $@ ){
+    $self->kvetch("error in nodes path from: '$xpath' (bailing): $@");
+  }
+
+  ## Now iterate through the list and do the best we can.
+  foreach my $rnode (@$results){
+    my $lbl = $defval;
+    $lbl = $rnode->findvalue('.') || $defval;
+
+    push @$ret, $lbl;
+  }
+
+  return $ret;
 }
 
 

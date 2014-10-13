@@ -171,10 +171,11 @@ sub input_profile {
   # }elsif( $profile_name eq 'id_request' ){
   #   $self->_add_simple_argument('data', '');
   }elsif( $profile_name eq 'goose' ){
-    $self->_add_simple_argument('limit', '1000',
-				['0', '10', '100', '1000', '10000']);
-    $self->_add_simple_argument('mirror', '');
-    $self->_add_simple_argument('query', '');
+      $self->_add_data_format();
+      $self->_add_simple_argument('limit', '1000',
+				  ['0', '10', '100', '1000', '10000']);
+      $self->_add_simple_argument('mirror', '');
+      $self->_add_simple_argument('query', '');
   }elsif( $profile_name eq 'medial_search' ){
     #$self->_add_simple_search_set();
     $self->_add_simple_argument('q', '');
@@ -192,6 +193,15 @@ sub input_profile {
     $self->_add_simple_optional_argument('q', '');
     $self->_add_simple_optional_argument('fq', '');
     $self->_add_simple_optional_argument('sfq', '');
+
+  # }elsif( $profile_name eq 'static' ){
+
+  #     $self->_add_simple_optional_argument('arg1', '');
+    # $self->_add_simple_optional_argument('arg1', '');
+    # $self->_add_simple_optional_argument('arg2', '');
+    # $self->_add_simple_optional_argument('arg3', '');
+    # $self->_add_simple_optional_argument('arg4', '');
+    # $self->_add_simple_optional_argument('arg5', '');
 
   }elsif( $profile_name eq 'workspace' ){
     $self->_add_workspace_set();
@@ -377,7 +387,7 @@ sub _add_data_format {
   push @{$profile->{required}}, 'format';
   $profile->{defaults}{format} = $default_format;
   $profile->{constraint_methods}{format} =
-    $self->is_in_list_p('html', 'json', 'xml', 'tab');
+    $self->is_in_list_p('html', 'json', 'xml', 'tab', 'text');
 }
 
 
