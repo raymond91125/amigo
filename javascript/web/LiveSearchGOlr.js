@@ -31,19 +31,24 @@ function LiveSearchGOlrInit(){
 	ll('Using _establish_buttons');
 	if( personality == 'annotation' ){
 	    manager.clear_buttons();
-	    manager.add_button(facet_matrix_button);
+	    // Only add matrix button for labs for now.
+	    if( sd.beta() && sd.beta() == '1' ){
+		manager.add_button(facet_matrix_button);		
+	    }
 	    manager.add_button(gaf_download_button);
+	    manager.add_button(ann_flex_download_button);
 	    //manager.add_button(gaf_galaxy_button);
 	    manager.add_button(bookmark_button);
 	}else if( personality == 'ontology' ){
 	    manager.clear_buttons();
-	    manager.add_button(id_label_download_button);
+	    //manager.add_button(id_label_download_button);
 	    manager.add_button(ont_flex_download_button);
 	    //manager.add_button(id_term_label_galaxy_button);
 	    manager.add_button(bookmark_button);
 	}else if( personality == 'bioentity' ){
 	    manager.clear_buttons();
-	    manager.add_button(id_download_button);
+	    //manager.add_button(id_download_button);
+	    manager.add_button(bio_flex_download_button);
 	    //manager.add_button(id_symbol_galaxy_button);
 	    manager.add_button(bookmark_button);
 	}else if( personality == 'complex_annotation' ){
@@ -103,6 +108,7 @@ function LiveSearchGOlrInit(){
 
     var gconf = new bbop.golr.conf(amigo.data.golr);
     var sd = new amigo.data.server();
+    var defs = new amigo.data.definitions();
     var linker = new amigo.linker();
     var solr_server = sd.golr_base();
     var div_id = 'display-general-search';
@@ -112,8 +118,7 @@ function LiveSearchGOlrInit(){
     ///
 
     // Download limit.    
-    //var dlimit = 7500;
-    var dlimit = 100000;
+    var dlimit = defs.download_limit();
 
     // Global download properties.
     var _dl_props = {
@@ -122,25 +127,7 @@ function LiveSearchGOlrInit(){
     };
 
     // Define the rows that we'll use to create a psuedo-GAF.
-    var _gaf_fl = [
-	'source', // c1
-	'bioentity_internal_id', // c2; not bioentity
-	'bioentity_label', // c3
-	'qualifier', // c4
-	'annotation_class', // c5
-	'reference', // c6
-	'evidence_type', // c7
-	'evidence_with', // c8
-	'aspect', // c9
-	'bioentity_name', // c10
-	'synonym', // c11
-	'type', // c12
-	'taxon', // c13
-	'date', // c14
-	'assigned_by', // c15
-	'annotation_extension_class', // c16
-	'bioentity_isoform' // c17
-    ];
+    var _gaf_fl = defs.gaf_from_golr_fields();
 
     // Create button templates to use from our library.
     var btmpl = bbop.widget.display.button_templates;
@@ -158,30 +145,43 @@ function LiveSearchGOlrInit(){
 	btmpl.field_download('GAF chunk download (up to ' +
 			     dlimit + ')',
 			     dlimit, _gaf_fl);
+    // Flexible download buttons.
     var ont_flex_download_button =
-	btmpl.flexible_download('Flex download test (up to ' + dlimit + ')',
+	btmpl.flexible_download('Flex download (up to ' + dlimit + ')',
 				dlimit,
 				['annotation_class', 'annotation_class_label'],
 				'ontology',
 				gconf);
+    var bio_flex_download_button =
+	btmpl.flexible_download('Flex download (up to ' + dlimit + ')',
+				dlimit,
+				['bioentity', 'bioentity_label'],
+				'bioentity',
+				gconf);
+    var ann_flex_download_button =
+	btmpl.flexible_download('Flex download (up to ' + dlimit + ')',
+				dlimit,
+				defs.gaf_from_golr_fields(),
+				'annotation',
+				gconf);
     //var bookmark_button = btmpl.bookmark(linker);
     var bookmark_button = btmpl.restmark(linker);
     var facet_matrix_button = btmpl.open_facet_matrix(gconf, sd);
-    var gaf_galaxy_button =
-	btmpl.send_fields_to_galaxy('Send GAF chunk to Galaxy (up to ' +
-				    dlimit + ')',
-				    dlimit, _gaf_fl, global_galaxy_url);
-    var id_term_label_galaxy_button =
-	btmpl.send_fields_to_galaxy('Send IDs and names to Galaxy (up to ' +
-				    dlimit + ')',
-				    dlimit, ['annotation_class',
-					   'annotation_class_label'],
-				    global_galaxy_url);
-    var id_symbol_galaxy_button =
-	btmpl.send_fields_to_galaxy('Send IDs and symbols to Galaxy ' +
-				    '(up to ' + dlimit + ')',
-				    dlimit,['bioentity', 'bioentity_label'],
-				    global_galaxy_url);
+    // var gaf_galaxy_button =
+    // 	btmpl.send_fields_to_galaxy('Send GAF chunk to Galaxy (up to ' +
+    // 				    dlimit + ')',
+    // 				    dlimit, _gaf_fl, global_galaxy_url);
+    // var id_term_label_galaxy_button =
+    // 	btmpl.send_fields_to_galaxy('Send IDs and names to Galaxy (up to ' +
+    // 				    dlimit + ')',
+    // 				    dlimit, ['annotation_class',
+    // 					   'annotation_class_label'],
+    // 				    global_galaxy_url);
+    // var id_symbol_galaxy_button =
+    // 	btmpl.send_fields_to_galaxy('Send IDs and symbols to Galaxy ' +
+    // 				    '(up to ' + dlimit + ')',
+    // 				    dlimit,['bioentity', 'bioentity_label'],
+    // 				    global_galaxy_url);
 
     ///
     /// Ready widget.

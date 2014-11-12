@@ -43,11 +43,15 @@ function TermDetailsInit(){
     // Ready the configuration that we'll use.
     var gconf = new bbop.golr.conf(amigo.data.golr);
     var sd = new amigo.data.server();
+    var defs = new amigo.data.definitions();
     var solr_server = sd.golr_base();
+    var linker = new amigo.linker();
+
+    // Download limit.    
+    var dlimit = defs.download_limit();
 
     // Setup the annotation profile and make the annotation document
     // category and the current acc sticky in the filters.
-    var linker = new amigo.linker();
     var handler = new amigo.handler();
     var gps_args = {
 	'linker': linker,
@@ -69,16 +73,19 @@ function TermDetailsInit(){
     // TODO: And or this in as well.
     //gps.add_query_filter('annotation_class', global_acc, ['*']);
 
-    // Download limit.
-    //var dlimit = 7500;
-    var dlimit = 100000;
-
     // Add a bioentity download button.
     var btmpl = bbop.widget.display.button_templates;
-    var id_download_button =
-	btmpl.field_download('Download bioentity IDs (up to ' + dlimit + ')',
-			     dlimit, ['bioentity']);
-    gps.add_button(id_download_button);
+    // var id_download_button =
+    // 	btmpl.field_download('Download bioentity IDs (up to ' + dlimit + ')',
+    // 			     dlimit, ['bioentity']);
+    // gps.add_button(id_download_button);
+    var ont_flex_download_button =
+	btmpl.flexible_download('Flex download (up to ' + dlimit + ')',
+				dlimit,
+				defs.gaf_from_golr_fields(),
+				'annotation',
+				gconf);
+    gps.add_button(ont_flex_download_button);
 
     // Experiment.
     // Process incoming queries, pins, and filters (into
@@ -107,31 +114,57 @@ function TermDetailsInit(){
     gps.search();
 
     ///
-    /// TODO: Create a bookmark for searching bioentities with this
-    /// term and the default, and add it to the DOM at
-    /// "related-terms-span".
+    /// Create a bookmark for searching annotations and
+    /// bioentities with this term. Generate links and activate
+    /// hidden stubs in the doc.
     ///
+
+    jQuery('#prob_related').removeClass('hidden');
+
+    // Get bookmark for bioentities.
+    (function(){
+	 // Ready bookmark.
+	 var man = new bbop.golr.manager.jquery(solr_server, gconf);
+	 man.set_personality('annotation');
+	 man.add_query_filter('document_category', 'bioentity', ['*']);
+	 man.add_query_filter('regulates_closure', global_acc);
+	 var lstate = man.get_filter_query_string();
+	 var lurl = linker.url(lstate, 'search', 'bioentity');
+	 // Add it to the DOM.
+	 jQuery('#prob_bio_href').attr('href', lurl);
+	 jQuery('#prob_bio').removeClass('hidden');
+     })();
     
-    // Get bookmark.
-    var relman = new bbop.golr.manager.jquery(solr_server, gconf);
-    relman.set_personality('bioentity');
-    relman.add_query_filter('document_category', 'bioentity', ['*']);
-    relman.add_query_filter('regulates_closure', global_acc);
-    //ll('qurl: ' + relman.get_query_url());
-    //var relstate = encodeURIComponent(relman.get_state_url());
-    var relstate = relman.get_filter_query_string();
-
-    // Generate the link.
-    var al = new amigo.linker();
-    var hot_anchor = al.anchor({id:relstate, label:'Search'},
-			       'search', 'bioentity');
-
-    // Add it to the DOM.
-    var rtid = "#related-terms-span";
-    jQuery(rtid).empty();
-    jQuery(rtid).append(hot_anchor + ' for <i>bioentities</i> ' +
-			'that have been annotated with this term.');
-
+    // Get bookmark for annotations.
+    (function(){
+	 // Ready bookmark.
+	 var man = new bbop.golr.manager.jquery(solr_server, gconf);
+	 man.set_personality('annotation');
+	 man.add_query_filter('document_category', 'annotation', ['*']);
+	 man.add_query_filter('regulates_closure', global_acc);
+	 var lstate = man.get_filter_query_string();
+	 var lurl = linker.url(lstate, 'search', 'annotation');
+	 // Add it to the DOM.
+	 jQuery('#prob_ann_href').attr('href', lurl);
+	 jQuery('#prob_ann').removeClass('hidden');
+     })();
+    
+    // Get bookmark for annotation download.
+    (function(){
+	 // Ready bookmark.
+	 var man = new bbop.golr.manager.jquery(solr_server, gconf);
+	 man.set_personality('annotation');
+	 man.add_query_filter('document_category', 'annotation', ['*']);
+	 man.add_query_filter('regulates_closure', global_acc);
+	 var dstate = man.get_download_url(defs.gaf_from_golr_fields(),
+					   {
+					       'rows': dlimit,
+					       'encapsulator': ''
+					   });
+	 jQuery('#prob_ann_dl_href').attr('href', dstate);
+	 jQuery('#prob_ann_dl').removeClass('hidden');
+     })();
+    
     //
     ll('TermDetailsInit done.');
 }

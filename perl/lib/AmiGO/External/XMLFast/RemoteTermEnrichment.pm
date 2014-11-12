@@ -14,25 +14,28 @@ format=(html|xml)
 Payload:
 
 <results>
-<input>
-<mapped>ID1</mapped>
-<mapped>ID2</mapped>
-...
-<unmapped>ID1</unmapped>
-<unmapped>ID2</unmapped>
-...
-</input>
-<result>
-<term>
-<id>GO:nnn</id>
-<label>fatty acid metabolic process</label>
-</term>
-<number_in_population>188</number_in_population>
-<number_in_sample>45</number_in_sample>
-<expected>3.98</expected>
-<plus_or_minus>+</plus_or_minus>
-<p_value>6.88</p_value>
-</result>
+  <reference>
+    <mapped_count>21804</mapped_count>
+    <unmapped_count>0</unmapped_count>
+  </reference>
+  <input_list>
+    <mapped_count>14</mapped_count>
+    <mapped_id>AKT1</mapped_id>
+    ...
+    <mapped_id>GHR</mapped_id>
+    <unmapped_count>0</unmapped_count>
+  </input_list>
+  <result>
+    <term>
+      <id>GO:0048009</id>
+      <label>insulin-like growth factor receptor signaling pathway</label>
+    </term>
+    <number_in_reference>14</number_in_reference>
+    <number_in_list>14</number_in_list>
+    <expected>0.008989176297926985</expected>
+    <plus_minus>+</plus_minus>
+    <pValue>2.7397582582268944E-41</pValue>
+  </result>
 ...
 </results>
 
@@ -45,6 +48,7 @@ package AmiGO::External::XMLFast::RemoteTermEnrichment;
 
 use base ("AmiGO::External::XMLFast");
 use Date::Format;
+#use Try::Tiny;
 
 
 # =item $URL_FOR_REMOTE
@@ -99,50 +103,97 @@ sub remote_call {
   $self->{MECH}->timeout(300);
   $ret = $self->post_external_data($url, $self->{ARGS});
 
+  if( ! $self->upstream_okay_p() ){
+      die "There might be a problem with the upstream server: $url: $@";
+  }
+
   return $ret;
 }
 
-=item get_reference_mapped
+=item get_reference_mapped_count
 
 ...
 
 =cut
-sub get_reference_mapped {
+sub get_reference_mapped_count {
   my $self = shift;
-  return $self->try('/results/reference/mapped', undef);
+  return $self->try('/results/reference/mapped_count', undef);
 }
 
 
-=item get_reference_unmapped
+=item get_reference_unmapped_count
 
 ...
 
 =cut
-sub get_reference_unmapped {
+sub get_reference_unmapped_count {
   my $self = shift;
-  return $self->try('/results/reference/unmapped', undef);
+  return $self->try('/results/reference/unmapped_count', undef);
 }
 
 
-=item get_input_list_mapped
+=item get_input_list_mapped_count
 
 ...
 
 =cut
-sub get_input_list_mapped {
+sub get_input_list_mapped_count {
   my $self = shift;
-  return $self->try('/results/input_list/mapped', undef);
+  return $self->try('/results/input_list/mapped_count', undef);
 }
 
 
-=item get_input_list_unmapped
+=item get_input_list_unmapped_count
 
 ...
 
 =cut
-sub get_input_list_unmapped {
+sub get_input_list_unmapped_count {
   my $self = shift;
-  return $self->try('/results/input_list/unmapped', undef);
+  return $self->try('/results/input_list/unmapped_count', undef);
+}
+
+=item get_reference_mapped_list
+
+...
+
+=cut
+sub get_reference_mapped_list {
+  my $self = shift;
+  return $self->get_value_list('/results/reference/mapped_id', '???');
+}
+
+
+=item get_reference_unmapped_list
+
+...
+
+=cut
+sub get_reference_unmapped_list {
+  my $self = shift;
+  return $self->get_value_list('/results/reference/unmapped_id', '???');
+}
+
+
+=item get_input_list_mapped_list
+
+...
+
+=cut
+sub get_input_list_mapped_list {
+  my $self = shift;
+  return $self->get_value_list('/results/input_list/mapped_id', '???');
+}
+
+
+=item get_input_list_unmapped_list
+
+...
+
+=cut
+sub get_input_list_unmapped_list {
+  my $self = shift;
+  return $self->get_value_list('/results/input_list/unmapped_id', '???');
 }
 
 
@@ -204,7 +255,7 @@ sub get_results {
     }
   };
   if( $@ ){
-    die 'An error occured processing the response from the resource:';
+    die "An error occured processing the response from the resource: $@";
   }
 
   return $ret;

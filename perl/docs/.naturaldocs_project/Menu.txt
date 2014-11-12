@@ -78,6 +78,7 @@ Group: AmiGO  {
          Group: Solr  {
 
             File: AmiGO...GOlr::Status  (AmiGO/External/JSON/Solr/GOlr/Status.pm)
+            File: GOlr/BulkSearch.pm  (AmiGO/External/JSON/Solr/GOlr/BulkSearch.pm)
             File: GOlr/Document.pm  (AmiGO/External/JSON/Solr/GOlr/Document.pm)
             File: GOlr/SafeQuery.pm  (AmiGO/External/JSON/Solr/GOlr/SafeQuery.pm)
             File: GOlr/Search.pm  (AmiGO/External/JSON/Solr/GOlr/Search.pm)
@@ -126,12 +127,15 @@ Group: AmiGO  {
       File: GOOSE.pm  (AmiGO/WebApp/GOOSE.pm)
       File: Grebe.pm  (AmiGO/WebApp/Grebe.pm)
       File: HTMLClient  (AmiGO/WebApp/HTMLClient.pm)
+      File: HTMLClient::Dispatch  (AmiGO/WebApp/HTMLClient/Dispatch.pm)
       File: HTMLClientExp  (AmiGO/WebApp/HTMLClientExp.pm)
       File: Matrix.pm  (AmiGO/WebApp/Matrix.pm)
       File: PGraph  (AmiGO/WebApp/PGraph.pm)
       File: REPL.pm  (AmiGO/WebApp/REPL.pm)
       File: RTE.pm  (AmiGO/WebApp/RTE.pm)
       File: Services  (AmiGO/WebApp/Services.pm)
+      File: Static.pm  (AmiGO/WebApp/Static.pm)
+      File: Static::Dispatch  (AmiGO/WebApp/Static/Dispatch.pm)
       File: VisualizeServer.pm  (AmiGO/WebApp/VisualizeServer.pm)
       File: Xrefs.pm  (AmiGO/WebApp/Xrefs.pm)
       }  # Group: WebApp

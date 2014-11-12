@@ -906,9 +906,15 @@ sub _ensure_xref_data {
   ## Revive the cache from the JSON if we don't have it.
 
   if( ! defined($self->{DB_INFO}) ){
-    ## Populate our hash.
-    #my($ret_hash) = _read_frozen_file($self, '/db_info.pl');
-    my($ret_hash) = _read_json_file($self, 'xrefs.json');
+    ## Populate our hash.  First, look for the file--this toggle is
+    ## used because of the relative path differences between apache
+    ## and the static server.
+    my $json_path = 'xrefs.json';
+    if( ! -r $json_path ){
+      $json_path = $self->amigo_env('AMIGO_DYNAMIC_PATH') . '/' . 'xrefs.json';
+    }
+
+    my($ret_hash) = _read_json_file($self, $json_path);
     $self->{DB_INFO} = $ret_hash || {};
     #print STDERR "_init_...\n";
     #print STDERR "_keys: " . scalar(keys %$ret_hash) . "\n";
@@ -1256,6 +1262,7 @@ sub get_interlink {
      'schema_details' => sub { $ilink = 'amigo/schema_details'; },
      'load_details' => sub { $ilink = 'amigo/load_details'; },
      'browse' => sub { $ilink = 'amigo/browse'; },
+     'free_browse' => sub { $ilink = 'amigo/free_browse'; },
      'goose' => sub { $ilink = 'goose'; },
      'grebe' => sub { $ilink = 'grebe'; },
      'gannet' => sub { $ilink = 'gannet'; },
@@ -1509,6 +1516,25 @@ sub get_interlink {
        }
      },
 
+     'bulk_search' =>
+     sub {
+       if( ! $self->empty_hash_p($args) ){
+	 my $type = $args->{type} ||
+	   die "require a type for non-default searches";
+	 $ilink = 'amigo/bulk_search/' . $type;
+
+	 # ## In the case that we also have an incoming query, add that.
+	 # if( defined $args->{query} && $args->{query} ne '' ){
+	 #   $ilink = $ilink . '?q=' . $args->{query};
+	 # }
+
+       }else{
+	 ## Just the most generic search we have.
+	 ## TODO/BUG: Likely DEFUNCT at this point.
+	 $ilink = 'amigo/bulk_search';
+       }
+     },
+
      'id_request' =>
      sub {
        my $data = $args->{data} || '';
@@ -1597,7 +1623,7 @@ sub get_interlink {
 	$ilink = $self->amigo_env('AMIGO_PUBLIC_CGI_BASE_URL') . '/' . $ilink;
       }elsif( $optional_full_p ){
 	#$self->kvetch('FULL LINK');
-	$ilink = $self->amigo_env('AMIGO_CGI_URL') . '/' . $ilink;
+	$ilink = $self->amigo_env('AMIGO_DYNAMIC_URL') . '/' . $ilink;
       }else{
 	#$self->kvetch('LOCAL LINK');
       }
@@ -1652,14 +1678,16 @@ sub render_json {
       ref($perl_var) eq "ARRAY" ){
     ## Try the new version, if not, use the old version.
     eval{
-      $retval = $self->{JSON}->encode($perl_var);
+      $retval = JSON::XS->new->utf8->allow_blessed->encode($perl_var);
     };
     if ($@) {
       #    $retval = $self->{JSON}->to_json($perl_var);
-      $retval = JSON::XS->new->utf8->allow_blessed->encode($perl_var);
+      $retval = $self->{JSON}->encode($perl_var);
     }
   }else{
-    $retval = $self->emit_json_scalar($perl_var);
+    #$retval = $self->emit_json_scalar($perl_var);
+    $retval =
+      JSON::XS->new->utf8->allow_blessed->allow_nonref->encode($perl_var);
   }
 
   return $retval;
@@ -2086,23 +2114,23 @@ sub get_amigo_layout {
   return $retlist;
 }
 
-=item get_amigo_search_default
+# =item get_amigo_search_default
 
-Arguments: n/a
+# Arguments: n/a
 
-Return: ID of the default search personality to use (as defined in conf)
+# Return: ID of the default search personality to use (as defined in conf)
 
-=cut
-sub get_amigo_search_default {
+# =cut
+# sub get_amigo_search_default {
 
-  my $self = shift;
+#   my $self = shift;
 
-  ## Extract the landing page search order from the ID.
-  my $str_raw = $self->amigo_env('AMIGO_SEARCH_DEFAULT') ||
-    die "could find no AMIGO_SEARCH_DEFAULT";
+#   ## Extract the landing page search order from the ID.
+#   my $str_raw = $self->amigo_env('AMIGO_SEARCH_DEFAULT') ||
+#     die "could find no AMIGO_SEARCH_DEFAULT";
 
-  return $str_raw;
-}
+#   return $str_raw;
+# }
 
 # ## Read misc_keys.pl (unless otherwise specified) and return the
 # ## thawed hash. BUG/TODO: we should be moving away from perl-specific
@@ -2538,6 +2566,99 @@ sub set_error_message {
   my $arg = shift || undef;
   $self->{ERROR_MESSAGE} = $arg;
   return $self->{ERROR_MESSAGE};
+}
+
+
+=item dynamic_dispatch_table
+
+Return a list for the dispatch table used by bin/amigo and
+AmiGO::WebApp::HTMLClient::Dispatch.pm.
+
+Note: Can use as a static method.
+
+Returns list ref.
+
+=cut
+sub dynamic_dispatch_table {
+  my $self = shift || undef; # can use as static method
+
+  my $app = 'AmiGO::WebApp::HTMLClient';
+  my $dispatch_table =
+    [
+     ''                    => { app => $app }, # defaults to landing
+     '/'                   => { app => $app }, # defaults to landing
+     'landing'             => { app => $app, rm => 'landing' },
+     'software_list'       => { app => $app, rm => 'software_list' },
+     'schema_details'      => { app => $app, rm => 'schema_details' },
+     'load_details'        => { app => $app, rm => 'load_details' },
+     'browse'              => { app => $app, rm => 'browse' },
+     'free_browse'              => { app => $app, rm => 'free_browse' },
+     ##
+     ## Soft applications (may take some parameters, browser-only).
+     ##
+     'medial_search'       => { app => $app, rm => 'medial_search' },
+     'simple_search'       => { app => $app, rm => 'simple_search' },
+     'bulk_search/:personality' => { app => $app, rm => 'bulk_search',
+				     personality => 'personality' },
+     'bulk_search' => { app => $app, rm => 'bulk_search'},
+     'search/:personality' => { app => $app, rm => 'specific_search',
+				personality => 'personality' },
+     'search'              => { app => $app, rm => 'search' },
+     'phylo_graph/:family' =>
+     { app => $app, rm => 'phylo_graph', family => 'family' },
+     'phylo_graph'         => { app => $app, rm => 'phylo_graph' },
+     ##
+     ## RESTy (can be consumed as service).
+     ##
+     'term/:term/:format?'       => { app => $app, rm => 'term',
+				      'term' => 'term', 'format' => 'format' },
+     'gene_product/:gp/:format?' => { app => $app, rm => 'gene_product',
+				      'gp' => 'gp', 'format' => 'format' },
+     'visualize'                 => { app => $app, rm => 'visualize' },
+     ## Beta.
+     'complex_annotation/:complex_annotation'  =>
+     { app => $app, rm => 'complex_annotation',
+       complex_annotation => 'complex_annotation' },
+     'visualize_freeform'  => { app => $app, rm => 'visualize_freeform' },
+    ];
+
+  return $dispatch_table;
+}
+
+=item static_dispatch_table
+
+Return a list for the dispatch table used by bin/amigo and
+AmiGO::WebApp::HTMLClient::Dispatch.pm.
+
+Note: Can use as a static method.
+
+Returns list ref.
+
+=cut
+sub static_dispatch_table {
+  my $self = shift || undef; # can use as static method
+
+  my $app = 'AmiGO::WebApp::Static';
+  my $load =
+    {
+     app => $app, rm => 'deliver',
+     # 'arg1' => 'arg1',
+     # 'arg2' => 'arg2',
+     # 'arg3' => 'arg3',
+     # 'arg4' => 'arg4',
+     # 'arg5' => 'arg5',
+    };
+  my $dispatch_table =
+    [
+     '*' => $load,
+     #'css/*' => $load,
+     # 'html/:arg1?/:arg2?/:arg3?/:arg4?/:arg5?' => $load,
+     # 'css/:arg1?/:arg2?/:arg3?/:arg4?/:arg5?' => $load,
+     # 'js/:arg1?/:arg2?/:arg3?/:arg4?/:arg5?' => $load,
+     # 'staging/:arg1?/:arg2?/:arg3?/:arg4?/:arg5?' => $load,
+    ];
+
+  return $dispatch_table;
 }
 
 

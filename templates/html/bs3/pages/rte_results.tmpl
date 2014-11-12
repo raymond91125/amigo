@@ -1,56 +1,30 @@
 <!-- Start: rte_results.tmpl -->
 
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">[% rte_resource.id %] Information</h3>
-  </div>
-  <div class="panel-body">
+[% INCLUDE common/noscript_js_necessary.tmpl %]
 
-    [% IF rte_resource.local_logo %]
-    <p>
-      <a href="[% rte_resource.website %]">
-	<img src="[% image_dir %]/[% rte_resource.local_logo %]"
-	     alt="Logo for: [% rte_resource.id %]" />
-      </a>
-    </p>
-    [% ELSIF rte_resource.remote_logo %]
-    <p>
-      <a href="[% rte_resource.website %]">
-	<img src="[% rte_resource.remote_logo %]"
-	     alt="Logo for: [% rte_resource.id %]" />
-      </a>
-    </p>
-    [% END %]
-
-    <p>
-      These results were produced by
-      <a href="[% rte_resource.website %]">[% rte_resource.label %]</a>.
-    </p>
-    
-    [% IF rte_resource.description %]
-    <p>
-      [% rte_resource.description %]
-    </p>
-    [% END %]
-
-    <p>
-      For more information, please see the resource
-      <a href="[% rte_resource.website %]">website</a>.
-    </p>
-    
-  </div>
-</div>
+[% rollup_id = "info_header" %]
+[% rollup_anchor = "Information about Term Enrichment Results" %]
+[% INCLUDE "common/info_rollup_start.tmpl" %]
+<p>
+  Current documentation and discussion of term enrichment with the GO
+  can be found
+  <a href="http://geneontology.org/page/go-enrichment-analysis">here</a>. 
+</p>
+<p>
+  This is a work in progress, so your feedback is appreciated.
+</p>
+[% INCLUDE "common/info_rollup_end.tmpl" %]
 
 <div class="panel panel-default">
   <div class="panel-heading">
-    <h3 class="panel-title">Results by [% rte_resource.label %]</h3>
+    <h3 class="panel-title">Results Produced by
+      <a href="#resource_information_panel">[% rte_resource.label %]&nbsp;<img height="15" alt="[Click to display more information.]" src="[% image_dir %]/question.icon.png" /></a></h3>
   </div>
   <div class="panel-body">
     
     <ul class="list-inline">
       <li>
-	Run with different parameters from <a href="[% interlink_rte %]">RTE</a> 
-	/ current: 
+	Run with different parameters (<a href="[% interlink_rte %]">reset</a>); currently: 
       </li>
       <li><strong>format</strong>: [%  rte_format %]</li>
       <li><strong>input count</strong>: [% rte_input_count %]</li>
@@ -69,17 +43,47 @@
 	[% rte_input_list_mapped %]/[% rte_input_list_unmapped %]
       </li>
       <li>
+	<strong>Unmapped inputs</strong>:
+	[% FOR ui IN rte_input_list_unmapped_list %]
+	<em>[% ui %]</em>
+	[% END %]
+      </li>
+    </ul>
+
+    <ul class="list-inline">
+      <li>
+	<strong>Download as</strong>:
+      </li>
+      <li>
+	[% rte_ex_format = "xml" %]
+	[% rte_ex_desc = "XML" %]
 	<form action="[% rte_web_service %]" target="_blank" method="POST">
-	  <input type="hidden" name="format" value="[%  rte_format %]" />
-	  <input type="hidden" name="input" value="[%  rte_input %]" />
+	  <input type="hidden" name="format" value="[% rte_ex_format %]" />
+	  <input type="hidden" name="input" value="[% rte_input %]" />
 	  <input type="hidden" name="species" value="[% rte_species %]" />
 	  <input type="hidden" name="ontology" value="[% rte_ontology %]" />
 	  <input type="hidden" name="correction" value="[% rte_correction %]" />
 	  <small>
 	    <button type="submit"
-		    class="btn btn-default">raw [% rte_format %]</button>
+		    class="btn btn-default">raw [% rte_ex_desc %]</button>
 	  </small>
-	<form>
+	</form>
+      </li>
+      <li>
+	[% rte_ex_format = "tab" %]
+	[% rte_ex_desc = "tab-delimited" %]
+	<form action="[% interlink_rte %]" target="_blank" method="POST">
+	  <input type="hidden" name="format" value="[% rte_ex_format %]" />
+	  <input type="hidden" name="input" value="[% rte_input %]" />
+	  <input type="hidden" name="species" value="[% rte_species %]" />
+	  <input type="hidden" name="ontology" value="[% rte_ontology %]" />
+	  <input type="hidden" name="correction" value="[% rte_correction %]" />
+	  <input type="hidden" name="resource" value="[% rte_resource.id %]" />
+	  <small>
+	    <button type="submit"
+		    class="btn btn-default">raw [% rte_ex_desc %]</button>
+	  </small>
+	</form>
       </li>
     </ul>
 
@@ -90,10 +94,10 @@
 	    Term
 	  </td>
 	  <td>
-	    #&nbsp;Population
+	    Background frequency
 	  </td>
 	  <td>
-	    #&nbsp;Sample
+	    Sample frequency
 	  </td>
 	  <td>
 	    Expected
@@ -136,6 +140,47 @@
       </tbody>
     </table>
 
+  </div>
+</div>
+
+<div id="resource_information_panel" class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">[% rte_resource.id %] Information</h3>
+  </div>
+  <div class="panel-body">
+
+    [% IF rte_resource.local_logo %]
+    <p>
+      <a href="[% rte_resource.website %]">
+	<img src="[% image_dir %]/[% rte_resource.local_logo %]"
+	     alt="Logo for: [% rte_resource.id %]" />
+      </a>
+    </p>
+    [% ELSIF rte_resource.remote_logo %]
+    <p>
+      <a href="[% rte_resource.website %]">
+	<img src="[% rte_resource.remote_logo %]"
+	     alt="Logo for: [% rte_resource.id %]" />
+      </a>
+    </p>
+    [% END %]
+
+    <p>
+      These results were produced by
+      <a href="[% rte_resource.website %]">[% rte_resource.label %]</a>.
+    </p>
+    
+    [% IF rte_resource.description %]
+    <p>
+      [% rte_resource.description %]
+    </p>
+    [% END %]
+
+    <p>
+      For more information, please see the resource
+      <a href="[% rte_resource.website %]">website</a>.
+    </p>
+    
   </div>
 </div>
 <!-- End: rte_results.tmpl -->

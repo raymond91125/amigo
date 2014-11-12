@@ -52,6 +52,17 @@ GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_
 LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.obo
 PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.obo
  
+ONTOLOGIES ?= \
+ http://purl.obolibrary.org/obo/go.owl \
+ http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim.owl \
+ http://purl.obolibrary.org/obo/cl/cl-basic.owl \
+ http://purl.obolibrary.org/obo/eco.owl \
+ http://geneontology.org/ontology/extensions/gorel.owl \
+ http://purl.obolibrary.org/obo/ma.owl \
+ http://purl.obolibrary.org/obo/pato.owl \
+ http://purl.obolibrary.org/obo/po.owl \
+ http://purl.obolibrary.org/obo/emap.owl
+
 ## Next:
 # http://purl.obolibrary.org/obo/uberon/basic.owl
 

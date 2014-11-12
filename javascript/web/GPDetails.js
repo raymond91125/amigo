@@ -29,6 +29,7 @@ function GPDetailsInit(){
     // Ready the configuration that we'll use.
     var gconf = new bbop.golr.conf(amigo.data.golr);
     var sd = new amigo.data.server();
+    var defs = new amigo.data.definitions();
     var solr_server = sd.golr_base();
 
     // Setup the annotation profile and make the annotation document
@@ -53,15 +54,21 @@ function GPDetailsInit(){
     gps.add_query_filter('bioentity', global_acc, ['*']);
 
     // Download limit.
-    //var dlimit = 7500;
-    var dlimit = 100000;
+    var dlimit = defs.download_limit();
 
     // Add a term id download button.
     var btmpl = bbop.widget.display.button_templates;
-    var id_download_button =
-	btmpl.field_download('Download term IDs (up to ' + dlimit + ')',
-			     dlimit, ['annotation_class']);
-    gps.add_button(id_download_button);
+    // var id_download_button =
+    // 	btmpl.field_download('Download term IDs (up to ' + dlimit + ')',
+    // 			     dlimit, ['annotation_class']);
+    // gps.add_button(id_download_button);
+     var bio_flex_download_button =
+	btmpl.flexible_download('Flex download (up to ' + dlimit + ')',
+				dlimit,
+				defs.gaf_from_golr_fields(),
+				'annotation',
+				gconf);   
+    gps.add_button(bio_flex_download_button);
 
     // Experiment.
     // Process incoming queries, pins, and filters (into
@@ -88,6 +95,44 @@ function GPDetailsInit(){
     gps.establish_display();
     //gps.reset();
     gps.search();
+
+     ///
+    /// Create a bookmark for searching annotations and
+    /// bioentities with this term. Generate links and activate
+    /// hidden stubs in the doc.
+    ///
+
+    jQuery('#prob_related').removeClass('hidden');
+
+    // Get bookmark for annotations.
+    (function(){
+	 // Ready bookmark.
+	 var man = new bbop.golr.manager.jquery(solr_server, gconf);
+	 man.set_personality('annotation');
+	 man.add_query_filter('document_category', 'annotation', ['*']);
+	 man.add_query_filter('bioentity', global_acc);
+	 var lstate = man.get_filter_query_string();
+	 var lurl = linker.url(lstate, 'search', 'annotation');
+	 // Add it to the DOM.
+	 jQuery('#prob_ann_href').attr('href', lurl);
+	 jQuery('#prob_ann').removeClass('hidden');
+     })();
+    
+    // Get bookmark for annotation download.
+    (function(){
+	 // Ready bookmark.
+	 var man = new bbop.golr.manager.jquery(solr_server, gconf);
+	 man.set_personality('annotation');
+	 man.add_query_filter('document_category', 'annotation', ['*']);
+	 man.add_query_filter('bioentity', global_acc);
+	 var dstate = man.get_download_url(defs.gaf_from_golr_fields(),
+					   {
+					       'rows': dlimit,
+					       'encapsulator': ''
+					   });
+	 jQuery('#prob_ann_dl_href').attr('href', dstate);
+	 jQuery('#prob_ann_dl').removeClass('hidden');
+     })();
 
     //
     ll('GPDetailsInit done.');
