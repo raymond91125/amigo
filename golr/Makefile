@@ -62,7 +62,11 @@ ONTOLOGIES ?= \
  http://purl.obolibrary.org/obo/pato.owl \
  http://purl.obolibrary.org/obo/po.owl \
  http://purl.obolibrary.org/obo/emap.owl
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5163dbc42d606229cb910d2e51f1f8ea1aa417c3
 ## Next:
 # http://purl.obolibrary.org/obo/uberon/basic.owl
 
@@ -102,7 +106,11 @@ GENE_ASSOCIATION_FILES ?= \
 
 ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.wb.clean
 GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.wb.clean
+<<<<<<< HEAD
 PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.wb.clean
+=======
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.wb.clean.col7
+>>>>>>> 5163dbc42d606229cb910d2e51f1f8ea1aa417c3
 DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.wb.clean
 LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.wb.clean
 

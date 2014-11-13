@@ -360,8 +360,8 @@
     <!-- ontology: JSON blob form of the local stepwise topology graph. Uses various relations (including regulates, occurs in, capable_of). -->
     <!-- complex_annotation: JSON blob form of the local stepwise topology graph. -->
     <field name="topology_graph_json" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
-    <!-- bioentity: PANTHER family IDs that are associated with this entity. -->
-    <!-- annotation: PANTHER family IDs that are associated with this entity. -->
+    <!-- bioentity: PANTHER families that are associated with this entity. -->
+    <!-- annotation: PANTHER families that are associated with this entity. -->
     <!-- complex_annotation: PANTHER family IDs that are associated with this entity. -->
     <!-- family: PANTHER family IDs that are associated with this entity. -->
     <!-- bbop_ann_ev_agg: Family IDs that are associated with this entity. -->
