@@ -243,6 +243,7 @@ sub mode_free_browse {
      javascript =>
      [
       $self->{JS}->get_lib('GeneralSearchForwarding.js'),
+      $self->{JS}->get_lib('CytoDraw.js'),
       $self->{JS}->get_lib('FreeBrowse.js')
      ],
      javascript_init =>
@@ -1211,9 +1212,15 @@ sub mode_bulk_search {
     foreach my $sti (@$stinfo){
       my $stid = $sti->{id};
       if( $personality eq $stid ){
+	## Make sure we're on the list.
 	$allowed_personality = 1;
 	$personality_name = $sti->{display_name};
 	$personality_desc = $sti->{description};
+
+	## Pull out detailed personality information to assemble the
+	## UI.
+	## TODO: ?
+
 	last;
       }
     }
@@ -1258,7 +1265,7 @@ sub mode_bulk_search {
      ],
      javascript =>
      [
-      $self->{JS}->make_var('global_live_search_personality', $personality),
+      $self->{JS}->make_var('global_bulk_search_personality', $personality),
       # $self->{JS}->make_var('global_live_search_query', $query),
       # $self->{JS}->make_var('global_live_search_filters', $filters),
       # $self->{JS}->make_var('global_live_search_pins', $pins),
@@ -1559,7 +1566,7 @@ sub mode_term_details {
       #'standard',
       'com.bootstrap',
       'com.jquery.jqamigo.custom',
-      'com.jquery.tablesorter',
+      #'com.jquery.tablesorter',
       'amigo',
       'bbop'
      ],

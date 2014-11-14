@@ -62,7 +62,7 @@ ONTOLOGIES ?= \
  http://purl.obolibrary.org/obo/pato.owl \
  http://purl.obolibrary.org/obo/po.owl \
  http://purl.obolibrary.org/obo/emap.owl
- 
+
 ## Next:
 # http://purl.obolibrary.org/obo/uberon/basic.owl
 
