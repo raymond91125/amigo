@@ -167,6 +167,7 @@ fields:
       - "xunion_of"
       - "preceded_by"
       - "BFO:0000051"
+      - "union_of"
     indexed: false
   - id: regulates_transitivity_graph_json
     description: "JSON blob form of the local relation transitivity graph. Uses various relations (including regulates, occurs in, capable_of)."
