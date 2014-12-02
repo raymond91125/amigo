@@ -45,12 +45,12 @@ SCHEMA_METADATA ?= \
  ../metadata/ann_ev_agg-config.yaml
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
-ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS245.obo.xunion
-DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS245.obo
+ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS246.obo.xunion
+DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS246.obo
 # GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
-GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS245.obo
-LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS245.obo
-PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS245.obo
+GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS246.obo
+LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS246.obo
+PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS246.obo
  
 ONTOLOGIES ?= \
  http://purl.obolibrary.org/obo/go.owl \
@@ -100,11 +100,11 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.tair.gz \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
 
-ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS245.wb.clean
-GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS245.wb.clean
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS245.wb.clean.col7
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS245.wb.clean
-LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS245.wb.clean
+ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS246.wb.clean
+GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS246.wb.clean
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS246.wb.clean.col7
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS246.wb.clean
+LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS246.wb.clean
 
 ##
 DATE = `date +'%Y-%m-%d'`
