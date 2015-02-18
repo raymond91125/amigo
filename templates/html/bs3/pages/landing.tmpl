@@ -114,7 +114,8 @@
 	    <form action="[% interlink_rte %]"
 		  class="form-inline" role="form" method="POST">
 	      <input type="hidden" name="correction" value="bonferroni" />
-	      <input type="hidden" name="format" value="xml" />
+	      <!-- <input type="hidden" name="format" value="xml" /> -->
+	      <input type="hidden" name="format" value="html" />
 	      <input type="hidden" name="resource" value="PANTHER" />
 	      <textarea id="landing_gene_input" class="form-control" rows="2" name="input" placeholder="Your genes here..." ></textarea>
 	      
@@ -163,12 +164,13 @@
 	  <p>
 	    <!-- <small><a href="[% interlink_rte %]">Advanced options</a></small> -->
 	    <!-- <br /> -->
-	    <small>Powered by <a href="http://go.pantherdb.org">PANTHER</a></small>
+	    <small>Powered by <a href="http://pantherdb.org">PANTHER</a></small>
 	  </p>
-	  <!-- -->
-	  <p class="">
-	    <a class="btn btn-primary" href="[% interlink_rte %]">Advanced &raquo;</a>
-	  </p>
+
+	  <!-- Allow user to make other choices in RTE. -->
+	  <!-- <p class=""> -->
+	  <!--   <a class="btn btn-primary" href="[% interlink_rte %]">Advanced &raquo;</a> -->
+	  <!-- </p> -->
 
 	</div>
       </div>
