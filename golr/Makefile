@@ -12,7 +12,7 @@
 
 ## Options.
 OWLTOOLS_MAX_MEMORY ?= 4G
-OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS = --merge-support-ontologies --remove-subset-entities upperlevel --reasoner elk
+OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS = --merge-support-ontologies --reasoner elk
 
 ## Bins.
 MAVEN_EXE ?= ~/local/src/java/apache-maven-3.0.5/bin/mvn
@@ -28,7 +28,7 @@ PHENOTYPE_SOLR_URL ?= http://localhost:8080/solr/phenotype/
  
 
 ## Paths.
-OWLTOOLS_ROOT ?= ~/local/src/git/owltools/
+OWLTOOLS_ROOT ?= ~/local/src/svn/owltools/
 BBOP_JS_ROOT ?= ~/local/src/git/bbop-js/
 PANTHER_FILES_DIR ?= ~/local/src/svn/geneontology.org/trunk/experimental/trees/panther_data/
 
@@ -45,26 +45,26 @@ SCHEMA_METADATA ?= \
  ../metadata/ann_ev_agg-config.yaml
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
-ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS246.obo.xunion
-DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS246.obo
+ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS247.obo.xunion
+DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS247.obo
 # GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
-GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS246.obo
-LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS246.obo
-PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS246.obo
+GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS247.obo
+LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS247.obo
+PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS247.obo
  
 ONTOLOGIES ?= \
- http://purl.obolibrary.org/obo/go/extensions/go-plus.owl \
- http://purl.obolibrary.org/obo/ncbitaxon.owl \
+ http://purl.obolibrary.org/obo/go.owl \
+ http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim.owl \
  http://purl.obolibrary.org/obo/cl/cl-basic.owl \
  http://purl.obolibrary.org/obo/eco.owl \
- http://purl.obolibrary.org/obo/go/extensions/gorel.owl \
+ http://geneontology.org/ontology/extensions/gorel.owl \
  http://purl.obolibrary.org/obo/ma.owl \
  http://purl.obolibrary.org/obo/pato.owl \
  http://purl.obolibrary.org/obo/po.owl \
- http://purl.obolibrary.org/obo/emap.owl \
- http://purl.obolibrary.org/obo/chebi.owl \
- http://purl.obolibrary.org/obo/uberon/basic.owl \
- http://purl.obolibrary.org/obo/go/extensions/go-modules-annotations.owl
+ http://purl.obolibrary.org/obo/emap.owl
+
+## Next:
+# http://purl.obolibrary.org/obo/uberon/basic.owl
 
 GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Lmajor.gz \
@@ -99,28 +99,12 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.sgn.gz \
 	http://www.geneontology.org/gene-associations/gene_association.tair.gz \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
-<<<<<<< HEAD
 
-ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS246.wb.clean
-GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS246.wb.clean
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS246.wb.clean.col7
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS246.wb.clean
-LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS246.wb.clean
-=======
-	http://www.geneontology.org/gene-associations/gene_association.zfin.gz \
-	http://www.geneontology.org/gene-associations/submission/paint/pre-submission/gene_association.paint_other.gaf # And higher-level PAINT annotations.
-
-TEST_GAF = http://www.geneontology.org/gene-associations/gene_association.mgi.gz
-TEST_GAF_SMALL ?= ./_test/mgi-limited.gaf
-TEST_GAF_MICRO = ./_test/mgi-limited-100.gaf
-
-## Not over the wire yet.
-## Experimental Lego paths.
-LEGO_S3_LISTING ?= \
- /tmp/lego.cat
-LEGO_CATALOGS ?= \
- ~/local/src/svn/geneontology.org/trunk/experimental/lego/server/protein/subset/catalog-v001.xml
->>>>>>> upstream/master
+ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS247.wb.clean
+GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS247.wb.clean
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS247.wb.clean.col7
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS247.wb.clean
+LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS247.wb.clean
 
 ##
 DATE = `date +'%Y-%m-%d'`
@@ -220,11 +204,7 @@ load-wb-go: owltools-build clear-load-log
 .PHONY: load-wb-lifestage	
 load-wb-lifestage: owltools-build clear-load-log
 	make message-load-start
-<<<<<<< HEAD
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(LIFESTAGEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(LIFESTAGE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(LIFESTAGE_GAF)
-=======
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --catalog-xml $(LEGO_CATALOGS) --solr-url $(SOLR_URL) --read-ca-list $(LEGO_S3_LISTING) --solr-load-complex-exp
->>>>>>> upstream/master
 	make message-load-clear
 .PHONY: load-wb-phenotype	
 load-wb-phenotype: owltools-build clear-load-log
