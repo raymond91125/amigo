@@ -71,7 +71,6 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Pfalciparum.gz \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Spombe.gz  \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Tbrucei.gz \
-	http://www.geneontology.org/gene-associations/gene_association.GeneDB_tsetse.gz \
 	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Atumefaciens.gz \
 	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Ddadantii.gz \
 	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Mgrisea.gz \
@@ -123,7 +122,7 @@ all:
 
 .PHONY: owltools-update
 owltools-update:
-	cd $(OWLTOOLS_ROOT) && svn update
+	cd $(OWLTOOLS_ROOT) && git pull
 # svn update --accept theirs-full
 
 .PHONY: owltools-build
@@ -176,7 +175,23 @@ load-ontology: owltools-build
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general
 	make message-load-clear
 
+
 ## The full and final load.
+
+## Load the ontology stuff without building.
+.PHONY: load-ontology-quick
+load-ontology-quick:
+	make message-load-start
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general
+	make message-load-clear
+
+## Test GAF.
+.PHONY: load-test-gaf
+load-test-gaf: owltools-build
+	make message-load-start
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(TEST_GAF) --solr-load-panther --solr-load-panther-general
+	make message-load-clear
+
 
 .PHONY: load-wb-full
 load-wb-full:

@@ -18,6 +18,10 @@ JS_TESTS = \
  $(wildcard javascript/lib/amigo/handlers/*.js.tests)
 #BENCHMARKS = $(wildcard _benchmark/*.js)
 
+## Target setup for Makefile CLI unit testing
+#AMIGO ?= http://amigo.geneontology.org
+AMIGO ?= http://amigo2.berkeleybop.org
+
 ## Perl lib test setup.
 TEST_PERL ?= perl
 TEST_PERL_FLAGS ?= -I ./perl/lib/
@@ -30,7 +34,7 @@ NODE_JS ?= /usr/bin/node
 
 ## Handle versioning. The patch level is automatically incremented on
 ## after every release.
-AMIGO_BASE_VERSION ?= 2.2
+AMIGO_BASE_VERSION ?= 2.3
 AMIGO_PATCH_LEVEL ?= `cat version-patch.lvl`
 AMIGO_VERSION_TAG ?= "" # e.g. -alpha
 AMIGO_VERSION ?= $(AMIGO_BASE_VERSION).$(AMIGO_PATCH_LEVEL)$(AMIGO_VERSION_TAG)
@@ -59,6 +63,11 @@ test-perl: $(PERL_TESTS)
 $(PERL_TESTS):
 	echo "trying: $@"
 	$(TEST_PERL) $(TEST_PERL_FLAGS) $(@D)/$(@F)
+
+## Unit tests for a running amigo.
+.PHONY: test-app
+test-app:
+	cd selenium/webdriver && AMIGO=$(AMIGO) ./node_modules/mocha/bin/mocha --reporter spec ./*_tests.js -t 100000
 
 ###
 ### Check the metadata using kwalify.
