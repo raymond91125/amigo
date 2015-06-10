@@ -25,7 +25,6 @@ GO_SOLR_URL ?= http://localhost:8080/solr/go/
 LIFESTAGE_SOLR_URL ?= http://localhost:8080/solr/lifestage/
 PHENOTYPE_SOLR_URL ?= http://localhost:8080/solr/phenotype/
 
- 
 
 ## Paths.
 OWLTOOLS_ROOT ?= ~/local/src/svn/owltools/
@@ -34,6 +33,7 @@ PANTHER_FILES_DIR ?= ~/local/src/svn/geneontology.org/trunk/experimental/trees/p
 
 ## Files.
 SOLR_LOAD_LOG ?= /tmp/golr_timestamp.log
+SOLR_USE_CATALOG_XML ?= /tmp/catalog.xml
 
 ## File lists.
 SCHEMA_METADATA ?= \
@@ -51,7 +51,7 @@ DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS248.o
 GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS248.obo
 LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS248.obo
 PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS248.obo
- 
+
 ONTOLOGIES ?= \
  http://purl.obolibrary.org/obo/go.owl \
  http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim.owl \
@@ -92,7 +92,6 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.mgi.gz \
 	http://www.geneontology.org/gene-associations/gene_association.pombase.gz \
 	http://www.geneontology.org/gene-associations/gene_association.pseudocap.gz \
-	http://www.geneontology.org/gene-associations/gene_association.reactome.gz \
 	http://www.geneontology.org/gene-associations/gene_association.rgd.gz \
 	http://www.geneontology.org/gene-associations/gene_association.sgd.gz \
 	http://www.geneontology.org/gene-associations/gene_association.sgn.gz \
@@ -221,11 +220,22 @@ load-wb-lifestage: owltools-build clear-load-log
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(LIFESTAGEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(LIFESTAGE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(LIFESTAGE_GAF)
 	make message-load-clear
+
 .PHONY: load-wb-phenotype	
 load-wb-phenotype: owltools-build clear-load-log
+
+## Check the ontology data for suitability.
+.PHONY: check-ontology-data
+check-ontology-data:
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --ontology-pre-check
+
+## The full and final load.
+.PHONY: load-full
+load-full: owltools-build clear-load-log
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(PHENOTYPEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(PHENOTYPE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(PHENOTYPE_GAF)
 	make message-load-clear
+
 .PHONY: load-optimize-wb
 load-optimize-wb:
 	../scripts/global-message.pl -w "GOlr is currently being optimized (started at $(TIME) on $(DATE)). Expect reduced performance."
@@ -239,6 +249,20 @@ load-test: owltools-build clear-load-log
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(TESTONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(TEST_GAFS)
 	make message-load-clear	
+
+
+## Check the ontology data for suitability, using a catalog.
+.PHONY: check-ontology-data-catalog
+check-ontology-data-catalog:
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools --catalog-xml $(SOLR_USE_CATALOG_XML) $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --ontology-pre-check
+
+## The full and final load, using a catalog.
+.PHONY: load-full-catalog
+load-full-catalog: owltools-build clear-load-log
+	make message-load-start
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools --catalog-xml $(SOLR_USE_CATALOG_XML) $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --read-panther $(PANTHER_FILES_DIR) --solr-load-gafs $(GENE_ASSOCIATION_FILES) --solr-load-panther --solr-load-panther-general
+	make message-load-clear
+
 ## "Silent" variation--useful w/o amigo.
 .PHONY: load-full-silent
 load-full-silent: owltools-build clear-load-log
