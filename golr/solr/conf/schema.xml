@@ -84,7 +84,7 @@
     <!-- annotation: Taxonomic group. -->
     <!-- complex_annotation: GAF column 13 (taxon). -->
     <!-- bbop_ann_ev_agg: Column 13: taxon. -->
-    <field name="taxon" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <field name="taxon" type="string" required="false" multiValued="true" indexed="true" stored="true"></field>
     <!-- ontology: Only in taxon closure. -->
     <field name="only_in_taxon_closure" type="string" required="false" multiValued="true" indexed="true" stored="true"></field>
     <!-- annotation: Secondary taxon closure. -->
