@@ -12,7 +12,7 @@
 
 ## Options.
 OWLTOOLS_MAX_MEMORY ?= 12G
-OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS = --merge-support-ontologies --reasoner elk
+OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS = --merge-support-ontologies --remove-subset-entities upperlevel --reasoner elk
 
 ## Bins.
 MAVEN_EXE ?= ~/local/src/java/apache-maven-3.0.5/bin/mvn
@@ -28,12 +28,14 @@ PHENOTYPE_SOLR_URL ?= http://localhost:8080/solr/phenotype/
  
 
 ## Paths.
-OWLTOOLS_ROOT ?= ~/local/src/svn/owltools/
+OWLTOOLS_ROOT ?= ~/local/src/git/owltools/
 BBOP_JS_ROOT ?= ~/local/src/git/bbop-js/
 PANTHER_FILES_DIR ?= ~/local/src/svn/geneontology.org/trunk/experimental/trees/panther_data/
+SOLR_DATA_ROOT ?= /srv/solr
 
 ## Files.
 SOLR_LOAD_LOG ?= /tmp/golr_timestamp.log
+SOLR_USE_CATALOG_XML ?= /tmp/catalog.xml
 
 ## File lists.
 SCHEMA_METADATA ?= \
@@ -45,12 +47,12 @@ SCHEMA_METADATA ?= \
  ../metadata/ann_ev_agg-config.yaml
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
-ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS248.obo.xunion
-DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS248.obo
+ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS249.obo.xunion
+DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS249.obo
 # GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
-GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS248.obo
-LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS248.obo
-PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS248.obo
+GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS249.obo
+LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS249.obo
+PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS249.obo
  
 ONTOLOGIES ?= \
  http://purl.obolibrary.org/obo/go.owl \
@@ -99,11 +101,11 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.tair.gz \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
 
-ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS248.wb.clean
-GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS248.wb.clean
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS248.wb.clean.col7
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS248.wb.clean
-LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS248.wb.clean
+ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS249.wb.clean
+GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS249.wb.clean
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS249.wb.clean.col7
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS249.wb.clean
+LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS249.wb.clean
 
 ##
 DATE = `date +'%Y-%m-%d'`
