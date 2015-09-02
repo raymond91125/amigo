@@ -56,8 +56,9 @@ fields:
     type: string
     property: [getComment]
     searchable: true
-## looks like single in OWLGraphWrapper API
-#    cardinality: multi
+    ## looks like single in OWLGraphWrapper API
+    ## See ticket: https://github.com/geneontology/noctua/issues/182
+    #    cardinality: multi
   - id: synonym
     description: Term synonyms.
     display_name: Synonyms

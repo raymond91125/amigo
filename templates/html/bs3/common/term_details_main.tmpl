@@ -2,7 +2,10 @@
 
 <div class="panel panel-default">
   <div class="panel-heading">
-    <h3 class="panel-title">[% IF TERM_INFO.is_obsolete == "true" OR TERM_INFO.is_obsolete == 1 %]<strong>Obsolete</strong> [% END %]Term Information</h3>
+    <h3 class="panel-title">
+      [% IF TERM_INFO.is_obsolete == "true" OR TERM_INFO.is_obsolete == 1 %]<strong>Obsolete</strong> [% END %]Term Information
+      [% INCLUDE "common/abstract_help_link.tmpl" %]
+    </h3>
   </div>
   <div class="panel-body">
     
@@ -23,14 +26,17 @@
       [% IF sl.size == 0 AND al.size == 0 %]
       <dd>None</dd>
       [% ELSE %]
-      [%    FOREACH alth IN al %]
-      <dd><strong>alt. id</strong>: [% alth %]</dd>
+      [%    IF al.size != 0 %]
+      <dd id="syn-collaspe-alt" class="syn-collapsible"><strong>alt. id</strong>: [% al.join(", ") %]</dd>
       [%    END %]
-      [%    FOREACH synh IN sl %]
+      [%    IF sl.size != 0 %]
+      <dd id="syn-collapse-syn" class="syn-collapsible">[% sl.join(", ") %]</dd>
+      [%    END %]
+      <!-- [% #   FOREACH synh IN sl %] -->
       <!-- BUG/TODO: Like this when we have scope available. -->
       <!-- <dd>[% IF synh.scope %]<span>[% synh.scope %]</span>: [% END %][% synh.acc %]</dd> -->
-      <dd>[% synh %]</dd>
-      [%    END %]
+      <!-- <dd>[% # synh %]</dd> -->
+      <!-- [% #   END %] -->
       [% END %]
 
       <!-- Definition -->
@@ -121,7 +127,7 @@
       <dt id="prob_related" class="hidden">Related</dt>
       <dd id="prob_bio" class="hidden">
 	<a id="prob_bio_href" href="#" class="btn btn-primary btn-xs">Link</a>
-	to all <strong>genes and gene products</strong> associated to [% TERM_INFO.name %].
+	to all <strong>genes and gene products</strong> annotated to [% TERM_INFO.name %].
       </dd>
       <dd id="prob_ann" class="hidden">
 	<a id="prob_ann_href" href="#" class="btn btn-primary btn-xs">Link</a>
