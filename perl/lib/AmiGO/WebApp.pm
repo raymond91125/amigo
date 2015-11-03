@@ -45,6 +45,10 @@ sub cgiapp_init {
   # ## Say goonight, Gracie.
   # $self->{CORE}->kvetch('running: '. $self->get_current_runmode() || '???');
 
+  ## Make the encoding something usable--a Windows encoding seems to
+  ## be default.
+  $self->header_add(-type => "text/html; charset=UTF-8");
+
   ## What the default prefix looks like.
   $self->{SESSION_STRING} = 'cgisess_';
 
@@ -113,8 +117,9 @@ sub cgiapp_prerun {
   $self->{WEBAPP_TEMPLATE_PARAMS} = {};
 
   ## Make sure we have the right path for our internal system.
-  #$self->template_set('legacy');
-  $self->template_set('bs3');
+  ## Default to the current sane base.
+  my $tmpl_local_set = $self->{CORE}->amigo_env('AMIGO_TEMPLATE_SET') || 'bs3';
+  $self->template_set($tmpl_local_set);
 
   ## Setup template environment.
   $self->tt_include_path($self->{CORE}->amigo_env('AMIGO_ROOT') .
@@ -780,7 +785,7 @@ sub _resolve_page_settings {
   my $page_title = 'AmiGO 2';
   my $page_content_title = 'AmiGO Help';
   my $wiki_base = 'http://wiki.geneontology.org/index.php/';
-  my $page_help_link = $wikk_base . 'AmiGO_2_Manual';
+  my $page_help_link = $wiki_base . 'AmiGO_2_Manual';
 
   if( $page_name eq 'browse' ){
     $page_title = 'AmiGO 2: Browse';
@@ -858,6 +863,10 @@ sub _resolve_page_settings {
     $page_title = 'AmiGO 2: Load Details';
     $page_content_title = 'Current instance load information';
     $page_help_link = $wiki_base . 'AmiGO_2_Manual:_Load_Details';
+  }elsif( $page_name eq 'owltools_details' ){
+    $page_title = 'AmiGO 2: OWLTools/Loader Details';
+    $page_content_title = 'Current OWLTools and loader information';
+    $page_help_link = $wiki_base . 'AmiGO_2_Manual:_OWLTools_Details';
   }elsif( $page_name eq 'xrefs' ){
     $page_title = 'AmiGO 2: Cross References';
     $page_content_title = 'Current Cross Reference Abbreviations';
@@ -905,6 +914,8 @@ sub _common_params_settings {
     $self->{CORE}->get_interlink({mode=>'schema_details'});
   $params->{interlink_load_details} =
     $self->{CORE}->get_interlink({mode=>'load_details'});
+  $params->{interlink_owltools_details} =
+    $self->{CORE}->get_interlink({mode=>'owltools_details'});
   $params->{interlink_browse} =
     $self->{CORE}->get_interlink({mode=>'browse'});
   $params->{interlink_dd_browse} =
@@ -945,6 +956,7 @@ sub _common_params_settings {
   $params->{public_1x_base} =
     $self->{CORE}->amigo_env('AMIGO_1X_PUBLIC_CGI_BASE_URL') ||
       $params->{public_base};
+  $params->{noctua_base} = $self->{CORE}->amigo_env('AMIGO_PUBLIC_NOCTUA_URL');
   $params->{BETA} =
     $self->_atoi($self->{CORE}->amigo_env('AMIGO_BETA'));
   $params->{VERBOSE} =

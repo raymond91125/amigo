@@ -71,10 +71,11 @@ sub setup {
 		   'free_browse'         => 'mode_free_browse',
 		   'term'                => 'mode_term_details',
 		   'gene_product'        => 'mode_gene_product_details',
-		   'model'    => 'mode_model_details',
+		   'model'               => 'mode_model_details',
 		   'software_list'       => 'mode_software_list',
 		   'schema_details'      => 'mode_schema_details',
 		   'load_details'        => 'mode_load_details',
+		   'owltools_details'    => 'mode_owltools_details',
 		   'medial_search'       => 'mode_medial_search',
 		   ## ???
 		   'phylo_graph'         => 'mode_phylo_graph',
@@ -757,9 +758,9 @@ sub mode_medial_search {
 
   ## Page settings.
   my $page_name = 'medial_search';
-  my($page_title, 
+  my($page_title,
      $page_content_title,
-     $page_help_link) = $self->_resolve_page_settings($page_name);  
+     $page_help_link) = $self->_resolve_page_settings($page_name);
   $self->set_template_parameter('page_name', $page_name);
   $self->set_template_parameter('page_title', $page_title);
   $self->set_template_parameter('page_content_title', $page_content_title);
@@ -952,7 +953,9 @@ sub mode_load_details {
   my $params = $i->input_profile();
 
   ## Load in the GOlr timestamp details.
-  my $glog = $self->{CORE}->amigo_env('GOLR_TIMESTAMP_LOCATION');
+  #my $glog = $self->{CORE}->amigo_env('GOLR_TIMESTAMP_LOCATION');
+  my $glog =
+      $self->{CORE}->amigo_env('AMIGO_WORKING_PATH') . '/golr_timestamp.log';
   my $ts_details = $self->{CORE}->golr_timestamp_log($glog);
   if( $ts_details && scalar(@$ts_details) ){
     $self->set_template_parameter('TS_DETAILS_P', 1);
@@ -1027,6 +1030,75 @@ sub mode_load_details {
      content =>
      [
       'pages/load_details.tmpl'
+     ]
+    };
+  $self->add_template_bulk($prep);
+
+  return $self->generate_template_page_with();
+}
+
+##
+sub mode_owltools_details {
+
+  my $self = shift;
+
+  my $i = AmiGO::Input->new($self->query());
+  my $params = $i->input_profile();
+
+  ## Load in the OWLTools info.
+  my $owltools =
+    'java -Xms2048M -DentityExpansionLimit=4086000 -Djava.awt.headless=true -jar ' . $self->{CORE}->amigo_env('AMIGO_ROOT') . '/java/lib/owltools-runner-all.jar --version';
+  my $ot_raw = `$owltools`;
+  my @ot_lines = split(/\n+/, $ot_raw);
+  my $ot = [];
+  foreach my $ot_line (@ot_lines){
+    my @bits = split(/\t+/, $ot_line);
+    push @$ot, \@bits;
+  }
+  $self->set_template_parameter('OT_DETAILS', $ot);
+
+  ## Page settings.
+  my $page_name = 'owltools_details';
+  my($page_title,
+     $page_content_title,
+     $page_help_link) = $self->_resolve_page_settings($page_name);
+  $self->set_template_parameter('page_name', $page_name);
+  $self->set_template_parameter('page_title', $page_title);
+  $self->set_template_parameter('page_content_title', $page_content_title);
+  $self->set_template_parameter('page_help_link', $page_help_link);
+
+  ## Our AmiGO services CSS.
+  my $prep =
+    {
+     css_library =>
+     [
+      #'standard',
+      'com.bootstrap',
+      'com.jquery.jqamigo.custom',
+      #'com.jquery.tablesorter',
+      'amigo',
+      'bbop'
+     ],
+     javascript_library =>
+     [
+      'com.jquery',
+      'com.bootstrap',
+      'com.jquery-ui',
+      'com.jquery.tablesorter',
+      'bbop',
+      'amigo2'
+     ],
+     javascript =>
+     [
+      $self->{JS}->get_lib('GeneralSearchForwarding.js')
+     ],
+     javascript_init =>
+     [
+      'GeneralSearchForwardingInit();',
+     ],
+     content =>
+     [
+      'pages/owltools_details.tmpl'
      ]
     };
   $self->add_template_bulk($prep);
@@ -1540,7 +1612,7 @@ sub mode_term_details {
   ###
 
   ## Page settings.
-  ## Don't use usual mechanism--a litle special.
+  ## Don't use usual mechanism--a little special.
   $self->set_template_parameter('page_name', 'term');
   $self->set_template_parameter('page_title',
 				'AmiGO 2: Term Details for "' .
@@ -1689,22 +1761,24 @@ sub mode_gene_product_details {
   ### Standard setup.
   ###
 
-  ## Page settings.
   ## Again, a little different.
-  $self->set_template_parameter('page_name', 'gene_product');
-  $self->set_template_parameter('page_title',
-				'AmiGO 2: Gene Product Details for ' .
-				$input_gp_id);
-  ## Figure out the best title we can.
+  ## Start by figuring out the best title we can.
   my $best_title = $input_gp_id; # start with the worst as a default
   if ( $gp_info_hash->{$input_gp_id}{'name'} ){
     $best_title = $gp_info_hash->{$input_gp_id}{'name'};
   }elsif( $gp_info_hash->{$input_gp_id}{'label'} ){
     $best_title = $gp_info_hash->{$input_gp_id}{'label'};
   }
+  ## Page settings.
+  $self->set_template_parameter('page_name', 'gene_product');
+  $self->set_template_parameter('page_title',
+				'AmiGO 2: Gene Product Details for ' .
+				$input_gp_id);
+  $self->set_template_parameter('content_title', $best_title);
   $self->set_template_parameter('page_content_title', $best_title);
-  my($page_title, $page_content_title, $page_help_link) =
-      $self->_resolve_page_settings('gene_product');
+  my($page_title,
+     $page_content_title,
+     $page_help_link) = $self->_resolve_page_settings('gene_product');
   $self->set_template_parameter('page_help_link', $page_help_link);
 
   ## Our AmiGO services CSS.
@@ -1814,15 +1888,15 @@ sub mode_model_details {
     $best_title = $ma_info_hash->{$input_id}{'model_label'};
   }
   $self->set_template_parameter('page_content_title', $best_title);
-  
+
   ## BUG/TODO: Some silliness to get the variables right; will need to
   ## revisit later on.
   ## TODO/BUG: Again, temporary badness for Noctua.
   my $github_base =
     'https://github.com/geneontology/noctua-models/blob/master/models/';
-  my $noctua_base = 'http://noctua-dev.berkeleybop.org:8909';
-  my $editor_base = $noctua_base . '/editor/graph/';
-  my $viewer_base = $noctua_base . '/workbench/cytoview/';
+  my $noctua_base = $self->{WEBAPP_TEMPLATE_PARAMS}{noctua_base};
+  my $editor_base = $noctua_base . 'editor/graph/';
+  my $viewer_base = $noctua_base . 'workbench/cytoview/';
   ## We need to translate some of the document information.
   ## TODO/BUG: This is temporary as we work out what we'll actually have.
   my @s = split(':', $input_id);
