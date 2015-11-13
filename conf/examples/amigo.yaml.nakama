@@ -19,6 +19,10 @@ AMIGO_DYNAMIC_URL:
   comment: The URL that AMIGO_DYNAMIC_PATH maps to.
   type: url
   value: http://amigo2.berkeleybop.org
+AMIGO_FOR_GO:
+  comment: This flag indicates whether or not your AmiGO instance is for the GO, or a more generic instance. If you are trying to run AmiGO locally, probably "1"; if you are trying to have your own AmiGO with different ontologies, data, etc., probably 0.
+  type: boolean
+  value: 1
 AMIGO_GOOGLE_ANALYTICS_ID:
   comment: Google analytics ID. Optional.
   type: string
@@ -42,7 +46,7 @@ AMIGO_PUBLIC_GALAXY_URL:
 AMIGO_PUBLIC_GOLR_URL:
   comment: The public URL of the GOlr server (including slash); this is the one called by AmiGO resource, JS, etc.
   type: url
-  value: http://toaster.lbl.gov:9000/solr/
+  value: http://amigo-pro-golr.berkeleybop.org/solr/
 AMIGO_PRIVATE_GOLR_URL:
   comment: The (optional) private URL of the GOlr server (including slash); this is the one used for loading. Can be the same as the public URL if you have no proxy or firewall to deal with.
   type: url
@@ -78,11 +82,15 @@ AMIGO_VERBOSE:
 AMIGO_VERSION:
   comment: The version of AmiGO to report; not generally changed unless running a forked instance.
   type: string
-  value: 2.3.1
+  value: 2.3.2
 AMIGO_WORKING_PATH:
   comment: Please enter the full path to readable/writable directory that will be used for things like temporary files, logs (if enabled), and the golr_timestamp.log file.
   type: directory
   value: /tmp
+GASS_PORT:
+  comment: The port to run the Gene Annotation Summary Service on. (Optional.)
+  type: string
+  value: 6455
 GOLR_CATALOG_LOCATION:
   comment: The location of the GO catalog file for various work.
   type: file
@@ -166,3 +174,11 @@ OWLTOOLS_MAX_MEMORY:
   comment: The maximum amount of memory to give OWLTools processes.
   type: string
   value: 192G
+OWLTOOLS_USE_MERGE_IMPORT:
+  comment: Whether or not to include --merge-import http://purl.obolibrary.org/obo/go/extensions/go-plus.owl.
+  type: boolean
+  value: 0
+OWLTOOLS_USE_REMOVE_DISJOINTS:
+  comment: Whether or not to include --remove-disjoints.
+  type: boolean
+  value: 0

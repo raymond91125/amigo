@@ -20,6 +20,7 @@ var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var yaml = require('yamljs');
 var tilde = require('expand-home-dir');
+var request = require('request');
 //var git = require('gulp-git');
 //var watch = require('gulp-watch');
 //var watchify = require('watchify');
@@ -35,6 +36,25 @@ function _die(str){
     process.exit(-1);
 }
 
+// Ping server; used during certain commands.
+function _ping_count(){
+
+    if( count_url && typeof(count_url) === 'string' && count_url !== '' ){
+
+	request({
+	    url: count_url
+	}, function(error, response, body){
+	    if( error || response.statusCode !== 200 ){
+		console.log('Unable to ping: ' + count_url);
+	    }else{
+		console.log('Pinged: ' + count_url);
+	    }
+	});
+    }else{
+	console.log('Will not ping home.');
+    }
+}
+
 function _tilde_expand(ufile){
     return tilde(ufile);
 }
@@ -44,6 +64,24 @@ function _tilde_expand_list(list){
 	//console.log('ufile: ' + ufile);
 	return tilde(ufile);
     });
+}
+
+function _to_boolean(thing){
+    var ret = false;
+
+    if( typeof(thing) === 'string' ){
+	if( thing === 'true' ){
+	    ret = true;
+	}else if( thing === '1' ){
+	    ret = true;
+	}
+    }else if( typeof(thing) === 'number' ){
+	if( thing === 1 ){
+	    ret = true;
+	}
+    }
+
+    return ret;
 }
 
 function _run_cmd(command_bits){
@@ -102,9 +140,9 @@ if( ! a ){
 var amigo_version =  a['AMIGO_VERSION'].value;
 var amigo_url = a['AMIGO_DYNAMIC_URL'].value;
 var golr_private_url = a['AMIGO_PRIVATE_GOLR_URL'].value;
+var golr_public_url = a['AMIGO_PUBLIC_GOLR_URL'].value;
 var owltools_max_memory = a['OWLTOOLS_MAX_MEMORY'].value || '4G';
 var owltools_runner = 'java -Xms2048M -DentityExpansionLimit=4086000 -Djava.awt.headless=true -Xmx' + owltools_max_memory + ' -jar ./java/lib/owltools-runner-all.jar';
-var owltools_ops_flags = '--merge-support-ontologies --remove-subset-entities upperlevel --remove-disjoints --silence-elk --reasoner elk';
 var metadata_list = _tilde_expand_list(a['GOLR_METADATA_LIST'].value);
 var metadata_string = metadata_list.join(' ');
 var ontology_metadata = tilde(a['GOLR_METADATA_ONTOLOGY_LOCATION'].value);
@@ -112,6 +150,7 @@ var ontology_list = _tilde_expand_list(a['GOLR_ONTOLOGY_LIST'].value);
 var ontology_string = ontology_list.join(' ');
 var gaf_list = _tilde_expand_list(a['GOLR_GAF_LIST'].value);
 var gaf_string = gaf_list.join(' ');
+var gass_port = parseInt(a['GASS_PORT'].value);
 var panther_file_path = tilde(a['GOLR_PANTHER_FILE_PATH'].value);
 var catalog_file = tilde(a['GOLR_CATALOG_LOCATION'].value);
 var noctua_file_path = tilde(a['GOLR_NOCTUA_ENRICHED_MODEL_PATH'].value);
@@ -121,15 +160,38 @@ var solr_load_log = working_path + '/golr_timestamp.log';
 var d = new Date();
 var time = d.getHours() + ':' + d.getSeconds();
 var date = d.getFullYear() + ':' + d.getMonth() + ':' + d.getDate();
+// Execute by default; variable must be present and empty to stop.
+var count_url =
+	'https://s3-us-west-1.amazonaws.com/go-amigo-usage-master/ping.json';
+if( a['AMIGO_COUNTER_URL'] && a['AMIGO_COUNTER_URL'].value ){
+    count_url = a['AMIGO_COUNTER_URL'].value;
+}
+
+// The OWLTools options are a little harder, and variable with the
+// load we're attempting.
+var otu_mrg_imp_p = _to_boolean(a['OWLTOOLS_USE_MERGE_IMPORT'].value);
+var otu_rm_dis_p = _to_boolean(a['OWLTOOLS_USE_REMOVE_DISJOINTS'].value);
+var all_owltools_ops_flags_list = [
+    '--merge-support-ontologies',
+    (otu_mrg_imp_p ? '--merge-import http://purl.obolibrary.org/obo/go/extensions/go-plus.owl' : '' ),
+    '--remove-subset-entities upperlevel',
+    (otu_rm_dis_p ? '--remove-disjoints' : ''),
+    '--silence-elk --reasoner elk'
+];
+var owltools_ops_flags =
+	all_owltools_ops_flags_list.join(' ').replace(/ +/g, ' ');
 
 // Verbosity.
 console.log('AmiGO version: ' + amigo_version);
 console.log('AmiGO location: ' + amigo_url);
 console.log('GOlr (private loading) location: ' + golr_private_url);
 console.log('OWLTools invocation: ' +
-	    owltools_runner + ' (' + owltools_ops_flags + ')');
+	    owltools_runner + ' ' + owltools_ops_flags + '');
 //console.log('Ontologies: ' + ontology_string);
 //console.log('Ontology metadata: ' + ontology_metadata);
+
+// Execute counter.
+_ping_count();
 
 ///
 /// Tests (async).
@@ -359,8 +421,15 @@ gulp.task('w3c-validate', shell.task(_run_cmd_list(
 )));
 
 // Run the local-only/embedded testing server.
-gulp.task('run', shell.task(_run_cmd_list(
+gulp.task('run-amigo', shell.task(_run_cmd_list(
     ['perl -I./perl/bin/ -I./perl/lib/ scripts/amigo-runner']
+)));
+
+// Run the GASS service.
+gulp.task('run-gass', shell.task(_run_cmd(
+    ['node', './scripts/gass.js',
+     '-g', golr_public_url,
+     '-p', gass_port]
 )));
 
 ///

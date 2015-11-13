@@ -134,7 +134,7 @@ sub cgiapp_prerun {
      'success' => [],
     };
 
-  ## 
+  ## Basic variable definitions.
   $self->{CORE}->kvetch("_in prerun...defining variables");
   $self->_common_params_settings();
 
@@ -269,8 +269,9 @@ sub cgiapp_prerun {
   if( defined($reportable_error) ){
     ## The journey ends here.
     #$self->{CORE}->kvetch("done with status $code and message ($message)");
-    #$self->query->status(503);
-    $self->_status_message_exit(503, $reportable_error);
+    #$self->_status_message_exit(503, $reportable_error);
+    my $final_err = $self->mode_fatal($reportable_error);
+    $self->_status_message_exit(503, $final_err);
     exit;
   }
 }
@@ -959,6 +960,8 @@ sub _common_params_settings {
   $params->{noctua_base} = $self->{CORE}->amigo_env('AMIGO_PUBLIC_NOCTUA_URL');
   $params->{BETA} =
     $self->_atoi($self->{CORE}->amigo_env('AMIGO_BETA'));
+  $params->{IS_GO_P} =
+    $self->_atoi($self->{CORE}->amigo_env('AMIGO_FOR_GO'));
   $params->{VERBOSE} =
     $self->_atoi($self->{CORE}->amigo_env('AMIGO_VERBOSE'));
   $params->{last_load_date} =
