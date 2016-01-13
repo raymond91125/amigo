@@ -179,7 +179,6 @@ fields:
       - "develops_from"
       - "xunion_of"
       - "preceded_by"
-      - "BFO:0000051"
       - "union_of"
     indexed: false
   ## TODO/BUG: These are currently populated by junk functions.
