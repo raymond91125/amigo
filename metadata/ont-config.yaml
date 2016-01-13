@@ -173,6 +173,14 @@ fields:
       - "RO:0002213"
       - "RO:0002215"
       - "RO:0002216"
+      - "DESCENDENTOF"
+      - "DESCINHERM"
+      - "DESCINMALE"
+      - "develops_from"
+      - "xunion_of"
+      - "preceded_by"
+      - "BFO:0000051"
+      - "union_of"
     indexed: false
   ## TODO/BUG: These are currently populated by junk functions.
   ## https://github.com/geneontology/amigo/issues/56
