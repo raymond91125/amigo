@@ -159,6 +159,13 @@ fields:
       - "RO:0002213"
       - "RO:0002215"
       - "RO:0002216"
+      - "DESCENDENTOF"
+      - "DESCINHERM"
+      - "DESCINMALE"
+      - "develops_from"
+      - "xunion_of"
+      - "preceded_by"
+      - "union_of"
     indexed: false
   - id: regulates_transitivity_graph_json
     description: "JSON blob form of the local relation transitivity graph. Uses various relations (including regulates, occurs in, capable_of)."
@@ -173,13 +180,6 @@ fields:
       - "RO:0002213"
       - "RO:0002215"
       - "RO:0002216"
-      - "DESCENDENTOF"
-      - "DESCINHERM"
-      - "DESCINMALE"
-      - "develops_from"
-      - "xunion_of"
-      - "preceded_by"
-      - "union_of"
     indexed: false
   ## TODO/BUG: These are currently populated by junk functions.
   ## https://github.com/geneontology/amigo/issues/56
