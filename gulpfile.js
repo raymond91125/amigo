@@ -21,8 +21,9 @@ var source = require('vinyl-source-stream');
 var yaml = require('yamljs');
 var tilde = require('expand-home-dir');
 var request = require('request');
-//var git = require('gulp-git');
+var server_restarter = require('gulp-develop-server');
 //var watch = require('gulp-watch');
+//var git = require('gulp-git');
 //var watchify = require('watchify');
 //var concat = require('gulp-concat');
 //var sourcemaps = require('gulp-sourcemaps');
@@ -165,6 +166,11 @@ var count_url =
 if( a['AMIGO_COUNTER_URL'] && a['AMIGO_COUNTER_URL'].value ){
     count_url = a['AMIGO_COUNTER_URL'].value;
 }
+// Optional API port.
+var amigo_api_port = 6455;
+if( a['AMIGO_API_PORT'] && a['AMIGO_API_PORT'].value ){
+    amigo_api_port = a['AMIGO_API_PORT'].value;
+}
 
 // The OWLTools options are a little harder, and variable with the
 // load we're attempting.
@@ -243,11 +249,13 @@ gulp.task('docs', shell.task(_run_cmd_list(
 
 gulp.task('install', shell.task(_run_cmd_list(
     ['./node_modules/.bin/browserify javascript/web/AmiGOCytoViewSource.js -o javascript/web/AmiGOCytoView.js --exclude "ringo/httpclient"',
+    './node_modules/.bin/browserify javascript/web/AmiGOBioViewSource.js -o javascript/web/AmiGOBioView.js --exclude "ringo/httpclient"',
     './install -v -g -V ' + amigo_version]
 )));
 
 gulp.task('install-uncompressed', shell.task(_run_cmd_list(
     ['./node_modules/.bin/browserify javascript/web/AmiGOCytoViewSource.js -o javascript/web/AmiGOCytoView.js --exclude "ringo/httpclient"',
+    './node_modules/.bin/browserify javascript/web/AmiGOBioViewSource.js -o javascript/web/AmiGOBioView.js --exclude "ringo/httpclient"',
      './install -v -g -u -V ' + amigo_version]
 )));
 
@@ -329,6 +337,17 @@ gulp.task('load-gafs', shell.task(_run_cmd(
      '--solr-load-gafs', gaf_string]
 )));
 
+gulp.task('load-gafs-with-panther', shell.task(_run_cmd(
+    [owltools_runner,
+     ontology_string,
+     owltools_ops_flags,
+     '--solr-url', golr_private_url,
+     '--solr-log', solr_load_log,
+     // PANTHER (reading--annotations need them too)
+     '--read-panther', panther_file_path,
+     '--solr-load-gafs', gaf_string]
+)));
+
 gulp.task('load-panther', shell.task(_run_cmd(
     [owltools_runner,
      ontology_string,
@@ -340,7 +359,7 @@ gulp.task('load-panther', shell.task(_run_cmd(
      '--solr-load-panther-general']
 )));
 
-gulp.task('load-models', shell.task(_run_cmd(
+gulp.task('load-models-all', shell.task(_run_cmd(
     [owltools_runner,
      ontology_string,
      owltools_ops_flags,
@@ -474,6 +493,42 @@ gulp.task('buffer-check', shell.task(_run_cmd_list(
 
 // The default task (called when you run `gulp` from cli)
 gulp.task('default', ['install', 'tests', 'docs']);
+
+///
+/// Trying out possible approach to AmiGO JSON API.
+///
+
+// Use the GOLR_URL environmental variable if available.
+var amigo_api_golr = golr_public_url;
+if( process && process.env && process.env['GOLR_URL'] ){
+    amigo_api_golr = process.env['GOLR_URL'];
+}
+
+var exp_cmd = 'node ./bin/amigo.js -g ' + amigo_api_golr + ' -p 6455';
+gulp.task('run-amigo-api', shell.task(_run_cmd([
+    'node', './bin/amigo.js',
+    '-g', amigo_api_golr,
+    '-p', amigo_api_port
+])));
+
+// Quick restart development for AmiGO JSON API.
+gulp.task('develop-amigo-api', function(){
+    //console.log(server_restarter);
+    server_restarter.listen({path: './bin/amigo.js',
+			     args: ['-g', amigo_api_golr,
+				    '-p', amigo_api_port],
+			     successMessage: /started/,
+			     }, function(err){
+				 if( err ){
+				     console.log('Gulp startup error:', err);
+				 }
+			     });
+    // Restart server if changed.
+    gulp.watch( ['./bin/amigo.js'], function(){
+	//console.log(server_restarter);
+	server_restarter.restart();
+    });
+});
 
 ///
 /// Old Makefile that has not yet been transferred.

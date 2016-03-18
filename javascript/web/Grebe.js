@@ -3,6 +3,12 @@
 //// will probably leave DEBUG in.
 ////
 
+// Let jshint pass over over our external globals (browserify takes
+// care of it all).
+/* global bbop */
+/* global amigo */
+/* global global_grebe_questions */
+
 //
 function GrebeInit(){
 
@@ -89,6 +95,7 @@ function GrebeInit(){
 	     var document_category = grebe_item['document_category'];
 	     var personality = grebe_item['personality'];
 	     var field_translations = grebe_item['field_translations'] || [];
+	     var question_pins = grebe_item['question_pins'] || [];
 
 	     ll('processing: ' + question_id);
 
@@ -98,7 +105,8 @@ function GrebeInit(){
 		     'question_id': question_id,
 		     'document_category': document_category,
 		     'personality': personality,
-		     'field_translations': []
+		     'field_translations': [],
+		     'question_pins': question_pins
 		 };
 	     }
 
@@ -171,51 +179,78 @@ function GrebeInit(){
 	     
 	     // Finally, set the icon to open a new window when
 	     // clicked.
-	     jQuery('#' + question_id).find('.amigo-grebe-action').click(
-		 function(){
+	     var grebe_action_class = '.amigo-grebe-action';
+	     jQuery('#' + question_id).find(grebe_action_class).click(function(){
 
-		     // First, create a new manager for this line item.
-		     // We'll build-up its filters as we go.
-		     var mgr =
-			 new bbop.golr.manager.jquery(sd.golr_base(), gconf);
+		 // First, create a new manager for this line item.
+		 // We'll build-up its filters as we go.
+		 var mgr = new bbop.golr.manager.jquery(sd.golr_base(), gconf);
 
-		     // Collect the contents of the input boxes and
-		     // fold those into the jumping search manager.
-		     var smap = map[question_id];
-		     var qid = smap['question_id'];
-		     var dc = smap['document_category'];
-		     var prs = smap['personality'];
-		     var fts = smap['field_translations'];
-
-		     // The primary filters.
-		     mgr.set_personality(prs);
-		     mgr.add_query_filter('document_category', dc, ['*']);
-
-		     // Unwind the map of names to autocompletes
-		     each(fts,
-			  function(ft){
-			      //var fid = ft['field_id'];
-			      var ffield = ft['field_filter'];
-			      var ac = ft['manager'];
-			      ll('ffield: ' + ffield);
-			      ll('manager: ' + ac);
-			      ll('iid: ' + ac._interface_id);
-
-			      var fc = ac.content();
-			      ll('content: ' + fc);
-
-			      mgr.add_query_filter(ffield, fc);
-			  });
-
-		     //alert('clicked: ' + qid);
-		     //alert('clicked: ' + mgr.get_query_url());
-
-		     // Jump to that search in AmiGO 2.
-		     var state = mgr.get_state_url();
-		     var pop = linker.url(encodeURIComponent(state),
-					  'search', prs);
-		     window.open(pop, '_blank');
+		 // Collect the contents of the input boxes and
+		 // fold those into the jumping search manager.
+		 var smap = map[question_id];
+		 var qid = smap['question_id'];
+		 var dc = smap['document_category'];
+		 var prs = smap['personality'];
+		 var fts = smap['field_translations'];
+		 var pins = smap['question_pins'];
+		 
+		 // The primary filters.
+		 mgr.set_personality(prs);
+		 mgr.add_query_filter('document_category', dc, ['*']);
+		 
+		 // Add all of the pins that we can.
+		 ll('pin count for (' + dc + '): ' + pins.length);
+		 each(pins, function(pin_def){
+		     
+		     var fname = null;
+		     var fval = null;
+		     //var fmods = [];
+		     
+		     if( typeof(pin_def['field_name']) !== 'undefined'){
+			 fname = pin_def['field_name'];
+		     }
+		     if( typeof(pin_def['field_value']) !== 'undefined'){
+			 fval = pin_def['field_value'];
+		     }
+		     // if( typeof(pin_def['field_modifiers']) !== 'undefined'){
+		     //     fmods = pin_def['field_modifiers'];
+		     //     if( typeof(fmods) === 'string' ){
+		     // 	 fmods = [fmods];
+		     //     }
+		     // }
+		     
+		     // Only add if minimally defined.
+		     ll('pin field name: ' + fname);
+		     ll('pin field val: ' + fval);
+		     if( fname && fval ){
+			 mgr.add_query_filter(fname, fval);
+		     }
 		 });
+		 
+		 // Unwind the map of names to autocompletes
+		 each(fts, function(ft){
+		     //var fid = ft['field_id'];
+		     var ffield = ft['field_filter'];
+		     var ac = ft['manager'];
+		     ll('ffield: ' + ffield);
+		     ll('manager: ' + ac);
+		     ll('iid: ' + ac._interface_id);
+		     
+		     var fc = ac.content();
+		     ll('content: ' + fc);
+		     
+		     mgr.add_query_filter(ffield, fc);
+		 });
+		 
+		 //alert('clicked: ' + qid);
+		 //alert('clicked: ' + mgr.get_query_url());
+		 
+		 // Jump to that search in AmiGO 2.
+		 var state = mgr.get_state_url();
+		 var pop = linker.url(encodeURIComponent(state), 'search', prs);
+		 window.open(pop, '_blank');
+	     });
 	 });
     
     ll('GrebeInit done.');

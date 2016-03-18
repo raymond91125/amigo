@@ -19,6 +19,47 @@
   <fields>
     <!-- A special static/fixed (by YAML conf file) field all documents have. -->
     <field name="document_category" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!-- ontology: Term identifier. -->
+    <!-- bioentity: Gene of gene product ID. -->
+    <!-- annotation: A unique (and internal) combination of bioentity and ontology class. -->
+    <!-- general: The mangled internal ID for this entity. -->
+    <!-- model_annotation: A unique (and internal) thing. -->
+    <!-- noctua_model_meta: The mangled internal ID for this entity. -->
+    <!-- family: Family ID. -->
+    <!-- bbop_ann_ev_agg: Gene/product ID. -->
+    <field name="id" type="string" required="true" multiValued="false" indexed="true" stored="true"></field>
+    <!-- ontology: Term identifier. -->
+    <!-- annotation: Direct annotations. -->
+    <!-- bbop_ann_ev_agg: Column 5. -->
+    <field name="annotation_class" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!-- ontology: Identifier. -->
+    <!-- annotation: Direct annotations. -->
+    <!-- bbop_ann_ev_agg: Column 5 + ontology. -->
+    <field name="annotation_class_label" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!--An easily searchable (TextField tokenized) version of annotation_class_label.-->
+    <field name="annotation_class_label_searchable" type="text_searchable" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <copyField source="annotation_class_label" dest="annotation_class_label_searchable"></copyField>
+    <!-- ontology: Term definition. -->
+    <field name="description" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!--An easily searchable (TextField tokenized) version of description.-->
+    <field name="description_searchable" type="text_searchable" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <copyField source="description" dest="description_searchable"></copyField>
+    <!-- ontology: Term namespace. -->
+    <!-- bioentity: Database source. -->
+    <!-- annotation: Database source. -->
+    <field name="source" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!-- ontology: Term ID space. -->
+    <field name="idspace" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!-- ontology: Is the term obsolete? -->
+    <field name="is_obsolete" type="boolean" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!-- ontology: Term comments. -->
+    <!-- model_annotation: Comments -->
+    <!-- noctua_model_meta: The comments associated with a model. -->
+    <field name="comment" type="string" required="false" multiValued="true" indexed="true" stored="true"></field>
+    <!--An easily searchable (TextField tokenized) version of comment.-->
+    <field name="comment_searchable" type="text_searchable" required="false" multiValued="true" indexed="true" stored="true"></field>
+    <copyField source="comment" dest="comment_searchable"></copyField>
+>>>>>>> upstream/master
     <!-- ontology: Term synonyms. -->
     <!-- bioentity: Gene product synonyms. -->
     <!-- annotation: Gene or gene product synonyms. -->
@@ -465,6 +506,39 @@
     <!--An easily searchable (TextField tokenized) version of annotation_unit_label.-->
     <field name="annotation_unit_label_searchable" type="text_searchable" required="false" multiValued="false" indexed="true" stored="true"></field>
     <copyField source="annotation_unit_label" dest="annotation_unit_label_searchable"></copyField>
+=======
+    <!-- model_annotation:  -->
+    <field name="location_list_closure_label" type="string" required="false" multiValued="true" indexed="true" stored="true"></field>
+    <!-- Automatically created to capture mapping information -->
+    <!-- between location_list_(list|closure) and location_list_closure_label.-->
+    <!-- It is not indexed for searching (JSON blob), but may be useful to the client. -->
+    <field name="location_list_closure_map" type="string" required="false" multiValued="false" indexed="false" stored="true"></field>
+    <!-- model_annotation: ??? -->
+    <!-- noctua_model_meta: ??? -->
+    <field name="owl_blob_json" type="string" required="false" multiValued="false" indexed="false" stored="true"></field>
+    <!-- model_annotation: Evidence type. -->
+    <field name="evidence_type_label" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!--An easily searchable (TextField tokenized) version of evidence_type_label.-->
+    <field name="evidence_type_label_searchable" type="text_searchable" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <copyField source="evidence_type_label" dest="evidence_type_label_searchable"></copyField>
+    <!-- model_annotation: All evidence (evidence closure) for this annotation -->
+    <field name="evidence_type_closure_label" type="string" required="false" multiValued="true" indexed="true" stored="true"></field>
+    <!--An easily searchable (TextField tokenized) version of evidence_type_closure_label.-->
+    <field name="evidence_type_closure_label_searchable" type="text_searchable" required="false" multiValued="true" indexed="true" stored="true"></field>
+    <copyField source="evidence_type_closure_label" dest="evidence_type_closure_label_searchable"></copyField>
+    <!-- Automatically created to capture mapping information -->
+    <!-- between evidence_type_(list|closure) and evidence_type_closure_label.-->
+    <!-- It is not indexed for searching (JSON blob), but may be useful to the client. -->
+    <field name="evidence_type_closure_map" type="string" required="false" multiValued="false" indexed="false" stored="true"></field>
+    <!-- family: Gene/products annotated with this protein family. -->
+    <field name="bioentity_list" type="string" required="false" multiValued="true" indexed="true" stored="true"></field>
+    <!-- family: Gene/products annotated with this protein family. -->
+    <field name="bioentity_list_label" type="string" required="false" multiValued="true" indexed="true" stored="true"></field>
+    <!-- Automatically created to capture mapping information -->
+    <!-- between bioentity_(list|closure) and bioentity_list_label.-->
+    <!-- It is not indexed for searching (JSON blob), but may be useful to the client. -->
+    <field name="bioentity_list_map" type="string" required="false" multiValued="false" indexed="false" stored="true"></field>
+>>>>>>> upstream/master
   </fields>
   <uniqueKey>id</uniqueKey>
 </schema>

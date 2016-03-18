@@ -8,12 +8,12 @@
 /* global jQuery */
 /* global bbop */
 /* global amigo */
-/* global global_live_search_bookmark */
 /* global global_live_search_pins */
 /* global global_live_search_query */
 /* global global_live_search_personality */
 /* global global_live_search_filters */
 /* global global_live_search_bookmark */
+/* global global_live_search_filter_idspace */
 
 //
 function LiveSearchGOlrInit(){
@@ -84,6 +84,12 @@ function LiveSearchGOlrInit(){
     	'ontology': function(manager){
     	    manager.add_query_filter('document_category',
     				     'ontology_class', ['*']);
+	    if( typeof(global_live_search_filter_idspace) !== 'undefined' &&
+		global_live_search_filter_idspace ){
+    		manager.add_query_filter('idspace',
+					 global_live_search_filter_idspace);
+	    }
+    	    manager.add_query_filter('is_obsolete', 'false');
     	    _establish_buttons('ontology', manager);
     	},
     	'bioentity': function(manager){
@@ -158,17 +164,14 @@ function LiveSearchGOlrInit(){
     var btmpl = bbop.widget.display.button_templates;
 
     var id_download_button =
-	btmpl.field_download('Download IDs (up to ' +
-			     dlimit + ')',
+	btmpl.field_download('Download IDs (up to ' + dlimit + ')',
 			     dlimit, ['id']);
     var id_label_download_button =
-	btmpl.field_download('Download IDs and labels (up to ' +
-			     dlimit + ')',
+	btmpl.field_download('Download IDs and labels (up to ' + dlimit + ')',
 			     dlimit, ['annotation_class',
 				      'annotation_class_label']);
     var gaf_download_button =
-	btmpl.field_download('GAF chunk download (up to ' +
-			     dlimit + ')',
+	btmpl.field_download('GAF chunk download (up to ' + dlimit + ')',
 			     dlimit, _gaf_fl);
     // Flexible download buttons.
     var ont_flex_download_button =
