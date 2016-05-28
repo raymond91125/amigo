@@ -60,14 +60,17 @@ sub cgiapp_init {
   if( defined $self->{AW_SEARCH_LIST} ){
     $self->{CORE}->kvetch('already have assembled layouts');
   }else{
+    $self->{CORE}->kvetch('create assembled layouts variable');
 
     ## Pulling: AMIGO_LAYOUT_SEARCH
     my $search_list_to_try =
-      $self->{CORE}->get_amigo_layout('AMIGO_LAYOUT_SEARCH');
+	$self->{CORE}->get_amigo_layout('AMIGO_LAYOUT_SEARCH');
     my $golr_conf = $self->{CORE}->golr_configuration();
     my $search_list = [];
     foreach my $search_entry (@$search_list_to_try){
       my $search_entry_id = $search_entry->{'id'};
+
+      $self->{CORE}->kvetch('   entry: ' . $search_entry_id);
       if( defined $golr_conf->{$search_entry_id} ){
 	## Add in the search link.
 	my $item_conf = $golr_conf->{$search_entry_id};
@@ -793,9 +796,9 @@ sub _resolve_page_settings {
     $page_content_title = 'Browse';
     $page_help_link = $wiki_base . 'AmiGO_2_Manual:_Browse';
   }elsif( $page_name eq 'dd_browse' ){
-    $page_title = 'AmiGO 2: Drill-down Browse';
-    $page_content_title = 'Drill-down Browse';
-    $page_help_link = $wiki_base . 'AmiGO_2_Manual:_Drill-down_Browse';
+    $page_title = 'AmiGO 2: Drill-down Browser';
+    $page_content_title = 'Drill-down Browser';
+    $page_help_link = $wiki_base . 'AmiGO_2_Manual:_Drill-down_Browser';
   }elsif( $page_name eq 'free_browse' ){
     $page_title = 'AmiGO 2: Free Browse';
     $page_content_title = 'Free Browse';
@@ -809,8 +812,8 @@ sub _resolve_page_settings {
     $page_content_title = 'GO Online SQL/Solr Environment (GOOSE)';
     $page_help_link = $wiki_base . 'AmiGO_2_Manual:_GOOSE';
   }elsif( $page_name eq 'gannet' ){
-    $page_title = 'AmiGO 2';
-    $page_content_title = 'Gannet';
+    $page_title = 'AmiGO 2: GO-flavored Solr exploration';
+    $page_content_title = 'GO-flavored Solr exploration';
     $page_help_link = $wiki_base . 'AmiGO_2_Manual:_Gannet';
   }elsif( $page_name eq 'grebe' ){
     $page_title = 'AmiGO 2: Search Templates';
@@ -921,8 +924,12 @@ sub _common_params_settings {
     $self->{CORE}->get_interlink({mode=>'browse'});
   $params->{interlink_dd_browse} =
     $self->{CORE}->get_interlink({mode=>'dd_browse'});
+  $params->{interlink_base_statistics} =
+    $self->{CORE}->get_interlink({mode=>'base_statistics'});
   $params->{interlink_free_browse} =
     $self->{CORE}->get_interlink({mode=>'free_browse'});
+  $params->{interlink_reference_search} =
+    $self->{CORE}->get_interlink({mode=>'reference_search'});
   $params->{interlink_medial_search} =
     $self->{CORE}->get_interlink({mode=>'medial_search'});
   $params->{interlink_simple_search} =
@@ -966,6 +973,7 @@ sub _common_params_settings {
     $self->_atoi($self->{CORE}->amigo_env('AMIGO_VERBOSE'));
   $params->{last_load_date} =
     $self->{CORE}->amigo_env('GOLR_TIMESTAMP_LAST');
+  $params->{root_terms} = $self->{CORE}->get_root_terms();
   #$params->{release_name} = $self->{CORE}->release_name();
   #$params->{release_type} = $self->{CORE}->release_type();
   $params->{release_date} = $params->{release_name};
@@ -984,6 +992,8 @@ sub _common_params_settings {
   $params->{version} = $self->{CORE}->amigo_env('AMIGO_VERSION');
   my $sid = $params->{session_id} || '';
   $params->{session_id_for_url} = 'session_id=' . $sid;
+  $params->{download_limit} =
+    $self->{CORE}->amigo_env('AMIGO_DOWNLOAD_LIMIT') || 100000;
   $params->{server_name} =
     $self->{CORE}->amigo_env('AMIGO_SERVER_NAME') || '';
   ## Filters and the like.
@@ -1264,7 +1274,7 @@ sub generate_template_page_with {
   ## Before we start, make sure that the beta is announced.
   my $is_beta = $self->_atoi($self->{CORE}->amigo_env('AMIGO_BETA'));
   if( defined $is_beta && $is_beta ){
-    $self->add_mq('notice', 'You are using an'.
+    $self->add_mq('warning', 'You are using an'.
 		  ' <a title="Go to AmiGO Labs explanation page"'.
 		  ' href="http://wiki.geneontology.org/index.php/AmiGO_Labs"'.
 		  ' class="alert-link">'.
@@ -1427,17 +1437,11 @@ sub mode_status {
      [
       'com.jquery',
       'com.bootstrap',
-      'com.jquery-ui',
-      'bbop',
-      'amigo'
+      'com.jquery-ui'
      ],
      javascript =>
      [
       $self->{JS}->get_lib('GeneralSearchForwarding.js'),
-     ],
-     javascript_init =>
-     [
-      'GeneralSearchForwardingInit();'
      ],
      content =>
      [
@@ -1509,17 +1513,11 @@ sub mode_fatal {
      [
       'com.jquery',
       'com.bootstrap',
-      'com.jquery-ui',
-      'bbop',
-      'amigo'
+      'com.jquery-ui'
      ],
      javascript =>
      [
       $self->{JS}->get_lib('GeneralSearchForwarding.js'),
-     ],
-     javascript_init =>
-     [
-      'GeneralSearchForwardingInit();'
      ],
      content =>
      [
@@ -1577,17 +1575,11 @@ sub mode_not_found {
      [
       'com.jquery',
       'com.bootstrap',
-      'com.jquery-ui',
-      'bbop',
-      'amigo'
+      'com.jquery-ui'
      ],
      javascript =>
      [
       $self->{JS}->get_lib('GeneralSearchForwarding.js'),
-     ],
-     javascript_init =>
-     [
-      'GeneralSearchForwardingInit();'
      ],
      content =>
      [
@@ -1649,17 +1641,11 @@ sub mode_generic_message {
      [
       'com.jquery',
       'com.bootstrap',
-      'com.jquery-ui',
-      'bbop',
-      'amigo'
+      'com.jquery-ui'
      ],
      javascript =>
      [
       $self->{JS}->get_lib('GeneralSearchForwarding.js'),
-     ],
-     javascript_init =>
-     [
-      'GeneralSearchForwardingInit();'
      ],
      content =>
      [
