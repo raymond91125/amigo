@@ -181,10 +181,13 @@
     <copyField source="bioentity_name" dest="bioentity_name_searchable"></copyField>
     <!-- bioentity: The bioentity ID used at the database of origin. -->
     <!-- annotation: The bioentity ID used at the database of origin. -->
-    <field name="bioentity_internal_id" type="string" required="false" multiValued="false" indexed="false" stored="true"></field>
+    <field name="bioentity_internal_id" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <!--An easily searchable (TextField tokenized) version of bioentity_internal_id.-->
+    <field name="bioentity_internal_id_searchable" type="text_searchable" required="false" multiValued="false" indexed="true" stored="true"></field>
+    <copyField source="bioentity_internal_id" dest="bioentity_internal_id_searchable"></copyField>
     <!-- bioentity: Type class. -->
     <!-- bioentity_for_browser: Type class. -->
-    <!-- annotation: Type class. -->
+    <!-- annotation: Type class. -->    
     <field name="type" type="string" required="false" multiValued="false" indexed="true" stored="true"></field>
     <!-- bioentity: Taxonomic group -->
     <!-- bioentity_for_browser: Taxonomic group -->
