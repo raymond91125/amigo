@@ -18,7 +18,7 @@ OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS = --merge-support-ontologies --remove-subset-
 MAVEN_EXE ?= ~/local/src/java/apache-maven-3.0.5/bin/mvn
 
 ## URLs.
-SOLR_URL ?= http://localhost:8080/solr/
+SOLR_URL ?= http://localhost:8080/solr/biggo/
 ANATOMY_SOLR_URL ?= http://localhost:8080/solr/anatomy/
 DISEASE_SOLR_URL ?= http://localhost:8080/solr/disease/
 GO_SOLR_URL ?= http://localhost:8080/solr/go/
@@ -68,10 +68,10 @@ ONTOLOGIES ?= \
 ## Next:
 # http://purl.obolibrary.org/obo/uberon/basic.owl
 
-GENE_ASSOCIATION_FILES ?= \
+ALL_GAFS ?= \
+	http://www.geneontology.org/gene-associations/submission/paint/pre-submission/gene_association.paint_other.gaf \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Lmajor.gz \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Pfalciparum.gz \
-	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Spombe.gz  \
 	http://www.geneontology.org/gene-associations/gene_association.GeneDB_Tbrucei.gz \
 	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Atumefaciens.gz \
 	http://www.geneontology.org/gene-associations/gene_association.PAMGO_Ddadantii.gz \
@@ -82,13 +82,22 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.dictyBase.gz \
 	http://www.geneontology.org/gene-associations/gene_association.ecocyc.gz \
 	http://www.geneontology.org/gene-associations/gene_association.fb.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_chicken.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_cow.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_dog.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_human.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_pig.gz \
-	http://www.geneontology.org/gene-associations/gene_association.goa_uniprot_noiea.gz \
-	http://www.geneontology.org/gene-associations/gene_association.gonuts.gz \
+	http://www.geneontology.org/gene-associations/goa_chicken.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_chicken_complex.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_chicken_rna.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_cow.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_cow_complex.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_cow_rna.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_dog.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_dog_complex.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_dog_rna.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_human.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_human_complex.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_human_rna.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_pig.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_pig_complex.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_pig_rna.gaf.gz \
+	http://www.geneontology.org/gene-associations/goa_uniprot_all_noiea.gaf.gz \
 	http://www.geneontology.org/gene-associations/gene_association.gramene_oryza.gz \
 	http://www.geneontology.org/gene-associations/gene_association.jcvi.gz \
 	http://www.geneontology.org/gene-associations/gene_association.mgi.gz \
@@ -100,6 +109,7 @@ GENE_ASSOCIATION_FILES ?= \
 	http://www.geneontology.org/gene-associations/gene_association.sgn.gz \
 	http://www.geneontology.org/gene-associations/gene_association.tair.gz \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
+	http://www.geneontology.org/gene-associations/gene_association.zfin.gz \
 
 ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS259.wb.clean
 GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS259.wb.clean
@@ -174,7 +184,7 @@ message-load-clear:
 .PHONY: load-ontology
 load-ontology: owltools-build
 	make message-load-start
-	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general
 	make message-load-clear
 
 
@@ -194,7 +204,18 @@ load-test-gaf: owltools-build
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --read-panther $(PANTHER_FILES_DIR) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(TEST_GAF) --solr-load-panther --solr-load-panther-general
 	make message-load-clear
 
-
+.PHONY: load-gaf
+load-gaf: owltools-build
+	make message-load-start
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(ALL_GAFS)
+	make message-load-clear
+	
+.PHONY: load-biggo
+load-biggo:
+	make load-ontology
+	make load-gaf
+	make load-optimize
+	
 .PHONY: load-wb-full
 load-wb-full:
 	make load-wb-anatomy
