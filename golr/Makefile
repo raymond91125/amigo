@@ -47,12 +47,12 @@ SCHEMA_METADATA ?= \
  ../metadata/ann_ev_agg-config.yaml
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
-ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS259.obo.xunion
-DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS259.obo
+ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS260.obo.xunion
+DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS260.obo
 # GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
-GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS259.obo
-LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS259.obo
-PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS259.obo
+GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS260.obo
+LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS260.obo
+PHENOTYPEONTOLOGY ?= http://caltech.wormbase.org/ontology/phenotype_ontology.WS260.obo
  
 ONTOLOGIES ?= \
  http://purl.obolibrary.org/obo/go.owl \
@@ -111,11 +111,11 @@ ALL_GAFS ?= \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
 	http://www.geneontology.org/gene-associations/gene_association.zfin.gz \
 
-ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS259.wb.clean
-GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS259.wb.clean
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS259.wb.clean.col7
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS259.wb.clean
-LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS259.wb.clean
+ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS260.wb.clean
+GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS260.wb.clean
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS260.wb.clean.col7
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS260.wb.clean
+LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS260.wb.clean
 
 ##
 DATE = `date +'%Y-%m-%d'`
@@ -209,13 +209,13 @@ load-gaf: owltools-build
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(ALL_GAFS)
 	make message-load-clear
-	
+
 .PHONY: load-biggo
 load-biggo:
 	make load-ontology
 	make load-gaf
 	make load-optimize
-	
+
 .PHONY: load-wb-full
 load-wb-full:
 	make load-wb-anatomy
