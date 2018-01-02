@@ -48,7 +48,7 @@ SCHEMA_METADATA ?= \
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
 ANATOMYONTOLOGY ?= http://caltech.wormbase.org/ontology/anatomy_ontology.WS262.obo.xunion
-DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS262.obo
+DISEASEONTOLOGY ?= http://caltech.wormbase.org/ontology/disease_ontology.WS261.obo
 # GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
 GOONTOLOGY ?= http://caltech.wormbase.org/ontology/gene_ontology.WS262.obo
 LIFESTAGEONTOLOGY ?= http://caltech.wormbase.org/ontology/development_ontology.WS262.obo
@@ -114,7 +114,7 @@ ALL_GAFS ?= \
 ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS262.wb.clean
 GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS262.wb.clean
 PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS262.wb.clean.col7
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS262.wb.clean
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS261.wb.clean
 LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS262.wb.clean
 
 ##
