@@ -49,7 +49,7 @@ ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
 ANATOMYONTOLOGY ?= \
 	http://caltech.wormbase.org/ontology/anatomy_ontology.WS264.obo.xunion \
-		http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim.owl
+	http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim.owl
 
 DISEASEONTOLOGY ?= \
 	http://caltech.wormbase.org/ontology/disease_ontology.WS264.obo \
@@ -62,7 +62,7 @@ GOONTOLOGY ?= \
 
 LIFESTAGEONTOLOGY ?= \
 	http://caltech.wormbase.org/ontology/development_ontology.WS264.obo \
-	http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim.owl
+	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 PHENOTYPEONTOLOGY ?= \
 	http://caltech.wormbase.org/ontology/phenotype_ontology.WS264.obo \
