@@ -24,8 +24,7 @@ DISEASE_SOLR_URL ?= http://localhost:8080/solr/disease/
 GO_SOLR_URL ?= http://localhost:8080/solr/go/
 LIFESTAGE_SOLR_URL ?= http://localhost:8080/solr/lifestage/
 PHENOTYPE_SOLR_URL ?= http://localhost:8080/solr/phenotype/
-
- 
+MOUSEPHENE_SOLR_URL ?= http://localhost:8080/solr/mousephene/
 
 ## Paths.
 OWLTOOLS_ROOT ?= ~/local/src/git/owltools/
@@ -68,7 +67,10 @@ PHENOTYPEONTOLOGY ?= \
 	http://caltech.wormbase.org/ontology/phenotype_ontology.WS265.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
- 
+MAMMALPHENEONTOLOGY ?= \
+	http://purl.obolibrary.org/obo/mp.owl
+
+
 ONTOLOGIES ?= \
  http://purl.obolibrary.org/obo/go.owl \
  http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim.owl \
@@ -131,6 +133,7 @@ GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS265.wb.clean
 PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS265.wb.clean.col7
 DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS265.wb.clean
 LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS265.wb.clean
+MOUSEPHENE_GAF ?= http://caltech.wormbase.org/ontology/MGI_phenotype_association.tsv
 
 ##
 DATE = `date +'%Y-%m-%d'`
@@ -225,6 +228,13 @@ load-gaf: owltools-build
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ONTOLOGIES) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(SOLR_URL) --solr-log $(SOLR_LOAD_LOG) --solr-load-gafs $(ALL_GAFS)
 	make message-load-clear
 
+.PHONY: load-mgi-phene
+load-mgi-phene:
+	make message-load-start
+	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(MAMMALPHENEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(MOUSEPHENE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(MOUSEPHENE_GAF)
+	make message-load-clear
+
+
 .PHONY: load-biggo
 load-biggo:
 	make load-ontology
@@ -232,7 +242,7 @@ load-biggo:
 	make load-optimize
 
 .PHONY: load-wb-full
-load-wb-full:
+load-wb-full: owltools-build clear-load-log
 	make load-wb-anatomy
 	make load-wb-disease
 	make load-wb-go
@@ -240,27 +250,27 @@ load-wb-full:
 	make load-wb-phenotype
 	make load-optimize-wb
 .PHONY: load-wb-anatomy
-load-wb-anatomy: owltools-build clear-load-log
+load-wb-anatomy:
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(ANATOMYONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(ANATOMY_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(ANATOMY_GAF)
 	make message-load-clear
 .PHONY: load-wb-disease
-load-wb-disease: owltools-build clear-load-log
+load-wb-disease:
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(DISEASEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(DISEASE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(DISEASE_GAF)
 	make message-load-clear
 .PHONY: load-wb-go
-load-wb-go: owltools-build clear-load-log
+load-wb-go:
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(GOONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(GO_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(GO_GAF)
 	make message-load-clear
 .PHONY: load-wb-lifestage	
-load-wb-lifestage: owltools-build clear-load-log
+load-wb-lifestage:
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(LIFESTAGEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(LIFESTAGE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(LIFESTAGE_GAF)
 	make message-load-clear
 .PHONY: load-wb-phenotype	
-load-wb-phenotype: owltools-build clear-load-log
+load-wb-phenotype:
 	make message-load-start
 	OWLTOOLS_MEMORY=$(OWLTOOLS_MAX_MEMORY) $(OWLTOOLS_ROOT)/OWLTools-Runner/bin/owltools $(PHENOTYPEONTOLOGY) $(OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS) --solr-url $(PHENOTYPE_SOLR_URL) --solr-purge --solr-config $(ONTOLOGY_METADATA) --solr-log $(SOLR_LOAD_LOG) --solr-load-ontology --solr-load-ontology-general --solr-load-gafs $(PHENOTYPE_GAF)
 	make message-load-clear
