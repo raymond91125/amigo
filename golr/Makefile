@@ -47,24 +47,24 @@ SCHEMA_METADATA ?= \
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
 ANATOMYONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/anatomy_ontology.WS265.obo.xunion \
+	http://caltech.wormbase.org/ontology/anatomy_ontology.WS266.obo.xunion \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 DISEASEONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/disease_ontology.WS265.obo \
+	http://caltech.wormbase.org/ontology/disease_ontology.lastgood.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 # GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
 GOONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/gene_ontology.WS265.obo \
+	http://caltech.wormbase.org/ontology/gene_ontology.WS266.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 LIFESTAGEONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/development_ontology.WS265.obo \
+	http://caltech.wormbase.org/ontology/development_ontology.WS266.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 PHENOTYPEONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/phenotype_ontology.WS265.obo \
+	http://caltech.wormbase.org/ontology/phenotype_ontology.WS266.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 MAMMALPHENEONTOLOGY ?= \
@@ -128,11 +128,11 @@ ALL_GAFS ?= \
 	http://www.geneontology.org/gene-associations/gene_association.wb.gz \
 	http://www.geneontology.org/gene-associations/gene_association.zfin.gz \
 
-ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS265.wb.clean
-GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS265.wb.clean
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS265.wb.clean.col7
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS265.wb.clean
-LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS265.wb.clean
+ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS266.wb.clean
+GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS266.wb.clean
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS266.wb.clean.col7
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS266.wb.clean
+LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS266.wb.clean
 MOUSEPHENE_GAF ?= http://caltech.wormbase.org/ontology/MGI_phenotype_association.tsv
 
 ##
