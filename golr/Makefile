@@ -64,7 +64,7 @@ LIFESTAGEONTOLOGY ?= \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 PHENOTYPEONTOLOGY ?= \
-	/home/raymond/local/src/git/amigo/solr/WS271_wbphenotype.obo \
+	/home/raymond/local/src/git/amigo/golr/WS271_wbphenotype.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 MAMMALPHENEONTOLOGY ?= \
