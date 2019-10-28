@@ -47,7 +47,7 @@ SCHEMA_METADATA ?= \
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
 ANATOMYONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/anatomy_ontology.WS272.obo.xunion \
+	http://caltech.wormbase.org/ontology/anatomy_ontology.WS273.obo.xunion \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 DISEASEONTOLOGY ?= \
@@ -56,15 +56,15 @@ DISEASEONTOLOGY ?= \
 
 # GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
 GOONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/gene_ontology.WS272.obo \
+	http://caltech.wormbase.org/ontology/gene_ontology.WS273.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 LIFESTAGEONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/development_ontology.WS272.obo \
+	http://caltech.wormbase.org/ontology/development_ontology.WS273.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 PHENOTYPEONTOLOGY ?= \
-	/home/raymond/local/src/git/amigo/golr/WS271_wbphenotype.obo \
+	http://caltech.wormbase.org/ontology/phenotype_ontology.WS273.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 MAMMALPHENEONTOLOGY ?= \
@@ -113,7 +113,6 @@ ALL_GAFS ?= \
 	http://current.geneontology.org/annotations/goa_pig_complex.gaf.gz \
 	http://current.geneontology.org/annotations/goa_pig_isoform.gaf.gz \
 	http://current.geneontology.org/annotations/goa_pig_rna.gaf.gz \
-	http://current.geneontology.org/annotations/goa_uniprot_all.gaf.gz \
 	http://current.geneontology.org/annotations/goa_uniprot_all_noiea.gaf.gz \
 	http://current.geneontology.org/annotations/gonuts.gaf.gz \
 	http://current.geneontology.org/annotations/gramene_oryza.gaf.gz \
@@ -134,11 +133,11 @@ ALL_GAFS ?= \
 	http://current.geneontology.org/annotations/zfin.gaf.gz \
 
 
-ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS272.wb.clean
-GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS272.wb.clean
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS272.wb.clean.col7
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS272.wb.clean
-LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS272.wb.clean
+ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS273.wb.clean
+GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS273.wb.clean
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS273.wb.clean.col7
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS273.wb.clean
+LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS273.wb.clean
 MOUSEPHENE_GAF ?= http://caltech.wormbase.org/ontology/MGI_phenotype_association.tsv
 
 ##
