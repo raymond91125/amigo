@@ -449,13 +449,14 @@
                and old cache.  
       -->
     <!-- Default change. -SJC -->
+    <!-- changed again. -Raymond -->
     <!-- <filterCache class="solr.FastLRUCache" -->
     <!--              size="512" -->
     <!--              initialSize="512" -->
     <!--              autowarmCount="0"/> -->
     <filterCache class="solr.FastLRUCache"
-                 size="16777216"
-                 initialSize="4194304"
+                 size="16777"
+                 initialSize="4194"
                  autowarmCount="0"/>
 
     <!-- Query Result Cache
@@ -465,13 +466,14 @@
          requested.  
       -->
     <!-- Default change. -SJC -->
+    <!-- changed again. -Raymond -->
     <!-- <queryResultCache class="solr.LRUCache" -->
     <!--                  size="512" -->
     <!--                  initialSize="512" -->
     <!--                  autowarmCount="0"/> -->
     <queryResultCache class="solr.LRUCache"
-		      size="16777216"
-		      initialSize="4194304"
+		      size="16777"
+		      initialSize="4194"
 		      autowarmCount="0"/>
    
     <!-- Document Cache
@@ -481,13 +483,14 @@
          this cache will not be autowarmed.  
       -->
     <!-- Default change. -SJC -->
+    <!-- changed again. -Raymond -->
     <!-- <documentCache class="solr.LRUCache" -->
     <!--                size="512" -->
     <!--                initialSize="512" -->
     <!--                autowarmCount="0"/> -->
     <documentCache class="solr.LRUCache"
-		   size="16777216"
-		   initialSize="4194304"
+		   size="16777"
+		   initialSize="4194"
                    autowarmCount="0"/>
     
     <!-- Field Value Cache
