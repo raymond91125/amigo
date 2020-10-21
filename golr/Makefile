@@ -18,13 +18,13 @@ OWLTOOLS_ONTOLOGY_PROCESSING_FLAGS = --merge-support-ontologies --remove-subset-
 MAVEN_EXE ?= ~/local/src/java/apache-maven-3.0.5/bin/mvn
 
 ## URLs.
-SOLR_URL ?= http://localhost:8080/solr/biggo/
-ANATOMY_SOLR_URL ?= http://localhost:8080/solr/anatomy/
-DISEASE_SOLR_URL ?= http://localhost:8080/solr/disease/
-GO_SOLR_URL ?= http://localhost:8080/solr/go/
-LIFESTAGE_SOLR_URL ?= http://localhost:8080/solr/lifestage/
-PHENOTYPE_SOLR_URL ?= http://localhost:8080/solr/phenotype/
-MOUSEPHENE_SOLR_URL ?= http://localhost:8080/solr/mousephene/
+SOLR_URL ?= http://localhost:8983/solr/biggo/
+ANATOMY_SOLR_URL ?= http://localhost:8983/solr/anatomy/
+DISEASE_SOLR_URL ?= http://localhost:8983/solr/disease/
+GO_SOLR_URL ?= http://localhost:8983/solr/go/
+LIFESTAGE_SOLR_URL ?= http://localhost:8983/solr/lifestage/
+PHENOTYPE_SOLR_URL ?= http://localhost:8983/solr/phenotype/
+MOUSEPHENE_SOLR_URL ?= http://localhost:8983/solr/mousephene/
 
 ## Paths.
 OWLTOOLS_ROOT ?= ~/local/src/git/owltools/
@@ -47,7 +47,7 @@ SCHEMA_METADATA ?= \
 ONTOLOGY_METADATA ?= ../metadata/ont-config.yaml
 
 ANATOMYONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/anatomy_ontology.WS277.obo.xunion \
+	http://caltech.wormbase.org/ontology/anatomy_ontology.WS278.obo.xunion \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 DISEASEONTOLOGY ?= \
@@ -56,15 +56,15 @@ DISEASEONTOLOGY ?= \
 
 # GOONTOLOGY ?= http://www.geneontology.org/ontology/obo_format_1_2/gene_ontology_ext.obo
 GOONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/gene_ontology.WS277.obo \
+	http://caltech.wormbase.org/ontology/gene_ontology.WS278.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 LIFESTAGEONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/development_ontology.WS277.obo \
+	http://caltech.wormbase.org/ontology/development_ontology.WS278.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 PHENOTYPEONTOLOGY ?= \
-	http://caltech.wormbase.org/ontology/phenotype_ontology.WS277.obo \
+	http://caltech.wormbase.org/ontology/phenotype_ontology.WS278.obo \
 	/home/raymond/local/src/git/ncbitaxon/subsets/taxslim.owl
 
 MAMMALPHENEONTOLOGY ?= \
@@ -133,11 +133,11 @@ ALL_GAFS ?= \
 	http://current.geneontology.org/annotations/zfin.gaf.gz \
 
 
-ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS277.wb.clean
-GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS277.wb.clean
-PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS277.wb.clean.col7
-DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS277.wb.clean
-LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS277.wb.clean
+ANATOMY_GAF ?= http://caltech.wormbase.org/ontology/anatomy_association.WS278.wb.clean
+GO_GAF ?= http://caltech.wormbase.org/ontology/gene_association.WS278.wb.clean
+PHENOTYPE_GAF ?= http://caltech.wormbase.org/ontology/phenotype_association.WS278.wb.clean.col7
+DISEASE_GAF ?= http://caltech.wormbase.org/ontology/disease_association.WS278.wb.clean
+LIFESTAGE_GAF ?= http://caltech.wormbase.org/ontology/development_association.WS278.wb.clean
 MOUSEPHENE_GAF ?= http://caltech.wormbase.org/ontology/MGI_phenotype_association.tsv
 
 ##
